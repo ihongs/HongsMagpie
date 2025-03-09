@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<db xmlns="http://hongs-core"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://ihongs.github.io/hongs-core db.xsd">
+    <config link="default"/>
+    <tables>
+        <table name="data"
+               tableName="a_magpie_data"
+               primaryKey="id">
+            <param name="field.state">-</param><!-- 正常查阅删除 -->
+            <param name="check.value">0</param><!-- 不检查字段值 -->
+        </table>
+    </tables>
+</db>

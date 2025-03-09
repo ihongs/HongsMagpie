@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <menu text="智能模型" href="common/menu.act?m=centra/data/magpie/">
+        <menu text="资料仓库" href="centra/data/magpie/reference/">
+            <menu text="正常" href="!centra/data/magpie/reference/#1" hrel="centra/data/magpie/reference/list.html#state=1"></menu>
+            <menu text="封存" href="!centra/data/magpie/reference/#0" hrel="centra/data/magpie/reference/list.html#state=0&amp;.deny=.create"></menu>
+            <role text="查看资料" name="centra/data/magpie/reference/search">
+                <depend>centra</depend>
+                <action>centra/data/magpie/reference/search.act</action>
+                <action>centra/data/magpie/reference/recite.act</action>
+            </role>
+            <role text="添加资料" name="centra/data/magpie/reference/create">
+                <depend>centra</depend>
+                <action>centra/data/magpie/reference/create.act</action>
+            </role>
+            <role text="更新资料" name="centra/data/magpie/reference/update">
+                <depend>centra/data/magpie/reference/search</depend>
+                <action>centra/data/magpie/reference/update.act</action>
+            </role>
+            <role text="删除资料" name="centra/data/magpie/reference/delete">
+                <depend>centra/data/magpie/reference/search</depend>
+                <action>centra/data/magpie/reference/delete.act</action>
+            </role>
+            <role text="回顾资料" name="centra/data/magpie/reference/reveal">
+                <depend>centra/data/magpie/reference/search</depend>
+                <action>centra/data/magpie/reference/reveal.act</action>
+                <action>centra/data/magpie/reference/remind.act</action>
+            </role>
+            <role text="恢复资料" name="centra/data/magpie/reference/revert">
+                <depend>centra/data/magpie/reference/reveal</depend>
+                <action>centra/data/magpie/reference/revert.act</action>
+            </role>
+        </menu>
+        <menu text="智能助理" href="centra/data/magpie/assistant/">
+            <menu text="助理" href="!centra/data/magpie/assistant/#a" hrel="centra/data/magpie/assistant/list.html"></menu>
+            <menu text="测试" href="!centra/data/magpie/assistant/#t" hrel="centra/data/magpie/assistant/test.html"></menu>
+            <role text="查看助理" name="centra/data/magpie/assistant/search">
+                <depend>centra</depend>
+                <action>centra/data/magpie/assistant/search.act</action>
+                <action>centra/data/magpie/assistant/recite.act</action>
+                <action>centra/data/magpie/assistant-message/create.act</action>
+            </role>
+            <role text="创建助理" name="centra/data/magpie/assistant/create">
+                <depend>centra</depend>
+                <depend>centra/data/magpie/assistant/search</depend>
+                <action>centra/data/magpie/assistant/create.act</action>
+            </role>
+            <role text="修改助理" name="centra/data/magpie/assistant/update">
+                <depend>centra/data/magpie/assistant/search</depend>
+                <action>centra/data/magpie/assistant/update.act</action>
+            </role>
+            <role text="删除助理" name="centra/data/magpie/assistant/delete">
+                <depend>centra/data/magpie/assistant/search</depend>
+                <action>centra/data/magpie/assistant/delete.act</action>
+            </role>
+            <role text="回看助理" name="centra/data/magpie/assistant/reveal">
+                <depend>centra/data/magpie/assistant/search</depend>
+                <action>centra/data/magpie/assistant/reveal.act</action>
+                <action>centra/data/magpie/assistant/remind.act</action>
+            </role>
+            <role text="恢复助理" name="centra/data/magpie/assistant/revert">
+                <depend>centra/data/magpie/assistant/reveal</depend>
+                <action>centra/data/magpie/assistant/revert.act</action>
+            </role>
+        </menu>
+        <menu text="对话记录" href="centra/data/magpie/assistant-message/">
+            <role text="查看记录" name="centra/data/magpie/assistant-message/search">
+                <depend>centra</depend>
+                <action>centra/data/magpie/assistant-message/search.act</action>
+                <action>centra/data/magpie/assistant-message/recite.act</action>
+            </role>
+            <role text="删除记录" name="centra/data/magpie/assistant-message/delete">
+                <depend>centra/data/magpie/assistant-message/search</depend>
+                <action>centra/data/magpie/assistant-message/delete.act</action>
+            </role>
+            <role name="__deny__">
+                <action>centra/data/magpie/assistant-message/create.act</action>
+                <action>centra/data/magpie/assistant-message/update.act</action>
+                <action>centra/data/magpie/assistant-message/reveal.act</action>
+                <action>centra/data/magpie/assistant-message/remind.act</action>
+                <action>centra/data/magpie/assistant-message/revert.act</action>
+            </role>
+        </menu>
+    </menu>
+</root>
