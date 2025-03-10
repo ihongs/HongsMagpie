@@ -75,17 +75,17 @@ public final class AIUtil {
      */
     public static List<List<Float>> embedding(List<String> parts, ETYPE etype) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
-        String api = cc.getProperty("magpie.embedding.api","base");
-        String mod = cc.getProperty("magpie.embedding.mod","test");
+        String api = cc.getProperty("magpie.ai.embedding.api", "embedding");
+        String mod = cc.getProperty("magpie.ai.embedding.mod", "test");
 
         // 临时测试
         if ("test".equals(mod)) {
-          List  vects = new ArrayList(parts.size());
-            for(int i = 0; i < parts.size(); i ++ ) {
+            CoreLogger.warn ( "Test embedding..."  );
+            List vects = new ArrayList(parts.size());
+            for (int i = 0; i < parts.size(); i ++ ) {
                 vects.add(null);
             }
-            CoreLogger.warn ( "Test embedding..." );
-            return  vects;
+            return vects;
         }
 
         return getAIClient(api)
@@ -109,9 +109,15 @@ public final class AIUtil {
 
     public static String chat(String model, List<Map> messages) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
-        String api = cc.getProperty("magpie.chat."+model+".api","base");
-        String mod = cc.getProperty("magpie.chat."+model+".mod", model);
-        String sys = cc.getProperty("magpie.ai."+api+".sys" , "system");
+        String api = cc.getProperty("magpie.ai."+model+".api", model );
+        String mod = cc.getProperty("magpie.ai."+model+".mod", "test");
+        String sys = cc.getProperty("magpie.ai."+ api +".sys", "system");
+
+        // 临时测试
+        if ("test".equals(mod)) {
+            CoreLogger.warn ( "Test chat {}...", model );
+            return "Hello world";
+        }
 
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder();
         for (Map message : messages) {
@@ -149,9 +155,16 @@ public final class AIUtil {
 
     public static void chat(String model, List<Map> messages, Consumer<String> callback) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
-        String api = cc.getProperty("magpie.chat."+model+".api","base");
-        String mod = cc.getProperty("magpie.chat."+model+".mod", model);
-        String sys = cc.getProperty("magpie.ai."+api+".sys" , "system");
+        String api = cc.getProperty("magpie.ai."+model+".api", model );
+        String mod = cc.getProperty("magpie.ai."+model+".mod", "test");
+        String sys = cc.getProperty("magpie.ai."+ api +".sys", "system");
+
+        // 临时测试
+        if ("test".equals(mod)) {
+            CoreLogger.warn ( "Test chat {}...", model );
+            callback.accept ( "Hello world" );
+            return;
+        }
 
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder();
         for (Map message : messages) {
