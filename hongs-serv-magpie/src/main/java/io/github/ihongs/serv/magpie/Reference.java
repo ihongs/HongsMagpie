@@ -138,37 +138,32 @@ public class Reference extends Segment {
             Map opts;
             opts = new TreeMap();
             args = Synt.asSet(rd.get("args"));
-            Pattern pa = Pattern.compile("^[^\\s\\[\\]\\.:=?&#]+$");
-            String  n  = Dict.getValue(getFields(), "args", "args", "__text__");
+            Pattern p = Pattern.compile("^[^\\s\\[\\]\\.:=?&#]+$");
             for(Object obj : args) {
                 String arg = Synt.asString( obj );
-                int p = arg.indexOf(":");
-                if (p > 0) {
-                    String k = arg.substring(0,p);
-                    String v = arg.substring(1+p);
-                    if (!pa.matcher(k).matches()) {
-                        Wrong wr = new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]");
-                        wr.setLocalizedCaption(n);
-                        throw wr;
+                int i = arg.indexOf(":");
+                if (i > 0) {
+                    String k = arg.substring(0,i);
+                    String v = arg.substring(1+i);
+                    if ( ! p.matcher(k).matches()) {
+                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]")
+                            . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
                     }
                     opts.put(k, v);
                 } else {
-                    p = arg.indexOf("=");
-                if (p > 0) {
-                    String k = arg.substring(0,p);
-                    String v = arg.substring(1+p);
-                    if (!pa.matcher(k).matches()) {
-                        Wrong wr = new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]");
-                        wr.setLocalizedCaption(n);
-                        throw wr;
+                    i = arg.indexOf("=");
+                if (i > 0) {
+                    String k = arg.substring(0,i);
+                    String v = arg.substring(1+i);
+                    if ( ! p.matcher(k).matches()) {
+                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]")
+                            . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
                     }
                     try {
                         opts.put(k, Synt.asDouble(v));
-                    }
-                    catch (ClassCastException ex) {
-                        Wrong wr = new Wrong("@magpie:magpie.reference.nums.val.invalid");
-                        wr.setLocalizedCaption(n);
-                        throw wr;
+                    } catch (ClassCastException e) {
+                        throw new Wrong("@magpie:magpie.reference.nums.val.invalid")
+                            . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
                     }
                 }}
             }
