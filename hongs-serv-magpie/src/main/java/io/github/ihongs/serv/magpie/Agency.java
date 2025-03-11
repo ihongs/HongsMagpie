@@ -168,7 +168,7 @@ public class Agency {
             ));
             String refeId = Synt.asString(info.get(Cnst.ID_KEY));
 
-            String text = AIUtil.renderByTemp("transform/"+formId+".md", item);
+            String text = AIUtil.renderByTemp("form/"+formId+".md", item);
             info.put("text" , text );
 
             if (refeId != null) {
