@@ -3,10 +3,11 @@ package io.github.ihongs.serv.magpie;
 import io.github.ihongs.Cnst;
 import io.github.ihongs.Core;
 import io.github.ihongs.CruxException;
-import io.github.ihongs.CruxExemption;
 import io.github.ihongs.serv.matrix.Data;
+import io.github.ihongs.util.Dict;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
+import io.github.ihongs.util.verify.Wrong;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -92,34 +93,53 @@ public class Reference extends Segment {
     }
 
     @Override
-    protected int padInf(Map dd , Map rd) {
-        Set ab = Synt.toTerms(rd.get(Cnst.AB_KEY));
+    protected int padDif(Map dd , Map rd) throws CruxException {
+        Set tags = rd.containsKey("tags") ? Synt.asSet(rd.get("tags")) : Synt.asSet(dd.get("tags"));
+        Set args = rd.containsKey("args") ? Synt.asSet(rd.get("args")) : Synt.asSet(dd.get("args"));
 
         // 合并标签
-        if (ab != null && ab.contains("add-tags")) {
-            Set nts  = Synt.toSet(rd.get("tags"));
-            Set ots  = Synt.toSet(dd.get("tags"));
-            if (ots != null) {
-                ots.addAll(nts);
-                rd.put("tags", ots);
+        Set addTags  = Synt.toSet(rd.get("add-tags"));
+        if (addTags != null && ! addTags.isEmpty()) {
+            if (tags != null) {
+                tags.addAll(addTags);
+            } else {
+                tags  = addTags ;
+            }
+            rd.put("tags", tags);
+        }
+        Set delTags  = Synt.toSet(rd.get("del-tags"));
+        if (delTags != null && ! delTags.isEmpty()) {
+            if (tags != null) {
+                tags.removeAll(delTags);
+                rd.put("tags", tags);
             }
         }
 
         // 合并参数
-        if (ab != null && ab.contains("add-args")) {
-            Set nts  = Synt.toSet(rd.get("args"));
-            Set ots  = Synt.toSet(dd.get("args"));
-            if (ots != null) {
-                ots.addAll(nts);
-                rd.put("args", ots);
+        Set addArgs  = Synt.toSet(rd.get("add-args"));
+        if (addArgs != null && ! addArgs.isEmpty()) {
+            if (args != null) {
+                args.addAll(addArgs);
+            } else {
+                args  = addArgs ;
+            }
+            rd.put("args", args);
+        }
+        Set delArgs  = Synt.toSet(rd.get("del-args"));
+        if (delArgs != null && ! delArgs.isEmpty()) {
+            if (args != null) {
+                args.removeAll(delArgs);
+                rd.put("args", args);
             }
         }
 
         // 解析参数
         if (rd.containsKey("args")) {
-            Set args = Synt.toSet(rd.get("args"));
-            Map opts = new TreeMap();
+            Map opts;
+            opts = new TreeMap();
+            args = Synt.asSet(rd.get("args"));
             Pattern pa = Pattern.compile("^[^\\s\\[\\]\\.:=?&#]+$");
+            String  n  = Dict.getValue(getFields(), "args", "args", "__text__");
             for(Object obj : args) {
                 String arg = Synt.asString( obj );
                 int p = arg.indexOf(":");
@@ -127,7 +147,9 @@ public class Reference extends Segment {
                     String k = arg.substring(0,p);
                     String v = arg.substring(1+p);
                     if (!pa.matcher(k).matches()) {
-                        throw new CruxExemption(400, "Option key `$0` contains illegal characters: .:=?&#[] or space...", k);
+                        Wrong wr = new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]");
+                        wr.setLocalizedCaption(n);
+                        throw wr;
                     }
                     opts.put(k, v);
                 } else {
@@ -136,13 +158,17 @@ public class Reference extends Segment {
                     String k = arg.substring(0,p);
                     String v = arg.substring(1+p);
                     if (!pa.matcher(k).matches()) {
-                        throw new CruxExemption(400, "Option key `$0` contains illegal characters: .:=?&#[] or space...", k);
+                        Wrong wr = new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]");
+                        wr.setLocalizedCaption(n);
+                        throw wr;
                     }
                     try {
                         opts.put(k, Synt.asDouble(v));
                     }
                     catch (ClassCastException ex) {
-                        throw new CruxExemption(ex, 400, "Option value for `$0` can not be cast to number, value: $1", k, v);
+                        Wrong wr = new Wrong("@magpie:magpie.reference.nums.val.invalid");
+                        wr.setLocalizedCaption(n);
+                        throw wr;
                     }
                 }}
             }
@@ -153,7 +179,7 @@ public class Reference extends Segment {
         String nt = Synt.asString(rd.get("text"));
         String ot = Synt.asString(dd.get("text"));
 
-        int n = super.padInf(dd , rd);
+        int n = super.padDif(dd , rd);
 
         // 拆分文本
         List pl = Synt.asList(rd.get("parts"));
@@ -177,6 +203,14 @@ public class Reference extends Segment {
         }
 
         return n;
+    }
+
+    @Override
+    protected boolean missable(String fn, Object fo, Object fr) {
+        if (fn.startsWith("add-") || fn.startsWith("del-")) {
+            return true;
+        }
+        return super.missable(fn, fo, fr);
     }
 
     public void updateSegments(String id, List parts) throws CruxException {

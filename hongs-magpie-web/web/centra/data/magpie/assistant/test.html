@@ -1,48 +1,164 @@
-
-<div id="magpie-assistant-chat">
-    <div class="chatbox"></div>
-    <form onsubmit="return false">
-        <textarea name="message"></textarea>
-        <button type="submit">发送</button>
-    </form>
+<h2 class="hide">创建智能助理</h2>
+<div id="centra-data-magpie-assistant-test" class="centra-data-magpie-assistant-test create-form">
+    <div class="row">
+        <div class="col col-xs-6 magpie-formbox">
+            <form>
+            <div class="rollbox panel panel-default">
+            <div class="form-body">
+                <div class="form-group" data-name="soul">
+                    <label class="form-label control-label form-control-static">人设</label>
+                    <div>
+                        <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-soul" name="soul" placeholder=""></textarea>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static"></div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="model">
+                    <label class="form-label control-label form-control-static">模型</label>
+                    <div>
+                        <select class="form-field form-control" name="model" required="required">
+                            <option value="">选择...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" data-name="query">
+                    <label class="form-label control-label form-control-static">引用参数</label>
+                    <div>
+                        <input class="form-field form-control" type="text" name="query" placeholder=""/>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static"></div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="min_up">
+                    <label class="form-label control-label form-control-static">最低匹配度</label>
+                    <div>
+                        <input class="form-field form-control" type="number" name="min_up" placeholder="" step="0.1" min="0.1" max="1.0"/>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static"></div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="max_rn">
+                    <label class="form-label control-label form-control-static">最多引用数</label>
+                    <div>
+                        <input class="form-field form-control" type="number" name="max_rn" placeholder="" step="1" min="1" max="50"/>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static"></div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="max_tk">
+                    <label class="form-label control-label form-control-static">限定 Token</label>
+                    <div>
+                        <input class="form-field form-control" type="number" name="max_tk" placeholder="" step="10" min="0" max="500"/>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static"></div>
+                    </div>
+                </div>
+            </div><!-- end form-body -->
+            </div><!-- end panel -->
+            <div class="panel panel-default">
+            <div class="form-foot">
+                <div class="form-group">
+                    <div>
+                        <div class="btn-toolbar">
+                            <button type="submit" class="commit btn btn-default">转存为智能助理</button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end form-foot -->
+            </div><!-- end panel -->
+            </form>
+        </div>
+        <div class="col col-xs-6 magpie-msgsbox">
+            <div class="rollbox panel panel-default">
+            <div class="form-body msgs-list">
+            </div><!-- end form-body -->
+            </div><!-- end panel -->
+            <div class="panel panel-default">
+            <div class="form-foot">
+                <div class="form-group">
+                    <div>
+                        <textarea name="prompt" class="form-control" style="resize: none;"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div>
+                        <div class="btn-toolbar">
+                            <button name="submit" type="button" class="btn btn-primary">发送消息</button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end form-foot -->
+            </div><!-- end panel -->
+        </div>
+    </div>
 </div>
-
 <script type="text/javascript">
 (function($) {
-    var context = H$("#magpie-assistant-chat");
-    var chatbox = context.find(".chatbox");
-    
-    context.find("form").submit(function() {
-        var msg = $('<pre></pre>').appendTo(chatbox);
-        fetch(hsFixUri("centra/data/magpie/assistant-message/create.act?prompt=你好&assistant_id=5G8U2CJIKWRD1800"))
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder("utf-8");
+    var context = H$("#centra-data-magpie-assistant-test");
+    var loadbox = context.closest( ".loadbox" );
+    var formbox = context.find("form").first( );
 
-          function read() {
-            reader.read().then(({ done, value }) => {
-              if (done) {
-                console.log('Stream complete');
-                return;
-              }
-              const chunk = decoder.decode(value, {stream: true});
+    var loadres = hsSerialDic(loadbox);
+    var denycss = loadres['.deny'];
+        delete    loadres['.deny'];
 
-              msg.text(msg.text() + chunk)
+    // 整理参数
+    var loaddat = new HsSerialDic();
+    var initinf = new HsSerialDic();
+    for(var k in loadres) {
+        var v  = loadres[k];
+        if ("id" == k) {
+            loaddat[k] = v ;
+            initinf[k] = v ;
+        } else
+        if (/^(ar|or|nr)\./.test(k)) { // 层级关系符可用于查询限定等
+            loaddat[k] = v ;
+        } else
+        if (v && ! /^[\._]/.test(k)) { // 点和下划线开头的是标记参数
+            initinf[k] = v ;
+        }
+    }
 
-              console.log('Received chunk:', chunk);
-              read();
-            });
-          }
+    var formobj = context.hsForm({
+        _url : "centra/data/magpie/assistant/recipe.act?ab=.enfo,.info,.fall,_fork,_text",
+         loadData: loaddat,
+         initInfo: initinf,
+        _fill__file: hsFormFillFile,
+        _fill__pict: hsFormFillPict,
+        _fill__fork: hsFormFillFork,
+        _fill__form: hsFormFillPart,
+        _feed__form: hsFormFeedPart,
+        _test__form: hsFormTestPart
+    });
 
-          read();
-        })
-        .catch(error => {
-          console.error('There has been a problem with your fetch operation:', error);
+    hsRequires("centra/data/magpie/assistant/defines.js", function() {
+        // 外部定制
+        $.when(window["in_centra_data_magpie_assistant_test"] && window["in_centra_data_magpie_assistant_test"](context, formobj))
+         .then(function() {
+
+        // 外部限制
+        $.each(denycss ? denycss.split(",") : []
+        , function(i, n) {
+            if (/^form\./.test(n)) {
+                n = ".form-group[data-name='"+n.substring(5)+"']";
+                formbox.find(n).remove();
+            } else {
+                context.find(n).remove();
+            }
         });
-    
+
+        // 自适滚动
+        context.find(".rollbox").each(function() {
+            hsFlexRoll(this, $("#main-context"), true);
+        });
+
+        // 特殊控件
+        setFormItems(formbox, loadbox);
+
+        // 加载数据
+        formobj.load();
+
+        }); // End Promise
     });
 })(jQuery);
 </script>

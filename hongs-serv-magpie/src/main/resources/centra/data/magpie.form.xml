@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
     <form name="reference">
-        <field fame="资料仓库">
+        <field text="资料仓库">
             <param name="part_id">0</param>
             <param name="db-name">magpie/data/reference</param>
             <param name="db-path">magpie/data/reference</param>
@@ -10,68 +10,87 @@
             <param name="srchable">name,text,tags</param>
             <param name="wordable">name,text,tags</param>
         </field>
-        <field fame="ID" name="id" type="hidden">
+        <field text="ID" name="id" type="hidden">
             <param name="deforce">create</param>
             <param name="default">@id</param>
         </field>
-        <field fame="名称" name="name" type="text" required="yes">
+        <field text="名称" name="name" type="text" required="yes">
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
         </field>
-        <field fame="标签" name="tags" type="text" repeated="yes">
+        <field text="标签" name="tags" type="text" repeated="yes">
             <param name="form-hint">用于标记内容, 供查阅参考</param>
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
             <param name="diverse">treeset</param>
         </field>
-        <field fame="参数" name="args" type="text" repeated="yes">
-            <param name="form-hint">用于标识数据, 供内部查询, 格式: xxx 或 xxx:字串 或 xxx=数值, 数值可查询 ?digs.xxx.at=[18,35]</param>
+        <field text="参数" name="args" type="text" repeated="yes">
+            <param name="form-hint">用于标识数据, 供内部查询; 格式: xxx 或 xxx:字串 或 xxx=数值; 查询: ?opts.xxx=abc&amp;nums.xxx=[18,35]</param>
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
             <param name="diverse">treeset</param>
         </field>
-        <field fame="选项" name="opts" type="object">
+        <field name="opts" type="object" rule="Ignore">
             <param name="disabled">yes</param>
         </field>
-        <field fame="选项" name="digs" type="ignore">
+        <field name="nums" type="object" rule="Ignore">
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
         </field>
-        <field fame="内容" name="text" type="textarea" required="yes">
-            <param name="filtable">yes</param>
-        </field>
-        <field fame="分块" name="part" type="stored">
+        <field name="add_tags" type="object" rule="Intact">
             <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
         </field>
-        <field fame="文档" name="file" type="file">
+        <field name="del_tags" type="object" rule="Intact">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
+        </field>
+        <field name="add_args" type="object" rule="Intact">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
+        </field>
+        <field name="del_args" type="object" rule="Intact">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
+        </field>
+        <!--field text="文档" name="file" type="file">
             <param name="listable">yes</param>
             <param name="accept">.md,.txt,.html,.docx,.xlsx,.pptx,.pdf</param>
             <param name="path">static/upload/magpie/reference/${id:split}</param>
             <param name="href">static/upload/magpie/reference/${id:split}</param>
             <param name="naming">keep:file.dat</param>
             <param name="hash-status">yes</param>
+        </field-->
+        <field text="内容" name="text" type="textarea" required="yes">
+            <param name="filtable">yes</param>
         </field>
-        <field fame="链接" name="href" type="text">
+        <field text="分块" name="part" type="stored">
+            <param name="disabled">yes</param>
+        </field>
+        <field text="链接" name="href" type="text">
             <param name="listable">yes</param>
         </field>
-        <field fame="ETag" name="etag" type="text">
-            <param name="listable">yes</param>
+        <field name="form_id" type="string">
+            <param name="disabled">yes</param>
         </field>
-        <field fame="状态" name="state" type="enum">
+        <field name="data_id" type="string">
+            <param name="disabled">yes</param>
+        </field>
+        <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="enum">reference_state</param>
             <param name="default">1</param>
             <param name="deforce">create</param>
         </field>
-        <field fame="修改时间" name="mtime" type="date">
+        <field text="修改时间" name="mtime" type="date">
             <param name="readonly">yes</param>
             <param name="listable">yes</param>
             <param name="type">time</param>
             <param name="default">=%time</param>
             <param name="deforce">always</param>
         </field>
-        <field fame="创建时间" name="ctime" type="date">
+        <field text="创建时间" name="ctime" type="date">
             <param name="readonly">yes</param>
             <param name="listable">yes</param>
             <param name="type">time</param>
@@ -80,7 +99,7 @@
         </field>
     </form>
     <form name="reference-segment">
-        <field fame="资料片段">
+        <field text="资料片段">
             <param name="part_id">1</param>
             <param name="db-name">magpie/data/reference</param>
             <param name="db-path">magpie/data/reference</param>
@@ -111,21 +130,21 @@
         </field>
     </form>
     <form name="assistant">
-        <field fame="智能助理">
+        <field text="智能助理">
             <param name="db-name">magpie/data/assistant</param>
             <param name="db-path">magpie/data/assistant</param>
             <param name="db-table">magpie.data</param>
             <param name="srchable">name,note</param>
             <param name="wordable">name,note</param>
         </field>
-        <field fame="ID" name="id" type="hidden">
+        <field text="ID" name="id" type="hidden">
             <param name="deforce">create</param>
             <param name="default">@id</param>
         </field>
-        <field fame="名称" name="name" type="text" required="yes">
+        <field text="名称" name="name" type="text" required="yes">
             <param name="listable">yes</param>
         </field>
-        <field fame="头像" name="icon" type="image" rule="Thumb">
+        <field text="头像" name="icon" type="image" rule="Thumb">
             <param name="listable">yes</param>
             <param name="path">static/upload/magpie/assistant/${id:split}</param>
             <param name="href">static/upload/magpie/assistant/${id:split}</param>
@@ -135,48 +154,48 @@
             <param name="thumb-mode">keep</param>
             <param name="thumb-size">300*300</param>
         </field>
-        <field fame="说明" name="note" type="textarea">
+        <field text="说明" name="note" type="textarea">
         </field>
-        <field fame="人设" name="soul" type="textarea">
+        <field text="人设" name="soul" type="textarea">
         </field>
-        <field fame="模型" name="model" type="enum" required="yes">
+        <field text="模型" name="model" type="enum" required="yes">
             <param name="enum">assistant_model</param>
         </field>
-        <field fame="引用参数" name="query" type="text">
+        <field text="引用参数" name="query" type="text">
         </field>
-        <field fame="最低匹配度" name="min_up" type="number">
+        <field text="最低匹配度" name="min_up" type="number">
             <param name="listable">yes</param>
             <param name="type">float</param>
             <param name="min">0.1</param>
             <param name="max">1.0</param>
         </field>
-        <field fame="最多引用数" name="max_rn" type="number">
+        <field text="最多引用数" name="max_rn" type="number">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">1</param>
             <param name="max">50</param>
         </field>
-        <field fame="限定 Token" name="max_tk" type="number">
+        <field text="限定 Token" name="max_tk" type="number">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">0</param>
             <param name="max">500</param>
         </field>
-        <field fame="状态" name="state" type="enum">
+        <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="enum">assistant_state</param>
             <param name="default">1</param>
             <param name="deforce">create</param>
         </field>
-        <field fame="修改时间" name="mtime" type="date">
+        <field text="修改时间" name="mtime" type="date">
             <param name="listable">yes</param>
             <param name="readonly">yes</param>
             <param name="type">time</param>
             <param name="default">=%time</param>
             <param name="deforce">always</param>
         </field>
-        <field fame="创建时间" name="ctime" type="date">
+        <field text="创建时间" name="ctime" type="date">
             <param name="listable">yes</param>
             <param name="readonly">yes</param>
             <param name="type">time</param>
@@ -185,7 +204,7 @@
         </field>
     </form>
     <form name="assistant-message">
-        <field fame="对话记录">
+        <field text="对话记录">
             <param name="db-name">magpie/data/assistant-message</param>
             <param name="db-path">magpie/data/assistant-message</param>
             <param name="db-table">magpie.data</param>
@@ -193,11 +212,11 @@
             <param name="wordable">prompt,remind,answer</param>
             <param name="listable">@all</param>
         </field>
-        <field fame="ID" name="id" type="hidden">
+        <field text="ID" name="id" type="hidden">
             <param name="deforce">create</param>
             <param name="default">@id</param>
         </field>
-        <field fame="用户" name="user_id" type="fork">
+        <field text="用户" name="user_id" type="fork">
             <param name="pass-id">yes</param>
             <param name="data-at">centra/master/user/list</param>
             <param name="listable">yes</param>
@@ -206,12 +225,12 @@
         </field>
         <field name="anon_id" type="hidden">
         </field>
-        <field fame="助理" name="assistant_id" type="fork" required="yes">
+        <field text="助理" name="assistant_id" type="fork" required="yes">
             <param name="data-at">centra/data/magpie/assistant/search</param>
             <param name="pass-id">yes</param>
             <param name="listable">yes</param>
         </field>
-        <field fame="资料" name="reference_id" type="fork" repeated="yes">
+        <field text="资料" name="reference_id" type="fork" repeated="yes">
             <param name="data-at">centra/data/magpie/reference/search</param>
             <param name="pass-id">yes</param>
             <param name="listable">yes</param>
@@ -221,24 +240,24 @@
         <field name="session_id" type="hidden">
             <param name="default">@id</param>
         </field>
-        <field fame="用户消息" name="prompt" type="textarea">
+        <field text="用户消息" name="prompt" type="textarea">
             <param name="listable">yes</param>
         </field>
-        <field fame="检索消息" name="remind" type="textarea">
+        <field text="检索消息" name="remind" type="textarea">
             <param name="listable">yes</param>
         </field>
-        <field fame="回复内容" name="result" type="textarea">
+        <field text="回复内容" name="result" type="textarea">
             <param name="listable">yes</param>
         </field>
-        <field fame="时间" name="ctime" type="date">
+        <field text="时间" name="ctime" type="date">
             <param name="type">time</param>
             <param name="default">=%time</param>
             <param name="deforce">create</param>
         </field>
-        <field fame="输入 Tokens" name="prompt_tokens" type="number">
+        <field text="输入 Tokens" name="prompt_tokens" type="number">
             <param name="type">int</param>
         </field>
-        <field fame="输出 Tokens" name="result_tokens" type="number">
+        <field text="输出 Tokens" name="result_tokens" type="number">
             <param name="type">int</param>
         </field>
     </form>

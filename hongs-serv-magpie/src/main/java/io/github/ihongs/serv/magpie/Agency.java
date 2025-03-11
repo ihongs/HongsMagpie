@@ -160,15 +160,16 @@ public class Agency {
         String formId = mod.getFormId();
 
         for(Map item : list) {
-            String itemId = Synt.asString(item.get(Cnst.ID_KEY));
+            String dataId = Synt.asString(item.get(Cnst.ID_KEY));
             Map info = ref.getOne(Synt.mapOf(
                 Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY),
-                "s-form_id", formId,
-                "s-id"     , itemId
+                "form_id", formId,
+                "data_id", dataId
             ));
             String refeId = Synt.asString(info.get(Cnst.ID_KEY));
 
-            info.put("text", AIUtil.renderByTemp("transform/"+formId+".md", item));
+            String text = AIUtil.renderByTemp("transform/"+formId+".md", item);
+            info.put("text" , text );
 
             if (refeId != null) {
                 info.put(Cnst.ID_KEY, refeId);
@@ -178,7 +179,8 @@ public class Agency {
                 info.put("ctime", t);
                 info.put("mtime", t);
                 info.put("state", 1);
-                info.put("args", Synt.setOf("form_id:"+formId, "data_id:"+itemId));
+                info.put("form_id", formId);
+                info.put("data_id", dataId);
                 ref .create(info);
             }
         }

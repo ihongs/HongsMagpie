@@ -150,7 +150,7 @@ public final class AIUtil {
             .get(0)
             .message()
             .content()
-            .get( );
+            .orElse("");
     }
 
     public static void chat(String model, List<Map> messages, Consumer<String> callback) {
@@ -201,7 +201,7 @@ public final class AIUtil {
                          .get(0)
                          .delta()
                          .content()
-                         .get( )
+                         .orElse("")
                 );
             });
         }
