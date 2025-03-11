@@ -138,7 +138,7 @@ public class Reference extends Segment {
             Map opts;
             opts = new TreeMap();
             args = Synt.asSet(rd.get("args"));
-            Pattern p = Pattern.compile("^[^\\s\\[\\]\\.:=?&#]+$");
+            Pattern p = Pattern.compile("^[^\\s\\[\\]\\.:=?&#%]+$");
             for(Object obj : args) {
                 String arg = Synt.asString( obj );
                 int i = arg.indexOf(":");
@@ -146,7 +146,7 @@ public class Reference extends Segment {
                     String k = arg.substring(0,i);
                     String v = arg.substring(1+i);
                     if ( ! p.matcher(k).matches()) {
-                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]")
+                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#%[]")
                             . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
                     }
                     opts.put(k, v);
@@ -156,7 +156,7 @@ public class Reference extends Segment {
                     String k = arg.substring(0,i);
                     String v = arg.substring(1+i);
                     if ( ! p.matcher(k).matches()) {
-                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#[]")
+                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#%[]")
                             . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
                     }
                     try {
