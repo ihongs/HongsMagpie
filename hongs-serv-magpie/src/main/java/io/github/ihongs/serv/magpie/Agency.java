@@ -83,7 +83,7 @@ public class Agency {
                     "rf"  , id,
                     "id"  , d ,
                     "sn"  , i ,
-                    "part", p ,
+                    "text", p ,
                     "vect", v
                 ), 0);
             }

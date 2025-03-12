@@ -1,8 +1,7 @@
 
 .centra-data-magpie-assistant-test .magpie-msgsbox .rollbox {
-    background-color: #eee;
 }
 .centra-data-magpie-assistant-test .magpie-msgsbox .rollbox > .msgs-list > div > .alert {
     border-color: #ccc;
-    white-space : pre ;
+    white-space : pre-wrap;
 }

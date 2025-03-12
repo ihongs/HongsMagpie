@@ -106,9 +106,9 @@
             <param name="db-table">magpie.data</param>
             <param name="db-class">io.github.ihongs.serv.magpie.Segment</param>
             <param name="db-table">none</param>
-            <param name="callable">none</param>
             <param name="srchable">@not</param>
             <param name="sortable">id,rf,sn</param>
+            <param name="findable">id,rf,sn,vect,tags,args,state</param>
         </field>
         <field name="id" type="hidden">
         </field>
@@ -117,13 +117,21 @@
         <field name="sn" type="number">
             <param name="type">int</param>
         </field>
-        <field name="part" type="stored">
+        <field name="text" type="stored">
         </field>
         <field name="vect" type="vector">
         </field>
         <field name="tags" type="string" repeated="yes">
         </field>
         <field name="args" type="string" repeated="yes">
+        </field>
+        <field name="opts" type="object" rule="Ignore">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
+        </field>
+        <field name="nums" type="object" rule="Ignore">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
         </field>
         <field name="state" type="number">
             <param name="type">int</param>
@@ -156,30 +164,52 @@
         </field>
         <field text="说明" name="note" type="textarea">
         </field>
-        <field text="人设" name="soul" type="textarea">
-        </field>
         <field text="模型" name="model" type="enum" required="yes">
-            <param name="enum">assistant_model</param>
+            <param name="conf">magpie</param>
+            <param name="enum">model</param>
         </field>
         <field text="引用参数" name="query" type="text">
+            <param name="form-hint">格式: ?键=值&amp;键=值 或 键:值,键:值 或直接写 JSON</param>
         </field>
         <field text="最低匹配度" name="min_up" type="number">
             <param name="listable">yes</param>
             <param name="type">float</param>
             <param name="min">0.1</param>
             <param name="max">1.0</param>
+            <param name="default">0.5</param>
         </field>
         <field text="最多引用数" name="max_rn" type="number">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">1</param>
             <param name="max">50</param>
+            <param name="default">10</param>
+        </field>
+        <field text="会话限长"   name="max_sn" type="number">
+            <param name="listable">yes</param>
+            <param name="type">int</param>
+            <param name="min">0</param>
+            <param name="max">50</param>
+            <param name="default">20</param>
         </field>
         <field text="限定 Token" name="max_tk" type="number">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">0</param>
             <param name="max">500</param>
+            <param name="default">0</param>
+        </field>
+        <field text="系统人设" name="system" type="textarea">
+            <param name="form-hint">使用 ${document} 嵌入引用材料</param>
+        </field>
+        <field text="意图识别" name="intent" type="textarea">
+            <param name="form-hint">填写意图分类描述</param>
+        </field>
+        <field text="意图应用" name="handle" type="text">
+            <param name="form-hint">填写应用 class</param>
+        </field>
+        <field text="访问码" name="token" type="text">
+            <param name="listable">yes</param>
         </field>
         <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>
@@ -225,6 +255,8 @@
         </field>
         <field name="anon_id" type="hidden">
         </field>
+        <field name="anon_ip" type="hidden">
+        </field>
         <field text="助理" name="assistant_id" type="fork" required="yes">
             <param name="data-at">centra/data/magpie/assistant/search</param>
             <param name="pass-id">yes</param>
@@ -238,7 +270,6 @@
         <field name="segment_id" type="hidden" repeated="yes">
         </field>
         <field name="session_id" type="hidden">
-            <param name="default">@id</param>
         </field>
         <field text="用户消息" name="prompt" type="textarea">
             <param name="listable">yes</param>
@@ -262,23 +293,14 @@
         </field>
     </form>
     <enum name="reference.cascade">
-        <value code="centra/data/magpie:reference-segment;fk">UPDATE,DELETE</value>
-    </enum>
-    <enum name="reference-segment.include">
-        <value code="centra/data/magpie:reference;fk">tags,args,opts,state</value>
+        <value code="centra/data/magpie:reference-segment;rf">DELETE</value>
     </enum>
     <enum name="reference_state">
         <value code="1">正常</value>
         <value code="0">封存</value>
     </enum>
     <enum name="assistant_state">
-        <value code="1">内部</value>
-        <value code="2">公开</value>
-    </enum>
-    <enum name="assistant_model">
-        <value code="deepseek">Deepseek</value>
-        <value code="qwen-max">Qwen-Max</value>
-        <value code="qwen-plus">Qwen-Plus</value>
-        <value code="qwen-turbo">Qwen-Turbo</value>
+        <value code="1">正常</value>
+        <value code="0">停用</value>
     </enum>
 </root>

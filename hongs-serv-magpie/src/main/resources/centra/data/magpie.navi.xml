@@ -2,12 +2,11 @@
 <root>
     <menu text="智能模型" href="common/menu.act?m=centra/data/magpie/">
         <menu text="资料仓库" href="centra/data/magpie/reference/">
-            <menu text="正常" href="!centra/data/magpie/reference/#1" hrel="centra/data/magpie/reference/list.html#state=1"></menu>
-            <menu text="封存" href="!centra/data/magpie/reference/#0" hrel="centra/data/magpie/reference/list.html#state=0&amp;.deny=.create"></menu>
             <role text="查看资料" name="centra/data/magpie/reference/search">
                 <depend>centra</depend>
                 <action>centra/data/magpie/reference/search.act</action>
                 <action>centra/data/magpie/reference/recite.act</action>
+                <action>centra/data/magpie/reference-segment/search.act</action>
             </role>
             <role text="添加资料" name="centra/data/magpie/reference/create">
                 <depend>centra</depend>
@@ -32,13 +31,13 @@
             </role>
         </menu>
         <menu text="智能助理" href="centra/data/magpie/assistant/">
-            <menu text="助理" href="!centra/data/magpie/assistant/#a" hrel="centra/data/magpie/assistant/list.html"></menu>
-            <menu text="测试" href="!centra/data/magpie/assistant/#t" hrel="centra/data/magpie/assistant/test.html"></menu>
+            <menu text="全部助理" href="!centra/data/magpie/assistant/#a" hrel="centra/data/magpie/assistant/list.html"></menu>
+            <menu text="自由聊"   href="!centra/data/magpie/assistant/#t" hrel="centra/data/magpie/assistant/test.html"></menu>
             <role text="查看助理" name="centra/data/magpie/assistant/search">
                 <depend>centra</depend>
                 <action>centra/data/magpie/assistant/search.act</action>
                 <action>centra/data/magpie/assistant/recite.act</action>
-                <action>centra/data/magpie/assistant-message/create.act</action>
+                <action>centra/data/magpie/assistant-message/censor.act</action>
             </role>
             <role text="创建助理" name="centra/data/magpie/assistant/create">
                 <depend>centra</depend>
@@ -74,6 +73,15 @@
                 <action>centra/data/magpie/assistant-message/delete.act</action>
             </role>
             <role name="__deny__">
+                <action>centra/data/magpie/reference-segment/acount.act</action>
+                <action>centra/data/magpie/reference-segment/assort.act</action>
+                <action>centra/data/magpie/reference-segment/create.act</action>
+                <action>centra/data/magpie/reference-segment/update.act</action>
+                <action>centra/data/magpie/reference-segment/reveal.act</action>
+                <action>centra/data/magpie/reference-segment/remind.act</action>
+                <action>centra/data/magpie/reference-segment/revert.act</action>
+                <action>centra/data/magpie/assistant-message/acount.act</action>
+                <action>centra/data/magpie/assistant-message/assort.act</action>
                 <action>centra/data/magpie/assistant-message/create.act</action>
                 <action>centra/data/magpie/assistant-message/update.act</action>
                 <action>centra/data/magpie/assistant-message/reveal.act</action>

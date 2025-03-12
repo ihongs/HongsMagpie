@@ -22,7 +22,12 @@ import org.apache.lucene.document.Document;
  */
 public class Reference extends Segment {
 
-    private List parts; // 分块跳线
+    /**
+     * add/put/set 无法返回保存数据, tags/args/state 无法在 updateSegments 时带入, 故需用跳线来传递.
+     * inlcude 级联带入发生在 padDif 时, 资料数据没写入库.
+     */
+    private Map  data ;
+    private List parts;
 
     protected Reference(String conf, String form) {
         super(conf, form);
@@ -38,6 +43,7 @@ public class Reference extends Segment {
 
     @Override
     public int add(String id, Map rd, long time) throws CruxException {
+        data  = null;
         parts = null;
         int n = super.add(id, rd, time);
         if (n > 0 && parts != null) {
@@ -48,6 +54,7 @@ public class Reference extends Segment {
 
     @Override
     public int put(String id, Map rd, long time) throws CruxException {
+        data  = null;
         parts = null;
         int n = super.put(id, rd, time);
         if (n > 0 && parts != null) {
@@ -58,6 +65,7 @@ public class Reference extends Segment {
 
     @Override
     public int set(String id, Map rd, long time) throws CruxException {
+        data  = null;
         parts = null;
         int n = super.set(id, rd, time);
         if (n > 0 && parts != null) {
@@ -194,6 +202,7 @@ public class Reference extends Segment {
             }
             dd.put("part", Dist.toString(ps, true));
             parts = ps;
+            data  = dd;
             n ++;
         }
 
@@ -220,8 +229,12 @@ public class Reference extends Segment {
                 "id", jd,
                 "rf", id,
                 "sn", i ,
-                "part", pa.get(0),
-                "vect", pa.get(1)
+                "text"  , pa.get(0),
+                "vect"  , pa.get(1),
+                "tags"  , data.get("tags"),
+                "args"  , data.get("args"),
+                "opts"  , data.get("opts"),
+                "state" , data.get("state")
             ), 0);
             i ++ ;
         }

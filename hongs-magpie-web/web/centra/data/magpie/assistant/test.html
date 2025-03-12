@@ -5,14 +5,6 @@
             <form>
             <div class="rollbox panel panel-default">
             <div class="form-body">
-                <div class="form-group" data-name="soul">
-                    <label class="form-label control-label form-control-static">人设</label>
-                    <div>
-                        <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-soul" name="soul" placeholder=""></textarea>
-                        <div class="help-block text-error form-control-static"></div>
-                        <div class="help-block text-muted form-control-static"></div>
-                    </div>
-                </div>
                 <div class="form-group" data-name="model">
                     <label class="form-label control-label form-control-static">模型</label>
                     <div>
@@ -40,7 +32,7 @@
                 <div class="form-group" data-name="max_rn">
                     <label class="form-label control-label form-control-static">最多引用数</label>
                     <div>
-                        <input class="form-field form-control" type="number" name="max_rn" placeholder="" step="1" min="1" max="100"/>
+                        <input class="form-field form-control" type="number" name="max_rn" placeholder="" step="1" min="1" max="50"/>
                         <div class="help-block text-error form-control-static"></div>
                         <div class="help-block text-muted form-control-static"></div>
                     </div>
@@ -48,9 +40,33 @@
                 <div class="form-group" data-name="max_tk">
                     <label class="form-label control-label form-control-static">限定 Token</label>
                     <div>
-                        <input class="form-field form-control" type="number" name="max_tk" placeholder="" step="1" min="0"/>
+                        <input class="form-field form-control" type="number" name="max_tk" placeholder="" step="10" min="0" max="500"/>
                         <div class="help-block text-error form-control-static"></div>
                         <div class="help-block text-muted form-control-static"></div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="system">
+                    <label class="form-label control-label form-control-static">系统人设</label>
+                    <div>
+                        <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-soul" name="system" placeholder=""></textarea>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static">使用 ${document} 嵌入引用材料</div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="system">
+                    <label class="form-label control-label form-control-static">意图识别</label>
+                    <div>
+                        <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-soul" name="intent" placeholder=""></textarea>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static">填写意图分类描述</div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="system">
+                    <label class="form-label control-label form-control-static">意图应用</label>
+                    <div>
+                        <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-soul" name="handle" placeholder=""></textarea>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static">填写应用 class</div>
                     </div>
                 </div>
             </div><!-- end form-body -->
