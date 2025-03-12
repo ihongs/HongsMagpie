@@ -105,7 +105,7 @@ public class MagpieMessage {
                 throw new CruxException(403 , "@magpie:magpie.assistant.token.invalid" );
             }
 
-            // 限定用户
+            // 当前用户/匿名信息
             Object uid = helper.getSessibute(Cnst.UID_SES);
             Object nid = null;
             Object nip = null;
