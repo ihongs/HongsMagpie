@@ -9,12 +9,12 @@ import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.verify.Wrong;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
-import org.apache.lucene.document.Document;
 
 /**
  * 资料库
@@ -22,15 +22,14 @@ import org.apache.lucene.document.Document;
  */
 public class Reference extends Segment {
 
-    /**
-     * add/put/set 无法返回保存数据, tags/args/state 无法在 updateSegments 时带入, 故需用跳线来传递.
-     * inlcude 级联带入发生在 padDif 时, 资料数据没写入库.
-     */
-    private Map  data ;
-    private List parts;
+    private final Set syns; // 需同步的字段
+    private       int sync; // 当前同步数
+    private       Map data; // 当前数据
 
     protected Reference(String conf, String form) {
         super(conf, form);
+
+        syns = Synt.toSet(getParams().get("syncable"));
     }
 
     public static Reference getInstance(String conf, String form) {
@@ -43,34 +42,49 @@ public class Reference extends Segment {
 
     @Override
     public int add(String id, Map rd, long time) throws CruxException {
-        data  = null;
-        parts = null;
+        sync = 0;
+        data = null;
+
         int n = super.add(id, rd, time);
-        if (n > 0 && parts != null) {
-            updateSegments( id, parts );
+        if (sync > 0) {
+            updateSegments(id, data);
         }
+
+        sync = 0;
+        data = null;
+
         return n;
     }
 
     @Override
     public int put(String id, Map rd, long time) throws CruxException {
-        data  = null;
-        parts = null;
+        sync = 0;
+        data = null;
+
         int n = super.put(id, rd, time);
-        if (n > 0 && parts != null) {
-            updateSegments( id, parts );
+        if (sync > 0) {
+            updateSegments(id, data);
         }
+
+        sync = 0;
+        data = null;
+
         return n;
     }
 
     @Override
     public int set(String id, Map rd, long time) throws CruxException {
-        data  = null;
-        parts = null;
+        sync = 0;
+        data = null;
+
         int n = super.set(id, rd, time);
-        if (n > 0 && parts != null) {
-            updateSegments( id, parts );
+        if (sync > 0) {
+            updateSegments(id, data);
         }
+
+        sync = 0;
+        data = null;
+
         return n;
     }
 
@@ -92,10 +106,7 @@ public class Reference extends Segment {
     public int rev(String id, Map rd, long time) throws CruxException {
         int n = super.rev(id, rd, time);
         if (n > 0) {
-            Document dc = getDoc(id);
-            String   ts = dc.getField("part").stringValue();
-            List     ps = (List) Dist.toObject(ts);
-            updateSegments( id , ps);
+            updateSegments(id, get(id));
         }
         return n;
     }
@@ -178,16 +189,16 @@ public class Reference extends Segment {
             rd.put("opts", opts);
         }
 
-        // 新旧内容
-        String nt = Synt.asString(rd.get("text"));
-        String ot = Synt.asString(dd.get("text"));
+        int n = 0;
 
-        int n = super.padDif(dd , rd);
+        // 新旧内容
+        Object nt = rd.get("text");
+        Object ot = dd.get("text");
 
         // 拆分文本
         List pl = Synt.asList(rd.get("parts"));
         if (pl == null && nt != null && ! nt.equals(ot)) {
-            pl = AIUtil.split(nt);
+            pl = AIUtil.split(nt.toString(  ));
         }
 
         // 获取向量
@@ -200,43 +211,61 @@ public class Reference extends Segment {
                 pa.add(vl.get(i));
                 ps.add(pa);
             }
-            dd.put("part", Dist.toString(ps, true));
-            parts = ps;
-            data  = dd;
-            n ++;
+            dd.put("parts", dd  );
+            dd.put("part" , Dist.toString(ps, true));
+            sync ++ ;
+            n ++ ;
         }
 
-        return n;
+        data = dd;
+
+        return n + super.padDif(dd, rd);
     }
 
     @Override
     protected boolean missable(String fn, Object fo, Object fr) {
-        if (fn.startsWith("add-") || fn.startsWith("del-")) {
+        if (fn.startsWith("add-") // 增加标签
+        ||  fn.startsWith("del-") // 删减标签
+        ||  fn.equals ("part")) { // 上面查过
             return true;
         }
-        return super.missable(fn, fo, fr);
+        if (super.missable(fn, fo, fr)) {
+            return true;
+        }
+        if (syns .contains(fn)) {
+            sync ++ ;
+        }
+        return false;
     }
 
-    public void updateSegments(String id, List parts) throws CruxException {
+    public void updateSegments(String id, Map data) throws CruxException {
         Data seg = getSegment();
+
+        List parts = Synt.asList(data.get("parts"));
+        if ( parts == null) {
+             parts = Synt.toList(data.get("part" ));
+        }
 
         // 写入新的
         int i = 0;
-        for(Object po : parts) {
-            List   pa = (List) po;
-            String jd = id+"-"+Synt.asString(i);
-            seg.set ( jd, Synt.mapOf(
-                "id", jd,
-                "rf", id,
-                "sn", i ,
-                "text"  , pa.get(0),
-                "vect"  , pa.get(1),
-                "tags"  , data.get("tags"),
-                "args"  , data.get("args"),
-                "opts"  , data.get("opts"),
-                "state" , data.get("state")
-            ), 0);
-            i ++ ;
+        if (parts != null && ! parts.isEmpty()) {
+            Map da = new HashMap();
+            for(Object kn : syns ) {
+                da.put(kn , data.get(kn));
+            }
+            for(Object po : parts) {
+                List   pa = (List) po;
+                String jd = id+"-"+Synt.asString(i);
+                Map ba = new HashMap(da.size() + 5);
+                ba.putAll(da);
+                ba.put ("id" , jd);
+                ba.put ("rf" , id);
+                ba.put ("sn" , i );
+                ba.put ("text", pa.get(0));
+                ba.put ("vect", pa.get(1));
+                seg.set(jd, ba, 0);
+                i ++ ;
+            }
         }
 
         // 删除多余
@@ -248,9 +277,9 @@ public class Reference extends Segment {
         ) , 0, 0).toList( );
         for(Map row : rows) {
             String jd = (String) row.get("id");
-            seg.end ( jd, Synt.mapOf(
-                "id", jd
-            ), 0);
+            Map ba = new HashMap(1);
+            ba.put ("id" , jd);
+            seg.end(jd, ba, 0);
         }
     }
 
@@ -265,9 +294,9 @@ public class Reference extends Segment {
         ) , 0, 0).toList( );
         for(Map row : rows) {
             String jd = (String) row.get("id");
-            seg.end ( jd, Synt.mapOf(
-                "id", jd
-            ), 0);
+            Map ba = new HashMap(1);
+            ba.put ("id" , jd);
+            seg.end(jd, ba, 0);
         }
     }
 

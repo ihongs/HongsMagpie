@@ -1,10 +1,14 @@
 
 function in_centra_data_magpie_assistant_test(context, formobj) {
     var msgs = [];
-    var uinp = context.find('[name=prompt]');
-    var usub = context.find('[name=submit]');
     var that = formobj;
-    usub.click(function() {
+    var mbox = context.find(".msgs-list");
+    var uinp = context.find('[name=prompt]');
+    context.find('[name=cleans]').click(function() {
+        msgs = [];
+        mbox.empty();
+    });
+    context.find('[name=submit]').click(function() {
         // 校验
         if (! that.validate()) {
             that.note("请检查错误项, 修改后重试", "danger");
@@ -42,8 +46,8 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
 
             var unam = '我';
             var anam = context.find('[name=model]>:selected').text();
-            var ubox = $('<div><b>'+unam+':</b><div class="alert"></div></div>').appendTo(context.find(".msgs-list")).find('div');
-            var abox = $('<div><b>'+anam+':</b><div class="alert"></div></div>').appendTo(context.find(".msgs-list")).find('div');
+            var ubox = $('<div><b>'+unam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
+            var abox = $('<div><b>'+anam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
 
             // 用户消息
             msgs.push({

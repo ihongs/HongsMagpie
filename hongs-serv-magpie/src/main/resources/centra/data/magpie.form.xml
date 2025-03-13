@@ -9,6 +9,8 @@
             <param name="db-class">io.github.ihongs.serv.magpie.Reference</param>
             <param name="srchable">name,text,tags</param>
             <param name="wordable">name,text,tags</param>
+            <param name="syncable">tags,args,opts,state</param><!-- 同步给分块 -->
+            <param name="showable">name,file,href,form_id,data_id,id</param><!-- 对话中展示 -->
         </field>
         <field text="ID" name="id" type="hidden">
             <param name="deforce">create</param>
@@ -292,9 +294,6 @@
             <param name="type">int</param>
         </field>
     </form>
-    <enum name="reference.cascade">
-        <value code="centra/data/magpie:reference-segment;rf">DELETE</value>
-    </enum>
     <enum name="reference_state">
         <value code="1">正常</value>
         <value code="0">封存</value>
