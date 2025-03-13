@@ -187,6 +187,7 @@ public class MagpieMessage {
                         if (!token.isEmpty()) {
                             sb.append(token);
                         }
+                        // 试探连接
                         out.write("");
                         out.flush(  );
                     } catch ( IOException e ) {
