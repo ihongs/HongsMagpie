@@ -72,9 +72,21 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
                         return;
                     }
 
-                    const chunk = decoder.decode(value, {stream: true});
-                    amsg  +=  chunk;
-                    abox.text(amsg);
+                    var chunk = decoder.decode(value, {stream:true});
+                    if (chunk.startsWith("data:")) {
+                        var item = JSON.parse (chunk.substring( 5 ));
+                        if (item.text) {
+                            amsg = amsg + item.text;
+                            abox.text(amsg);
+                        }
+                        if (item.references) {
+                            var l = $('<blockquote><i>引用资料</i><ul></ul></blockquote>').insertAfter(abox).find('ul');
+                            for(var i = 0; i < item.references.length; i ++) {
+                                var a = item.references[i];
+                                $('<li></li>').appendTo(l).text(a.name);
+                            }
+                        }
+                    }
 
                     read();
                 });
