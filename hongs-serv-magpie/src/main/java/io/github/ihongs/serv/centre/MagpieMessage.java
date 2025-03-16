@@ -12,6 +12,7 @@ import io.github.ihongs.action.anno.CustomReplies;
 import io.github.ihongs.action.anno.Preset;
 import io.github.ihongs.action.anno.Select;
 import io.github.ihongs.action.anno.Verify;
+import io.github.ihongs.dh.Roster;
 import io.github.ihongs.serv.magpie.AIUtil;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Dist;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  * 消息接口
@@ -83,18 +85,18 @@ public class MagpieMessage {
         String tok = Synt.asString(rd.get("token"));
         String aid = Synt.asString(rd.get("assistant_id"));
         String sid = Synt.asString(rd.get(  "session_id"));
+        String prompt = Synt.declare(rd.get("prompt"), "");
+        int    stream = Synt.declare(rd.get("stream"), 0 );
+
         if (tok == null || tok.isEmpty()
         ||  aid == null || aid.isEmpty()) {
             throw new CruxException(400 , "token and assistant_id required");
         }
-        if (sid == null || sid.isEmpty()) {
-            sid = Core.newIdentity ();
-        }
 
         Data bot = Data.getInstance("centra/data/magpie", "assistant");
         Map  ad  = bot .getOne(Synt.mapOf(
-            Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY, "state", "token", "model", "query"),
-            "assistant_id", aid
+            Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY, "state", "token"),
+            Cnst.ID_KEY, aid
         ));
         if (Synt.declare(ad.get("state"), 0) <= 0) {
             throw new CruxException(404 , "@magpie:magpie.assistant.state.invalid" );
@@ -104,17 +106,79 @@ public class MagpieMessage {
         }
 
         // 当前用户/匿名信息
-        Object uid = helper.getSessibute(Cnst.UID_SES);
-        Object nid = null;
-        Object nip = null;
+        HttpSession  ses = helper.getRequest().getSession(true);
+        Object uid = ses .getAttribute(Cnst.UID_SES);
+        String nid = null;
+        String nip = null;
         if (uid == null) {
-            nid = helper.getRequest().getSession(true).getId();
+            nid = ses.getId();
             nip = Core.CLIENT_ADDR.get();
         }
 
-        String prompt = Synt.declare(rd.get("prompt"), ""  );
-        String system = Synt.declare(ad.get("system"), ""  );
+        // 会话ID
+        if (sid == null || sid.isEmpty()) {
+            sid = Core.newIdentity ();
+        }
+
+        if (stream < 2) {
+            stream(helper, rd, stream);
+            return;
+        }
+
+        // 缓存半分钟, 等下个接口取
+        String id = Core.newIdentity();
+        Roster.put("magpie.stream."+id, Synt.mapOf(
+            "prompt", prompt,
+            "assistant_id", aid,
+              "session_id", sid,
+                 "user_id", uid,
+                 "anno_id", nid,
+                 "anno_ip", nip
+        ), 30);
+        helper.reply(Synt.mapOf(
+              "session_id", sid,
+               "stream_id",  id
+        ));
+    }
+
+    @Action("stream")
+    @CustomReplies
+    public void stream(ActionHelper helper) throws CruxException {
+        Map rd = helper.getRequestData();
+        String id;
+
+        id = Synt.declare(rd.get( "stream_id" ), "");
+        if (id == null || id.isEmpty()) {
+            throw new CruxException(400, "stream_id required");
+        }
+
+        rd = (Map) Roster.get("magpie.stream." + id);
+        if ( rd == null ||  rd.isEmpty()) {
+            throw new CruxException(400, "stream_id is invalid");
+        }
+        Roster.del("magpie.stream."+ id);
+
+        stream(helper, rd, 1);
+    }
+
+    private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
+        String aid = Synt.asString(rd.get("assistant_id"));
+        String sid = Synt.asString(rd.get(  "session_id"));
+        String uid = Synt.asString(rd.get(     "user_id"));
+        String nid = Synt.asString(rd.get(     "anno_id"));
+        String nip = Synt.asString(rd.get(     "anno_ip"));
+        String prompt = Synt.declare(rd.get("prompt"), "");
         String remind = prompt;
+
+        Data bot = Data.getInstance("centra/data/magpie", "assistant");
+        Map  ad  = bot .getOne(Synt.mapOf(
+            Cnst.ID_KEY, aid
+        ));
+        if (ad == null || ad.isEmpty( )) {
+            throw new CruxException(400, "Assistant is not found");
+        }
+
+        String system = Synt.declare(ad.get("system"), ""  );
         String model  = Synt.declare(ad.get("model" ), ""  );
         String query  = Synt.declare(ad.get("query" ), ""  );
         float  minUp  = Synt.declare(ad.get("min_up"), 0.5f);
@@ -241,7 +305,7 @@ public class MagpieMessage {
             throw new CruxException(e);
         }
 
-        if (Synt.declare(rd.get( "stream" ), false ) ) {
+        if (stream != 0) {
             rsp.setHeader("Cache-Control", "no-store");
             rsp.setHeader("Connection" , "keep-alive");
             rsp.setContentType ( "text/event-stream" );

@@ -1,6 +1,7 @@
 package io.github.ihongs.serv.centra;
 
 import io.github.ihongs.Cnst;
+import io.github.ihongs.Core;
 import io.github.ihongs.CoreLocale;
 import io.github.ihongs.CoreLogger;
 import io.github.ihongs.CruxException;
@@ -9,6 +10,7 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.anno.Action;
 import io.github.ihongs.action.anno.CustomReplies;
 import io.github.ihongs.action.anno.Preset;
+import io.github.ihongs.dh.Roster;
 import io.github.ihongs.serv.magpie.AIUtil;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Dist;
@@ -37,7 +39,61 @@ public class MagpieMessage {
 
         String prompt = Synt.declare(rd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
+        String model  = Synt.declare(rd.get("model" ), ""  );
+        String query  = Synt.declare(rd.get("query" ), ""  );
+        float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
+        int    maxRn  = Synt.declare(rd.get("max_rn"), 10  );
+        int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
+        int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
+        int    stream = Synt.declare(rd.get("stream"), 0   );
+
+        if (stream < 2) {
+            stream(helper, rd, stream);
+            return;
+        }
+
+        // 缓存半分钟, 等下个接口取
+        String id = Core.newIdentity();
+        Roster.put("magpie.stream."+id, Synt.mapOf(
+            "prompt", prompt,
+            "system", system,
+            "model" , model ,
+            "query" , query ,
+            "min_up", minUp ,
+            "max_rn", maxRn ,
+            "max_sn", maxSn ,
+            "max_tk", maxTk
+        ), 30);
+        helper.reply(Synt.mapOf(
+            "stream_id", id
+        ));
+    }
+
+    @Action("stream")
+    @CustomReplies
+    public void stream(ActionHelper helper) throws CruxException {
+        Map rd = helper.getRequestData();
+        String id;
+
+        id = Synt.declare(rd.get( "stream_id" ), "");
+        if (id == null || id.isEmpty()) {
+            throw new CruxException(400, "stream_id required");
+        }
+
+        rd = (Map) Roster.get("magpie.stream." + id);
+        if ( rd == null ||  rd.isEmpty()) {
+            throw new CruxException(400, "stream_id is invalid");
+        }
+        Roster.del("magpie.stream."+ id);
+
+        stream(helper, rd, 1);
+    }
+
+    private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
+        String prompt = Synt.declare(rd.get("prompt"), ""  );
         String remind = prompt;
+        
+        String system = Synt.declare(rd.get("system"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
         String query  = Synt.declare(rd.get("query" ), ""  );
         float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
@@ -142,9 +198,9 @@ public class MagpieMessage {
             throw new CruxException(e);
         }
 
-        if (Synt.declare(rd.get( "stream" ), false ) ) {
-            rsp.setHeader("Cache-Control", "no-store");
+        if (stream != 0) {
             rsp.setHeader("Connection" , "keep-alive");
+            rsp.setHeader("Cache-Control", "no-store");
             rsp.setContentType ( "text/event-stream" );
             rsp.setCharacterEncoding("UTF-8");
 
