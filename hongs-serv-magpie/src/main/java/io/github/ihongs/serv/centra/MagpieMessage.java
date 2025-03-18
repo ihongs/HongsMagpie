@@ -17,8 +17,10 @@ import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +39,7 @@ public class MagpieMessage {
     public void censor(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
 
+        String sid = Synt.asString(  rd.get("session_id")  );
         String prompt = Synt.declare(rd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
@@ -47,14 +50,19 @@ public class MagpieMessage {
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
         int    stream = Synt.declare(rd.get("stream"), 0   );
 
+        // 会话ID
+        if (sid == null || sid.isEmpty()) {
+            sid =  Core.newIdentity( );
+            rd.put("session_id" , sid);
+        }
+
         if (stream < 2) {
             stream(helper, rd, stream);
             return;
         }
 
         // 缓存半分钟, 等下个接口取
-        String id = Core.newIdentity();
-        Roster.put("magpie.stream."+id, Synt.mapOf(
+        Roster.put("magpie.stream."+sid, Synt.mapOf(
             "prompt", prompt,
             "system", system,
             "model" , model ,
@@ -62,11 +70,32 @@ public class MagpieMessage {
             "min_up", minUp ,
             "max_rn", maxRn ,
             "max_sn", maxSn ,
-            "max_tk", maxTk
+            "max_tk", maxTk ,
+            "session_id" , sid
         ), 30);
         helper.reply(Synt.mapOf(
-            "stream_id", id
+            "session_id" , sid
         ));
+    }
+
+    @Action("cancel")
+    @CustomReplies
+    public void cancel(ActionHelper helper) throws CruxException {
+        Map rd = helper.getRequestData();
+        String id;
+
+        id = Synt.declare(rd.get("session_id") , "");
+        if (id == null || id.isEmpty()) {
+            throw new CruxException(400, "stream_id required");
+        }
+
+        Thread thread = (Thread) Core.getInterior().get("magpie.stream."+id);
+        if (thread != null) {
+            thread.interrupt();
+            helper.reply( "" );
+        } else {
+            helper.fault( "" );
+        }
     }
 
     @Action("stream")
@@ -75,14 +104,14 @@ public class MagpieMessage {
         Map rd = helper.getRequestData();
         String id;
 
-        id = Synt.declare(rd.get( "stream_id" ), "");
+        id = Synt.declare(rd.get("session_id") , "");
         if (id == null || id.isEmpty()) {
             throw new CruxException(400, "stream_id required");
         }
 
         rd = (Map) Roster.get("magpie.stream." + id);
         if ( rd == null ||  rd.isEmpty()) {
-            throw new CruxException(400, "stream_id is invalid");
+            throw new CruxException(400, "stream_id invalid" );
         }
         Roster.del("magpie.stream."+ id);
 
@@ -90,9 +119,10 @@ public class MagpieMessage {
     }
 
     private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
+        String sid = Synt.asString(  rd.get("session_id")  );
         String prompt = Synt.declare(rd.get("prompt"), ""  );
         String remind = prompt;
-        
+
         String system = Synt.declare(rd.get("system"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
         String query  = Synt.declare(rd.get("query" ), ""  );
@@ -156,19 +186,24 @@ public class MagpieMessage {
         Data.Loop loop = seg.search(qry, 0, maxRn);
 
         // 引用资料
-        List<Map> refs = new ArrayList ();
-        if (loop.count() > 0) {
+        List<Map> refs = new ArrayList();
+        if (loop.count() > 0 ) {
             StringBuilder ps = new StringBuilder();
             Set rb = Synt.toSet(ref.getParams().get("showable"));
-            for (Map pa : loop) {
-                refs.add(ref.getOne(Synt.mapOf(
-                    Cnst.ID_KEY, Synt.mapOf(Cnst.IN_REL, pa.get("rf")),
-                    Cnst.RB_KEY, rb
-                )));
+            Set rl = new HashSet( );
+            for(Map pa : loop) {
+                Object rf = pa.get("rf");
+                if (! rl.contains ( rf )) {
+                      rl.add(rf);
+                    refs.add(ref.getOne(Synt.mapOf(
+                        Cnst.ID_KEY, Synt.mapOf(Cnst.IN_REL, rf),
+                        Cnst.RB_KEY, rb
+                    )));
+                }
                 ps.append(pa.get("text"))
                   .append("\n========\n");
             }
-            ps .setLength(ps.length( )-8);
+            ps .setLength(ps.length()-10);
 
             if (system == null || system.isBlank()) {
                 system = cl.getProperty("magpie.ai.system.temp");
@@ -198,6 +233,11 @@ public class MagpieMessage {
             throw new CruxException(e);
         }
 
+        // 登记线程, 可被中止
+        Thread thread = Thread.currentThread();
+        Core.getInterior().put("magpie.stream."+sid, thread);
+        try {
+
         if (stream != 0) {
             rsp.setHeader("Connection" , "keep-alive");
             rsp.setHeader("Cache-Control", "no-store");
@@ -207,7 +247,8 @@ public class MagpieMessage {
             try {
                 out.write("data:"
                   + Dist.toString(Synt.mapOf(
-                        "references", refs
+                        "references", refs,
+                        "session_id", sid
                     ), true)
                   + "\n\n");
                 out.flush();
@@ -231,9 +272,23 @@ public class MagpieMessage {
                     } catch ( IOException e ) {
                         throw new CruxExemption(e);
                     }
+                    if (thread.isInterrupted()) {
+                        throw new CruxExemption("@magpie.stream.cancel");
+                    }
                 });
             } finally {
-                // Nothing to do
+                if (! sb.isEmpty()) {
+                    String result = sb.toString();
+
+                    // 完整内容
+                    try {
+                        String thunk = "data:{\"content\":\""+Dist.doEscape(result)+"\"}";
+                        out.write(thunk);
+                        out.flush(  );
+                    } catch ( IOException e ) {
+                        throw new CruxExemption(e);
+                    }
+                }
             }
         } else {
             StringBuilder sb = new StringBuilder();
@@ -249,16 +304,42 @@ public class MagpieMessage {
                     } catch ( IOException e ) {
                         throw new CruxExemption(e);
                     }
+                    if (thread.isInterrupted()) {
+                        Exception e = new InterruptedException();
+                        throw new CruxExemption(e, "@magpie.stream.cancel");
+                    }
                 });
-
-                // 输出结果
-                helper.reply(Synt.mapOf(
-                    "text", sb.toString(),
-                    "references", refs
-                ));
             } finally {
-                // Nothing to do
+                if (! sb.isEmpty()) {
+                    String result = sb.toString();
+
+                    // 输出结果
+                    helper.reply(Synt.mapOf(
+                        "references", refs,
+                        "session_id", sid ,
+                        "content", result
+                    ));
+                }
             }
+        }
+
+        } catch (Exception ex) {
+            /**
+             * 外部中止
+             * 这里有件比较诡异的事情:
+             * 由于 OpenAI 用的 OKHttp 为 Kotlin 开发,
+             * 不是 RuntimeException 亦可不申明直接抛,
+             * 故在此能收到其内部的未经包装的中断异常.
+             */
+            Throwable ax  = ex.getCause();
+            if (ax == null) ax = ex;
+            if (! (ax instanceof InterruptedIOException)
+            &&  ! (ax instanceof InterruptedException) ) {
+                CoreLogger.debug(ex.getMessage());
+                throw ex;
+            }
+        } finally {
+            Core.getInterior().remove("magpie.stream." + sid);
         }
     }
 

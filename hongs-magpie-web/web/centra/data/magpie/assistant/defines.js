@@ -1,12 +1,19 @@
 
 function in_centra_data_magpie_assistant_test(context, formobj) {
+    var ssid ;
     var msgs = [];
     var that = formobj;
     var mbox = context.find(".msgs-list");
     var uinp = context.find('[name=prompt]');
     context.find('[name=cleans]').click(function() {
-        msgs = [];
-        mbox.empty();
+        msgs.length = 0;
+        mbox.empty( );
+    });
+    context.find('[name=cancel]').click(function() {
+        if (! ssid) {
+            return;
+        }
+        fetch(hsFixUri("centra/data/magpie/assistant-message/cancel.act?session_id="+ssid));
     });
     context.find('[name=submit]').click(function() {
         // 校验
@@ -24,18 +31,16 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
         }
         that._waiting = true;
 
-        var umsg = uinp.val();
-        var amsg = ""  ;
-
         var data = hsSerialDat(that.formBox);
+        var umsg = uinp.val();
         data.messages = msgs;
         data.prompt   = umsg;
 
-        fetch(hsFixUri("centra/data/magpie/assistant-message/censor.act"), {
+        fetch(hsFixUri("centra/data/magpie/assistant-message/censor.act?stream=2"), {
             body    : JSON.stringify(data),
             method  : "POST",
             headers : {
-                "Accept": "text/plain;q=0.9,*/*;q=0.8",
+                "Accept": "application/json",
                 "Content-Type": "application/json"
             }
         })
@@ -43,59 +48,69 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
             if (! rsp.ok) {
                 throw new Error("网络错误, 请检查网络后重试...");
             }
+            return rsp.json();
+        })
+        .then(rsp => {
+            if (! rsp.ok) {
+                throw new Error(rsp.msg || rsp.err || "未知错误");
+            }
+
+            ssid = rsp.session_id;
 
             var unam = '我';
             var anam = context.find('[name=model]>:selected').text();
             var ubox = $('<div><b>'+unam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
             var abox = $('<div><b>'+anam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
-
-            // 用户消息
-            msgs.push({
+            var umap = {
                 role    : "user",
                 content :  umsg
-            });
+            };
+            var amap = {
+                role    : "assistant",
+                content : ""
+            };
+
+            msgs.push(umap);
+            msgs.push(amap);
             ubox.text(umsg);
             uinp.val ( "" );
 
-            const reader  = rsp.body.getReader( );
-            const decoder = new TextDecoder("utf-8");
-
-            function read() {
-                reader.read().then(({done, value}) => {
-                    if (done) {
-                        // 助理消息
-                        msgs.push({
-                            role    : "assistant",
-                            content :  amsg||"无"
-                        });
-                        delete that._waiting;
-                        return;
+            const  evts = new EventSource(hsFixUri('centra/data/magpie/assistant-message/stream.act?session_id='+ssid));
+            evts.onmessage = function(ev) {
+                var dat = JSON.parse((ev.data));
+                if (dat .content) {
+                    amap.content  = dat.content;
+                    abox.text (amap.content);
+                } else
+                if (dat .text) {
+                    amap.content += dat.text;
+                    abox.text (amap.content);
+                    context.find('[name=cancel]').click();
+                } else
+                if (dat.references && dat.references.length) {
+                    var ul = $('<blockquote class="small"><i>引用资料</i><ul></ul></blockquote>')
+                            .insertAfter(abox)
+                            .find( 'ul' );
+                    for(var i = 0; i < dat.references.length; i ++) {
+                        var m = dat.references[i];
+                        var a = $('<li><a href="javascript:;" data-toggle="hsOpen" data-target="@"></a></li>')
+                            .appendTo(ul)
+                            .find( 'a'  );
+                        a.attr("data-href", 'centra/data/magpie/reference/info.html?id=' + m.id);
+                        a.text( m.name  );
                     }
-
-                    var chunk = decoder.decode(value, {stream:true});
-                    if (chunk.startsWith("data:")) {
-                        var item = JSON.parse (chunk.substring( 5 ));
-                        if (item.text) {
-                            amsg = amsg + item.text;
-                            abox.text(amsg);
-                        }
-                        if (item.references) {
-                            var l = $('<blockquote><i>引用资料</i><ul></ul></blockquote>').insertAfter(abox).find('ul');
-                            for(var i = 0; i < item.references.length; i ++) {
-                                var a = item.references[i];
-                                $('<li></li>').appendTo(l).text(a.name);
-                            }
-                        }
-                    }
-
-                    read();
-                });
-            }
-            read();
+                }
+            };
+            evts.onerror = function(ev) {
+                evts.close ();
+                console.log(ev);
+                ssid =  undefined;
+                delete  that._waiting;
+            };
         })
-        .catch(error => {
-            that.warn(error, "danger");
-            delete that._waiting;
+        .catch(err => {
+            that.warn(err.message, "danger");
+            delete  that._waiting;
         });
     });
 }
