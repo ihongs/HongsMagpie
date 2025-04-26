@@ -170,8 +170,18 @@
             <param name="conf">magpie</param>
             <param name="enum">model</param>
         </field>
-        <field text="引用参数" name="query" type="text">
+        <field text="引用参数" name="query" type="string">
+            <param name="listable">yes</param>
             <param name="form-hint">格式: ?键=值&amp;键=值 或 键:值,键:值 或直接写 JSON</param>
+        </field>
+        <field text="参数对象" name="quest" type="object">
+            <param name="disabled">yes</param>
+        </field>
+        <field text="直接引用" name="direct" type="select">
+            <param name="enum">assistant_state</param>
+            <param name="listable">yes</param>
+            <param name="type">int</param>
+            <param name="default">0</param>
         </field>
         <field text="最低匹配度" name="min_up" type="number">
             <param name="listable">yes</param>
@@ -294,6 +304,82 @@
             <param name="type">int</param>
         </field>
     </form>
+    <form name="applicant">
+        <field text="智能任务">
+            <param name="db-name">magpie/data/applicant</param>
+            <param name="db-path">magpie/data/applicant</param>
+            <param name="db-table">magpie.data</param>
+            <param name="srchable">prompt,remind,result</param>
+            <param name="wordable">prompt,remind,result</param>
+            <param name="nameable">prompt</param>
+        </field>
+        <field text="ID" name="id" type="hidden">
+            <param name="deforce">create</param>
+            <param name="default">@id</param>
+        </field>
+        <field text="执行器ID" name="agent_id" type="hidden">
+        </field>
+        <field text="需求" name="prompt" type="textarea" required="yes">
+            <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="form-hold">待执行的需求内容, 如查询明天北京的天气</param>
+        </field>
+        <field text="说明" name="remind" type="textarea" required="no" >
+            <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="form-hold">对需求的附加说明, 以便大模型更好的理解</param>
+        </field>
+        <field text="最多步数" name="max_steps" type="number">
+            <param name="type">int</param>
+            <param name="default">100</param>
+            <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+        </field>
+        <field text="结果" name="result" type="textarea">
+            <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="unwritable">yes</param>
+        </field>
+        <field text="报告" name="report" type="file" repeated="yes">
+            <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="unwritable">yes</param>
+            <param name="path">static/upload/magpie/applicant/${id:split}</param>
+        </field>
+        <field text="状态" name="state" type="enum">
+            <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="readonly">yes</param>
+            <param name="type">int</param>
+            <param name="enum">applicant_state</param>
+            <param name="default">1</param>
+            <param name="deforce">create</param>
+        </field>
+        <field text="开始时间" name="btime" type="date">
+            <param name="listable">yes</param>
+            <param name="unwritable">yes</param>
+            <param name="type">time</param>
+        </field>
+        <field text="结束时间" name="etime" type="date">
+            <param name="listable">yes</param>
+            <param name="unwritable">yes</param>
+            <param name="type">time</param>
+        </field>
+        <field text="更新时间" name="mtime" type="date">
+            <param name="listable">yes</param>
+            <param name="readonly">yes</param>
+            <param name="type">time</param>
+            <param name="default">=%time</param>
+            <param name="deforce">always</param>
+        </field>
+        <field text="创建时间" name="ctime" type="date">
+            <param name="listable">yes</param>
+            <param name="readonly">yes</param>
+            <param name="type">time</param>
+            <param name="default">=%time</param>
+            <param name="deforce">create</param>
+        </field>
+    </form>
     <enum name="reference_state">
         <value code="1">正常</value>
         <value code="0">封存</value>
@@ -301,5 +387,13 @@
     <enum name="assistant_state">
         <value code="1">正常</value>
         <value code="0">停用</value>
+    </enum>
+    <enum name="applicant_state">
+        <value code="1">待执行</value>
+        <value code="2">执行中</value>
+        <value code="3">完成</value>
+        <value code="4">结束(未完成)</value>
+        <value code="5">结束(有错误)</value>
+        <value code="9">中止</value>
     </enum>
 </root>

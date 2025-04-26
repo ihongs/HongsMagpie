@@ -89,5 +89,34 @@
                 <action>centra/data/magpie/assistant-message/revert.act</action>
             </role>
         </menu>
+        <menu text="智能任务" href="centra/data/magpie/applicant/">
+            <role text="查看任务" name="centra/data/magpie/applicant/search">
+                <depend>centra</depend>
+                <action>centra/data/magpie/applicant/search.act</action>
+                <action>centra/data/magpie/applicant/recite.act</action>
+                <action>centra/data/magpie/applicant/censor.act</action>
+                <action>centra/data/magpie/applicant/stream.act</action>
+            </role>
+            <role text="创建任务" name="centra/data/magpie/applicant/create">
+                <depend>centra/data/magpie/applicant/search</depend>
+                <action>centra/data/magpie/applicant/create.act</action>
+                <action>centra/data/magpie/applicant/update.act</action>
+            </role>
+            <role text="删除任务" name="centra/data/magpie/applicant/delete">
+                <depend>centra</depend>
+                <depend>centra/data/magpie/applicant/search</depend>
+                <action>centra/data/magpie/applicant/delete.act</action>
+            </role>
+            <role text="执行任务" name="centra/data/magpie/applicant/accept">
+                <action>centra/data/magpie/applicant/accept.act</action>
+                <action>centra/data/magpie/applicant/result.act</action>
+                <action>centra/data/magpie/applicant/reflow.act</action>
+            </role>
+            <role name="__deny__">
+                <action>centra/data/magpie/applicant/reveal.act</action>
+                <action>centra/data/magpie/applicant/remind.act</action>
+                <action>centra/data/magpie/applicant/revert.act</action>
+            </role>
+        </menu>
     </menu>
 </root>

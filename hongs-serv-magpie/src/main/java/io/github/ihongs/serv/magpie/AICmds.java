@@ -6,7 +6,7 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.SelectHelper;
 import io.github.ihongs.combat.CombatHelper;
 import io.github.ihongs.combat.anno.Combat;
-import io.github.ihongs.serv.magpie.AIUtil.ETYPE;
+import io.github.ihongs.serv.magpie.AiUtil.ETYPE;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Synt;
 import java.util.HashMap;
@@ -14,14 +14,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 资料库维护
- *
- * 维护命令及相关方法
- *
+ * 维护命令
  * @author Hongs
  */
 @Combat("magpie")
-public class Agency {
+public class AiCmds {
 
     /**
      * 重建向量库
@@ -45,7 +42,7 @@ public class Agency {
 
         Data ref = Data.getInstance("centra/data/magpie", "reference");
 
-        Agency.rearrange(ref, qry);
+        AiCmds.rearrange(ref, qry);
     }
 
     public static void rearrange(Data ref, Map qry) throws CruxException {
@@ -71,8 +68,8 @@ public class Agency {
             String id = (String) item.get( "id" );
             String bd = (String) item.get("body");
 
-            List pa = AIUtil.split(bd);
-            List va = AIUtil.embedding(pa, ETYPE.DOC);
+            List pa = AiUtil.split(bd);
+            List va = AiUtil.embedding(pa, ETYPE.DOC);
 
             // 写入记录
             for (int i = 0; i < pa.size(); i ++ ) {
@@ -129,7 +126,7 @@ public class Agency {
         Data mod = Data.getInstance(conf, form);
         Data ref = Data.getInstance("centra/data/magpie", "reference");
 
-        Agency.transform(ref, mod, qry);
+        AiCmds.transform(ref, mod, qry);
     }
 
     public static void transform(Data ref, Data mod, Map qry) throws CruxException {
@@ -168,7 +165,7 @@ public class Agency {
             ));
             String refeId = Synt.asString(info.get(Cnst.ID_KEY));
 
-            String text = AIUtil.renderByTemp("form/"+formId+".md", item);
+            String text = AiUtil.renderByTemp("form/"+formId+".md", item);
             info.put("text" , text );
 
             if (refeId != null) {

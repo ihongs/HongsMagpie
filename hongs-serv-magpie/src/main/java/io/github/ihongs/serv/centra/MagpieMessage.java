@@ -11,7 +11,7 @@ import io.github.ihongs.action.anno.Action;
 import io.github.ihongs.action.anno.CustomReplies;
 import io.github.ihongs.action.anno.Preset;
 import io.github.ihongs.dh.Roster;
-import io.github.ihongs.serv.magpie.AIUtil;
+import io.github.ihongs.serv.magpie.AiUtil;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Syno;
@@ -149,7 +149,7 @@ public class MagpieMessage {
             ));
             CoreLogger.debug("Remind: {}", remind);
 
-            remind = AIUtil.chat("remind", Synt.listOf(
+            remind = AiUtil.chat("remind", Synt.listOf(
                 Synt.mapOf(
                     "role", "user",
                     "content", remind
@@ -163,7 +163,7 @@ public class MagpieMessage {
         }
 
         // 获取向量
-        Object vect = AIUtil.embedding(Synt.listOf(remind), AIUtil.ETYPE.QRY).get(0);
+        Object vect = AiUtil.embedding(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
 
         // 查询资料
         Map qry;
@@ -258,7 +258,7 @@ public class MagpieMessage {
 
             StringBuilder sb = new StringBuilder();
             try {
-                AIUtil.chat(model, messages, (token)-> {
+                AiUtil.chat(model, messages, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             String thunk = "data:{\"text\":\""+Dist.doEscape(token)+"\"}\n\n";
@@ -293,7 +293,7 @@ public class MagpieMessage {
         } else {
             StringBuilder sb = new StringBuilder();
             try {
-                AIUtil.chat(model, messages, (token)-> {
+                AiUtil.chat(model, messages, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             sb.append(token);

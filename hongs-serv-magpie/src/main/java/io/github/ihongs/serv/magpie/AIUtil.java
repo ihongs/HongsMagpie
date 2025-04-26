@@ -38,7 +38,7 @@ import java.util.function.Consumer;
  * 配置均在 magpie.properties
  * @author Hongs
  */
-public final class AIUtil {
+public final class AiUtil {
 
     public static enum ETYPE {DOC, QRY};
 

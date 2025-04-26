@@ -198,12 +198,12 @@ public class Reference extends Segment {
         // 拆分文本
         List pl = Synt.asList(rd.get("parts"));
         if (pl == null && nt != null && ! nt.equals(ot)) {
-            pl = AIUtil.split(nt.toString(  ));
+            pl = AiUtil.split(nt.toString(  ));
         }
 
         // 获取向量
         if (pl != null) {
-            List vl = AIUtil.embedding(pl, AIUtil.ETYPE.DOC);
+            List vl = AiUtil.embedding(pl, AiUtil.ETYPE.DOC);
             List ps = new ArrayList(vl.size());
             for(int i = 0; i < vl.size(); i++) {
             List pa = new ArrayList(2);
@@ -211,7 +211,7 @@ public class Reference extends Segment {
                 pa.add(vl.get(i));
                 ps.add(pa);
             }
-            dd.put("parts", dd  );
+            dd.put("parts", ps  );
             dd.put("part" , Dist.toString(ps, true));
             sync ++ ;
             n ++ ;
