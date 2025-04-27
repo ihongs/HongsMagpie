@@ -68,23 +68,22 @@ def req(api:str, reqs:dict):
 def accept():
     '接收任务'
     return req('centra/data/magpie/applicant/accept.act', {
-        'agent_id' : os.getenv('AGENT_ID')
+        'agent' : os.getenv('AGENT_ID')
     })
 
 def reflow(id:str, text:str):
     '回传过程'
     return req('centra/data/magpie/applicant/reflow.act', {
-        'id'  : id  ,
-        'text': text,
+        'id'    : id,
+        'text'  : text,
     })
 
-def result(id:str, state=3, result:str=None, report:Any=None):
+def result(id:str, result:str, state=3):
     '提交结果'
     return req('centra/data/magpie/applicant/result.act', {
-        'id'  : id,
-        'state' : state ,
+        'id'    : id,
         'result': result,
-        'report': report,
+        'state' : state ,
     })
 
 async def run(info:dict, conf:dict):
@@ -179,17 +178,17 @@ if __name__ == "__main__":
                 res = his.final_result()
                 if  his.is_successful ():
                     reflow(id, "__DONE__")
-                    result(id, 3, res)
+                    result(id, res, 3)
                 else:
                     reflow(id, "__DONE__")
-                    result(id, 4, res)
+                    result(id, res, 4)
             except KeyboardInterrupt as ex:
                 reflow(id, "__STOP__")
-                result(id, 9, '')
+                result(id, '', 9)
                 raise (ex)
             except Exception as ex:
                 reflow(id, "__STOP__")
-                result(id, 5, '')
+                result(id, '', 5)
                 raise (ex)
         except KeyboardInterrupt:
             # 连按 ctrl+c 退出, 只按一次中止任务
@@ -198,7 +197,7 @@ if __name__ == "__main__":
             else:
                 log("WARN", "Exit")
                 break
-        except Exception:
+        except :
             traceback.print_exc()
             time.sleep(30)
         finally:

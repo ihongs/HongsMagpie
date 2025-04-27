@@ -72,7 +72,7 @@ public class MagpieApplicant {
     @Action("accept")
     public void accept(ActionHelper helper) throws CruxException {
     synchronized (LOGS) {
-        Data ent = Data.getInstance("centra/data/magpie", "agent");
+        Data ent = Data.getInstance("centra/data/magpie", "applicant");
         Map  inf = ent.getOne(Synt.mapOf(
             Cnst.OB_KEY, Synt.setOf("mtime", "ctime", Cnst.ID_KEY),
             "state", Synt.mapOf(Cnst.EQ_REL, 1)
@@ -83,19 +83,19 @@ public class MagpieApplicant {
         }
 
         // 状态改为执行
-        String wid = (String) helper.getParameter("worker_id");
+        String aid = (String) helper.getParameter("agent_id");
         String  id = (String) inf.get(Cnst.ID_KEY);
-        long    tm =  System.currentTimeMillis();
+        long    tm =  System.currentTimeMillis(  );
         int     st =  2;
-        Map dat = new HashMap(   );
-        dat.put("worker_id" , wid);
+        Map dat = new HashMap();
+        dat.put("agent", aid);
         dat.put("btime", tm);
         dat.put("state", st);
         ent.set(id, dat, 0 );
 
         // 大模型配置项
-        Map cnf = new HashMap( 6 );
-        String api, mod, url, key ;
+        Map cnf = new HashMap (6);
+        String api, mod, url, key;
         CoreConfig conf = CoreConfig.getInstance("magpie");
         api = conf.getProperty("magpie.ai.agent.api", "default");
         mod = conf.getProperty("magpie.ai.agent.mod", "test");
@@ -127,7 +127,7 @@ public class MagpieApplicant {
     } }
 
     @Action("result")
-    @Verify(conf="centra/data/magpie", form="agent")
+    @Verify(conf="centra/data/magpie", form="applicant")
     public void result(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
         String id = Synt.asString(rd.get(Cnst.ID_KEY));
@@ -136,7 +136,7 @@ public class MagpieApplicant {
         rd.put("state", st);
         rd.put("etime", tm);
 
-        Data  mod = Data.getInstance("centra/data/magpie", "agent");
+        Data  mod = Data.getInstance("centra/data/magpie", "applicant");
         mod.set(id, rd, 0 );
 
         helper.reply("");
@@ -148,7 +148,7 @@ public class MagpieApplicant {
         String tx = Synt.asString(rd.get("text"));
         String id = Synt.asString(rd.get(Cnst.ID_KEY));
         String fn = System.getProperty("logs.dir", Core.DATA_PATH+"/log")
-                  + "/magpie-agent-task/" + Syno.splitPath (id) + ".log";
+                  + "/magpie-applicant/" + Syno.splitPath( id ) + ".log";
 
         // 不换行, 一行一条记录
         tx = tx.trim().replaceAll("[\\r\\n]", "");
@@ -187,10 +187,10 @@ public class MagpieApplicant {
         Map rd = helper.getRequestData();
         String id = Synt.asString(rd.get(Cnst.ID_KEY));
         String fn = System.getProperty("logs.dir", Core.DATA_PATH+"/log")
-                  + "/magpie-agent-task/" + Syno.splitPath (id) + ".log";
+                  + "/magpie-applicant/" + Syno.splitPath( id ) + ".log";
 
         // 状态
-        Data ent = Data.getInstance("centra/data/magpie", "agent");
+        Data ent = Data.getInstance("centra/data/magpie", "applicant");
         Map  inf = ent.getOne(Synt.mapOf(
             Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY, "state", "mtime"),
             Cnst.ID_KEY, id
@@ -314,7 +314,7 @@ public class MagpieApplicant {
     }
 
     private static List<Consumer<String>> getLogs(String id) {
-        Gate.Leader lead = Gate.getLeader("magpie.agent.logs");
+        Gate.Leader lead = Gate.getLeader("magpie.applicant.logs");
         List<Consumer<String>> logs;
 
         lead.lockr();
@@ -328,7 +328,7 @@ public class MagpieApplicant {
     }
 
     private static void addLog(String id, Consumer<String> lg) {
-        Gate.Leader lead = Gate.getLeader("magpie.agent.logs");
+        Gate.Leader lead = Gate.getLeader("magpie.applicant.logs");
         List<Consumer<String>> logs;
 
         lead.lockw();
@@ -346,7 +346,7 @@ public class MagpieApplicant {
     }
 
     private static void delLog(String id, Consumer<String> lg) {
-        Gate.Leader lead = Gate.getLeader("magpie.agent.logs");
+        Gate.Leader lead = Gate.getLeader("magpie.applicant.logs");
         List<Consumer<String>> logs;
 
         lead.lockw();

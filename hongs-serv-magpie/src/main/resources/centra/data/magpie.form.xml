@@ -317,8 +317,6 @@
             <param name="deforce">create</param>
             <param name="default">@id</param>
         </field>
-        <field text="执行器ID" name="agent_id" type="hidden">
-        </field>
         <field text="需求" name="prompt" type="textarea" required="yes">
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
@@ -378,6 +376,10 @@
             <param name="type">time</param>
             <param name="default">=%time</param>
             <param name="deforce">create</param>
+        </field>
+        <field text="执行器ID" name="agent" type="hidden">
+            <param name="listable">yes</param>
+            <param name="unwritable">yes</param>
         </field>
     </form>
     <enum name="reference_state">

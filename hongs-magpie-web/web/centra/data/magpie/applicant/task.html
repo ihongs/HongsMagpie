@@ -1,0 +1,32 @@
+<h2 class="hide">执行过程</h2>
+<div id="centra-data-magpie-applicant-task" class="centra-data-magpie-applicant-task recite-task">
+    <div class="rollbox panel panel-default">
+    <div class="taskbox form-body">
+    </div>
+    </div>
+    <div class="form-foot">
+        <div class="form-group row">
+            <div class="col-xs-12" >
+                <div class="btn-toolbar">
+                    <button type="button" class="cancel btn btn-default">返回</button>
+                </div>
+            </div>
+        </div>
+        <br/><!-- 兼容占位 -->
+    </div><!-- end form-foot -->
+</div>
+<script type="text/javascript">
+(function($) {
+    var context = H$("#centra-data-magpie-applicant-task");
+    var rollbox = context.find(".rollbox");
+
+    hsRequires("centra/data/magpie/applicant/defines.js", function() {
+        // 外部定制
+        $.when(window["in_centra_data_magpie_applicant_task"] && window["in_centra_data_magpie_applicant_task"](context))
+         .then(function() {
+            // 自适滚动
+            hsFlexRoll(rollbox, $("#main-context"));
+        }); // End Promise
+    });
+})(jQuery);
+</script>
