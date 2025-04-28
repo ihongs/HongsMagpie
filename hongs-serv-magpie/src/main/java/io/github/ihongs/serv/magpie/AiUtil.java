@@ -318,24 +318,22 @@ public final class AiUtil {
             return indent(s, 2);
         }
         public String indent(String s, int n) {
-            String  d = " ";
-            int j = Synt.declare(n, 1);
-            for(int i = 1; i < j; i++) {
-                d = d + " ";
+            if (s == null || "".equals(s)) {
+                return "";
             }
-            return Syno.indent(s, d).trim();
+            return Syno.indent(s, " " .repeat(n)).trim();
         }
         public String concat(Object o) {
             return concat(o, ", ");
         }
         public String concat(Object o, String s) {
-            if (o == null) {
+            if (o == null || "".equals(o)) {
                 return "";
             }
-            return Syno.concat(s, Synt.asColl(o));
+            return Syno.concat(s, Synt.asColl(o)).trim();
         }
         public String date_format(Object d, String f) {
-            if (d == null) {
+            if (d == null || "".equals(d)) {
                 return "";
             } else
             if (d instanceof Date) {
