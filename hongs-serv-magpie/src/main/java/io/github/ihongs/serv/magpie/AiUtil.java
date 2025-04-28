@@ -5,13 +5,13 @@ import com.jfinal.template.Template;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.core.http.StreamResponse;
-import com.openai.models.ChatCompletionAssistantMessageParam;
-import com.openai.models.ChatCompletionChunk;
-import com.openai.models.ChatCompletionCreateParams;
-import com.openai.models.ChatCompletionDeveloperMessageParam;
-import com.openai.models.ChatCompletionSystemMessageParam;
-import com.openai.models.ChatCompletionUserMessageParam;
-import com.openai.models.EmbeddingCreateParams;
+import com.openai.models.embeddings.EmbeddingCreateParams;
+import com.openai.models.chat.completions.ChatCompletionChunk;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import com.openai.models.chat.completions.ChatCompletionAssistantMessageParam;
+import com.openai.models.chat.completions.ChatCompletionDeveloperMessageParam;
+import com.openai.models.chat.completions.ChatCompletionSystemMessageParam;
+import com.openai.models.chat.completions.ChatCompletionUserMessageParam;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
@@ -52,7 +52,7 @@ public final class AiUtil {
      * @param name
      * @return
      */
-    public static OpenAIClient getAIClient(String name) {
+    public static OpenAIClient getAiClient(String name) {
         return Core.getInstance()
             .got(OpenAIClient.class.getName()+":"+name, ()->{
                 CoreConfig cc = CoreConfig.getInstance("magpie");
@@ -88,21 +88,22 @@ public final class AiUtil {
             return vects;
         }
 
-        return getAIClient(api)
+        EmbeddingCreateParams.Builder builder = EmbeddingCreateParams.builder();
+        builder.inputOfArrayOfStrings(parts);
+        builder.model(mod);
+
+        return getAiClient(api)
             .embeddings()
-            .create(
-                EmbeddingCreateParams
-                    .builder()
-                    .model  (mod)
-                    .inputOfArrayOfStrings(parts)
-                    .build  ()
-            )
+            .create(builder.build())
             .data  ()
             .stream()
-            .map   (a->a.embedding ( )
-               .stream()
-               .map(b->b.floatValue())
-               .toList()
+            .map   (
+                a -> a.embedding ()
+            .stream()
+            .map   (
+                b -> b.floatValue()
+            )
+            .toList()
             )
             .toList();
     }
@@ -142,14 +143,14 @@ public final class AiUtil {
         }
         builder.model(mod);
 
-        return getAIClient(api)
-            .chat()
+        return getAiClient(api)
+            .chat   ( )
             .completions()
-            .create(builder.build())
-            .choices()
-            .get(0)
-            .message()
-            .content()
+            .create (builder.build())
+            .choices( )
+            .get    (0)
+            .message( )
+            .content( )
             .orElse("");
     }
 
@@ -190,17 +191,17 @@ public final class AiUtil {
         builder.model(mod);
 
         try (
-            StreamResponse<ChatCompletionChunk> stream =  getAIClient(api)
+            StreamResponse<ChatCompletionChunk> stream =  getAiClient(api)
                 .chat()
                 .completions()
                 .createStreaming(builder.build())
         ) {
             stream.stream().forEach(chunk-> {
                 callback.accept(
-                    chunk.choices()
-                         .get(0)
-                         .delta()
-                         .content()
+                    chunk.choices( )
+                         .get    (0)
+                         .delta  ( )
+                         .content( )
                          .orElse("")
                 );
             });

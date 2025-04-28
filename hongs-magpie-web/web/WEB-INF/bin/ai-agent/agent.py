@@ -26,19 +26,20 @@ class MyLogHandler(logging.Handler, object):
     def __init__(self):
         logging.Handler.__init__(self)
     def emit(self, record):
-        try:
-            msg = self.format(record)
-            reflow(id, f'{record.levelname} {msg}')
-        except Exception:
-            self.handleError (record)
-lh = MyLogHandler()
-lg = logging.getLogger('browser_use.agent.service')
-lg.addHandler(lh)
-lg = logging.getLogger(__name__)
-lg.addHandler(lh)
-
-def log(key:str, *text):
-    print(time.strftime(r"%Y/%m/%d %H:%M:%S", time.localtime()), key, *text)
+            try:
+                msg = self.format(record)
+                if  id is None:
+                    tim = time.strftime(r"%Y/%m/%d %H:%M:%S", time.localtime())
+                    print(f'{tim} {record.levelname} {msg}')
+                else:
+                    reflow(id , f'{record.levelname} {msg}')
+            except Exception:
+                self.handleError (record)
+loh = MyLogHandler()
+log = logging.getLogger('browser_use.agent.service')
+log.addHandler(loh)
+log = logging.getLogger(__name__)
+log.addHandler(loh)
 
 def req(api:str, reqs:dict):
     '''
@@ -62,7 +63,7 @@ def req(api:str, reqs:dict):
     rsps = rsp .read ()
     rsps = json.loads(rsps.decode('utf-8'))
     if  rsps and not rsps.get("ok" , True ):
-        log("ERROR("+rsps.get("ern", "")+")", rsps.get("err", "")+" "+rsps.get("msg", "")+" API: "+api)
+        log.error("Reqeust error("+rsps.get("ern", "")+")"+rsps.get("err", "")+" "+rsps.get("msg", "")+" API: "+api)
     return rsps
 
 def accept():
@@ -111,13 +112,12 @@ async def run(info:dict, conf:dict):
         raise ( ex )
 
 @controller.registry.action("""
-打印、输出内容或数
+打印、输出内容或数, 无返回值
 Args:
     data: 数据、内容
 """)
 async def echo(data:Any)->str:
-    print(time.strftime(r"%Y/%m/%d %H:%M:%S", time.localtime()), data)
-    return data
+    log(str(data))
 
 @controller.registry.action("""
 获取缓存数据
@@ -125,7 +125,8 @@ Args:
     key: 存储键、缓存标记
 """)
 async def get_cache(key:str)->Any:
-    return cache.get(key)
+    data = cache.get(key)
+    return ActionResult(extracted_content=data, include_in_memory=True)
 
 @controller.registry.action("""
 存储缓存数据
@@ -135,7 +136,7 @@ Args:
 """)
 async def set_cache(key:str, data:Any)->str:
     cache[key] = data
-    return f"Save to {key}"
+    return ActionResult(extracted_content=f'已登记 {key}')
 
 @controller.registry.action("""
 写入 xlsx 文件
@@ -150,7 +151,7 @@ async def save_to_xlsx(name:str, data:list) -> str:
         sh.append(row)
     wb.save(os.getenv('TMP_DIR') +'/'+ name)
     files.append(name)
-    return ActionResult(extracted_content=f'已写入 {name}', include_in_memory=True)
+    return ActionResult(extracted_content=f'已写入 {name}')
 
 if __name__ == "__main__":
     end = 0
@@ -158,20 +159,20 @@ if __name__ == "__main__":
         try:
             task = accept()
             if  not task:
-                log("INFO", "No task, waiting...")
+                log.info("No task, waiting...")
                 time.sleep(30)
                 continue
             
             info = task.get("info")
             conf = task.get("conf")
             if  not info and not conf:
-                log("INFO", "No task, waiting...")
+                log.info("No task, waiting...")
                 time.sleep(30)
                 continue
 
             ok = True
             id = info["id"]
-            log("INFO", info, conf)
+            print(info, conf)
 
             try:
                 his = asyncio.run(run(info, conf))
