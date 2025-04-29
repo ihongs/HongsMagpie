@@ -50,18 +50,6 @@ public class Segment extends Data {
     @Override
     protected boolean padQry(BooleanQuery.Builder qr, Map rd, String k, Object v) throws CruxException {
         // 查询数值选项
-        if ("nums".equals(k)) {
-            Map m = Synt.asMap(v);
-            for(Object o : m.entrySet() ) {
-                Map.Entry e = (Map.Entry) o ;
-                String n = Synt.asString(e.getKey( ));
-                Set    a = Synt.asSet( e.getValue( ));
-                Object w = Synt.mapOf(Cnst.AT_REL, a);
-                IQuest q = new DoubleQuest();
-                padQry(qr, rd, "n."+n, w, q);
-            }
-            return true;
-        } else
         if ("opts".equals(k)) {
             Map m = Synt.asMap(v);
             for(Object o : m.entrySet() ) {
@@ -72,6 +60,18 @@ public class Segment extends Data {
                 Object w = Synt.mapOf(Cnst.IN_REL, b);
                 IQuest q = new StringQuest();
                 padQry(qr, rd, "args", w, q);
+            }
+            return true;
+        } else
+        if ("nums".equals(k)) {
+            Map m = Synt.asMap(v);
+            for(Object o : m.entrySet() ) {
+                Map.Entry e = (Map.Entry) o ;
+                String n = Synt.asString(e.getKey( ));
+                Set    a = Synt.asSet( e.getValue( ));
+                Object w = Synt.mapOf(Cnst.AT_REL, a);
+                IQuest q = new DoubleQuest();
+                padQry(qr, rd, "n."+n, w, q);
             }
             return true;
         }

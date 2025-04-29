@@ -72,12 +72,6 @@
         <field text="链接" name="href" type="text">
             <param name="listable">yes</param>
         </field>
-        <field name="form_id" type="string">
-            <param name="disabled">yes</param>
-        </field>
-        <field name="data_id" type="string">
-            <param name="disabled">yes</param>
-        </field>
         <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>
             <param name="type">int</param>
@@ -88,14 +82,14 @@
         <field text="修改时间" name="mtime" type="date">
             <param name="readonly">yes</param>
             <param name="listable">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">always</param>
         </field>
         <field text="创建时间" name="ctime" type="date">
             <param name="readonly">yes</param>
             <param name="listable">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">create</param>
         </field>
@@ -233,14 +227,14 @@
         <field text="修改时间" name="mtime" type="date">
             <param name="listable">yes</param>
             <param name="readonly">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">always</param>
         </field>
         <field text="创建时间" name="ctime" type="date">
             <param name="listable">yes</param>
             <param name="readonly">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">create</param>
         </field>
@@ -293,7 +287,7 @@
             <param name="listable">yes</param>
         </field>
         <field text="时间" name="ctime" type="date">
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">create</param>
         </field>
@@ -356,24 +350,24 @@
         <field text="开始时间" name="btime" type="date">
             <param name="listable">yes</param>
             <param name="unwritable">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
         </field>
         <field text="结束时间" name="etime" type="date">
             <param name="listable">yes</param>
             <param name="unwritable">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
         </field>
         <field text="更新时间" name="mtime" type="date">
             <param name="listable">yes</param>
             <param name="readonly">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">always</param>
         </field>
         <field text="创建时间" name="ctime" type="date">
             <param name="listable">yes</param>
             <param name="readonly">yes</param>
-            <param name="type">time</param>
+            <param name="type">timestamp</param>
             <param name="default">=%time</param>
             <param name="deforce">create</param>
         </field>

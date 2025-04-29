@@ -361,8 +361,11 @@ public final class AiUtil {
                 if (sa.contains("tags") || sa.contains("html")) {
                     st = Syno.stripTags(st); // 清除标签
                 }
-                if (sa.contains("ends") || sa.contains("html") || sa.contains("text")) {
-                    st = Syno.stripEnds(st); // 首尾清理
+                if (sa.contains("gaps") || sa.contains("html")) {
+                    st = Syno.stripGaps(st); // 空行清理
+                }
+                if (sa.contains("ends") || sa.contains("text")) {
+                    st = Syno.stripEnds(st); // 换行清理
                 }
                 if (sa.contains("trim") || sa.contains("html") || sa.contains("text")) {
                     st = st.strip();

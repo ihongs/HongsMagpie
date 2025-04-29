@@ -1,6 +1,7 @@
 package io.github.ihongs.serv.magpie;
 
 import io.github.ihongs.Cnst;
+import io.github.ihongs.Core;
 import io.github.ihongs.CruxException;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.SelectHelper;
@@ -8,10 +9,13 @@ import io.github.ihongs.combat.CombatHelper;
 import io.github.ihongs.combat.anno.Combat;
 import io.github.ihongs.serv.magpie.AiUtil.ETYPE;
 import io.github.ihongs.serv.matrix.Data;
+import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 维护命令
@@ -154,32 +158,41 @@ public class AiCmds {
     }
 
     public static void transform(Data ref, Data mod, List<Map> list) throws CruxException {
-        String formId = mod.getFormId();
+        String  formId = mod.getFormId( );
+        String  temp = "form/" +formId+ ".md";
 
         for(Map item : list) {
             String dataId = Synt.asString(item.get(Cnst.ID_KEY));
             Map info = ref.getOne(Synt.mapOf(
                 Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY),
-                "form_id", formId,
-                "data_id", dataId
+                "opts", Synt.mapOf(
+                    "from", "transform",
+                    "form_id", formId,
+                    "data_id", dataId
+                )
             ));
             String refeId = Synt.asString(info.get(Cnst.ID_KEY));
+            long t = System.currentTimeMillis();
 
-            String text = AiUtil.renderByTemp("form/"+formId+".md", item);
-            info.put("text" , text );
-
-            if (refeId != null) {
-                info.put(Cnst.ID_KEY, refeId);
-                ref .update(info);
-            } else {
-                long t = System.currentTimeMillis() / 1000;
-                info.put("ctime", t);
-                info.put("mtime", t);
-                info.put("state", 1);
-                info.put("form_id", formId);
-                info.put("data_id", dataId);
-                ref .create(info);
+            if (refeId == null) {
+                refeId  = Core.newIdentity();
+                info.put( "args" , Synt.setOf(
+                    "from:transform" ,
+                    "form_id:"+formId,
+                    "data_id:"+dataId
+                ));
+                info.put("state" , 1);
+                info.put("ctime" , t);
+                info.put("mtime" , t);
             }
+
+            String text = AiUtil.renderByTemp(temp, item);
+            info.put("text", text);
+
+            String name = mod.getName(item);
+            info.put("name", name);
+
+            ref .set(refeId, info, t/1000L);
         }
     }
 
