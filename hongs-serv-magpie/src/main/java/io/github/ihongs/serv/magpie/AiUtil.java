@@ -1,36 +1,46 @@
 package io.github.ihongs.serv.magpie;
 
-import com.jfinal.template.Engine;
-import com.jfinal.template.Template;
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.core.http.StreamResponse;
-import com.openai.models.embeddings.EmbeddingCreateParams;
-import com.openai.models.chat.completions.ChatCompletionChunk;
-import com.openai.models.chat.completions.ChatCompletionCreateParams;
-import com.openai.models.chat.completions.ChatCompletionAssistantMessageParam;
-import com.openai.models.chat.completions.ChatCompletionDeveloperMessageParam;
-import com.openai.models.chat.completions.ChatCompletionSystemMessageParam;
-import com.openai.models.chat.completions.ChatCompletionUserMessageParam;
+import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.service.tool.DefaultToolExecutor;
+import dev.langchain4j.service.tool.ToolExecutor;
 import io.github.ihongs.Core;
 import io.github.ihongs.CoreConfig;
 import io.github.ihongs.CoreLogger;
+import io.github.ihongs.CoreRoster;
+import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
-import io.github.ihongs.util.Inst;
-import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -42,173 +52,65 @@ public final class AiUtil {
 
     public static enum ETYPE {DOC, QRY};
 
-    //** OpenAI **/
-
     /**
-     * 获取向量处理器
-     * 配置:
-     * magpie.ai.name.url=接口基础链接
-     * magpie.ai.name.key=接口认证密钥
-     * @param name
+     * 获取对话模型
+     * @param nam
      * @return
      */
-    public static OpenAIClient getAiClient(String name) {
-        return Core.getInstance()
-            .got(OpenAIClient.class.getName()+":"+name, ()->{
-                CoreConfig cc = CoreConfig.getInstance("magpie");
-                String url = cc.getProperty("magpie.ai."+name+".url");
-                String key = cc.getProperty("magpie.ai."+name+".key");
+    public static ChatLanguageModel getChatModel(String nam) {
+        CoreConfig cc = CoreConfig.getInstance("magpie");
+        String api = cc.getProperty("magpie.llm."+nam+".api", nam);
+        String mod = cc.getProperty("magpie.llm."+nam+".mod");
+        String url = cc.getProperty("magpie.llm."+api+".url");
+        String key = cc.getProperty("magpie.llm."+api+".key");
 
-                return OpenAIOkHttpClient
-                    .builder()
-                    .baseUrl(url)
-                    .apiKey (key)
-                    .build  ();
-            });
+        return OpenAiChatModel
+            .builder  (   )
+            .  apiKey (key)
+            . baseUrl (url)
+            .modelName(mod)
+            .build    (   );
     }
 
     /**
-     * 获取向量
-     * @param parts
-     * @param etype 处理文档还是处理查询
+     * 获取流式模型
+     * @param nam
      * @return
      */
-    public static List<List<Float>> embedding(List<String> parts, ETYPE etype) {
+    public static StreamingChatLanguageModel getStreamingModel(String nam) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
-        String api = cc.getProperty("magpie.ai.embedding.api", "embedding");
-        String mod = cc.getProperty("magpie.ai.embedding.mod", "test");
+        String api = cc.getProperty("magpie.llm."+nam+".api", nam);
+        String mod = cc.getProperty("magpie.llm."+nam+".mod");
+        String url = cc.getProperty("magpie.llm."+api+".url");
+        String key = cc.getProperty("magpie.llm."+api+".key");
 
-        // 临时测试
-        if ("test".equals(mod)) {
-            CoreLogger.warn ( "Test embedding..."  );
-            List vects = new ArrayList(parts.size());
-            for (int i = 0; i < parts.size(); i ++ ) {
-                vects.add(null);
-            }
-            return vects;
-        }
-
-        EmbeddingCreateParams.Builder builder = EmbeddingCreateParams.builder();
-        builder.inputOfArrayOfStrings(parts);
-        builder.model(mod);
-
-        return getAiClient(api)
-            .embeddings()
-            .create(builder.build())
-            .data  ()
-            .stream()
-            .map   (
-                a -> a.embedding ()
-            .stream()
-            .map   (
-                b -> b.floatValue()
-            )
-            .toList()
-            )
-            .toList();
+        return OpenAiStreamingChatModel
+            .builder  (   )
+            .  apiKey (key)
+            . baseUrl (url)
+            .modelName(mod)
+            .build    (   );
     }
 
-    public static String chat(String model, List<Map> messages) {
+    /**
+     * 获取向量模型
+     * @param nam
+     * @return
+     */
+    public static EmbeddingModel getEmbeddingModel(String nam) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
-        String api = cc.getProperty("magpie.ai."+model+".api", model );
-        String mod = cc.getProperty("magpie.ai."+model+".mod", "test");
-        String sys = cc.getProperty("magpie.ai."+ api +".sys", "system");
+        String api = cc.getProperty("magpie.llm."+nam+".api", nam);
+        String mod = cc.getProperty("magpie.llm."+nam+".mod");
+        String url = cc.getProperty("magpie.llm."+api+".url");
+        String key = cc.getProperty("magpie.llm."+api+".key");
 
-        // 临时测试
-        if ("test".equals(mod)) {
-            CoreLogger.warn ( "Test chat {}...", model );
-            return "Hello world";
-        }
-
-        ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder();
-        for (Map message : messages) {
-            String role = Synt.asString(message.get( "role"  ));
-            String text = Synt.asString(message.get("content"));
-            if ("system".equals(role) || "developer".equals(role)) {
-                   role = sys ;
-            }
-            switch(role) {
-                case "assistant":
-                    builder.addMessage(ChatCompletionAssistantMessageParam.builder().content(text).build());
-                    break;
-                case "developer":
-                    builder.addMessage(ChatCompletionDeveloperMessageParam.builder().content(text).build());
-                    break;
-                case "system":
-                    builder.addMessage(ChatCompletionSystemMessageParam.builder().content(text).build());
-                    break;
-                default:
-                    builder.addMessage(ChatCompletionUserMessageParam.builder().content(text).build());
-            }
-        }
-        builder.model(mod);
-
-        return getAiClient(api)
-            .chat   ( )
-            .completions()
-            .create (builder.build())
-            .choices( )
-            .get    (0)
-            .message( )
-            .content( )
-            .orElse("");
+        return OpenAiEmbeddingModel
+            .builder  (   )
+            .  apiKey (key)
+            . baseUrl (url)
+            .modelName(mod)
+            .build    (   );
     }
-
-    public static void chat(String model, List<Map> messages, Consumer<String> callback) {
-        CoreConfig cc = CoreConfig.getInstance("magpie");
-        String api = cc.getProperty("magpie.ai."+model+".api", model );
-        String mod = cc.getProperty("magpie.ai."+model+".mod", "test");
-        String sys = cc.getProperty("magpie.ai."+ api +".sys", "system");
-
-        // 临时测试
-        if ("test".equals(mod)) {
-            CoreLogger.warn ( "Test chat {}...", model );
-            callback.accept ( "Hello world" );
-            return;
-        }
-
-        ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder();
-        for (Map message : messages) {
-            String role = Synt.asString(message.get( "role"  ));
-            String text = Synt.asString(message.get("content"));
-            if ("system".equals(role) || "developer".equals(role)) {
-                   role = sys ;
-            }
-            switch(role) {
-                case "assistant":
-                    builder.addMessage(ChatCompletionAssistantMessageParam.builder().content(text).build());
-                    break;
-                case "developer":
-                    builder.addMessage(ChatCompletionDeveloperMessageParam.builder().content(text).build());
-                    break;
-                case "system":
-                    builder.addMessage(ChatCompletionSystemMessageParam.builder().content(text).build());
-                    break;
-                default:
-                    builder.addMessage(ChatCompletionUserMessageParam.builder().content(text).build());
-            }
-        }
-        builder.model(mod);
-
-        try (
-            StreamResponse<ChatCompletionChunk> stream =  getAiClient(api)
-                .chat()
-                .completions()
-                .createStreaming(builder.build())
-        ) {
-            stream.stream().forEach(chunk-> {
-                callback.accept(
-                    chunk.choices( )
-                         .get    (0)
-                         .delta  ( )
-                         .content( )
-                         .orElse("")
-                );
-            });
-        }
-    }
-
-    //** 文档拆分 **/
 
     /**
      * 获取文档拆分器
@@ -247,6 +149,243 @@ public final class AiUtil {
             });
     }
 
+    public static Map<String, Mathod> getToolMethods() {
+        return Core.getInterior().got("magpie.tools" , ( ) -> {
+            try {
+                String[] ps = CoreConfig.getInstance("magpie" )
+                                        .getProperty("magpie.tools.mount", "")
+                                        .split( ";" );
+                Map<String, Mathod> ts = new HashMap(ps.length);
+                for(String pn : ps) {
+                    pn = pn.trim( );
+                    Set<String> cs ;
+                    if (pn.endsWith(".**")) {
+                        cs = CoreRoster.getClassNames(pn, true);
+                    } else
+                    if (pn.endsWith(".*" )) {
+                        cs = CoreRoster.getClassNames(pn,false);
+                    } else
+                    {
+                        cs = Synt.setOf(pn);
+                    }
+                    for(String cn : cs) {
+                        Class  co = Class.forName(cn);
+                        Method[] ms = co.getDeclaredMethods();
+                        for(Method mo : ms) {
+                            Tool to = mo.getAnnotation(Tool.class);
+                            if (to != null) {
+                                String n = to.name( );
+                                if (n == null || n.isEmpty()) {
+                                    n = mo.getName( );
+                                }
+                                ts.put(n, new Mathod(co, mo));
+                            }
+                        }
+                    }
+                }
+                return ts;
+            }
+            catch (IOException | ClassNotFoundException ex) {
+                throw new CruxExemption(ex);
+            }
+        });
+    }
+
+    public static List<ToolSpecification> toToolSpecifications(Set<String> tools) {
+        if (tools == null || tools.isEmpty()) {
+            return new ArrayList();
+        }
+        Map<String, Mathod> ts = getToolMethods();
+        return tools
+            .stream()
+            .map(tool -> {
+                Mathod ma = ts.get(tool);
+                if (ma == null) {
+                    throw new CruxExemption ( "Can not find tool `{}`" , tool );
+                }
+                return ToolSpecifications.toolSpecificationFrom(ma.getMethod());
+            })
+            .toList();
+    }
+
+    public static List<ChatMessage> toChatMessages(List<Map> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return new ArrayList();
+        }
+        return messages
+            .stream()
+            .map(
+                message -> {
+                    String role = Synt.asString(message.get( "role"  ));
+                    String text = Synt.asString(message.get("content"));
+                    return switch(role) {
+                        case "system" -> SystemMessage.from(text);
+                        case "user"   ->   UserMessage.from(text);
+                        default       ->     AiMessage.from(text);
+                    };
+                }
+            )
+            .toList();
+    }
+
+    public static String chat(String model, List<Map> messages) {
+        ChatLanguageModel lm = getChatModel(model);
+        List<ChatMessage> ms = toChatMessages(messages);
+
+        ChatRequest rq = ChatRequest.builder()
+            .messages(ms)
+            .build();
+
+        return lm.chat(rq).toString();
+    }
+
+    public static void chat(String model, List<Map> messages, Consumer<String> callback) {
+        StreamingChatLanguageModel lm = getStreamingModel(model);
+        List<ChatMessage> ms = toChatMessages(messages);
+
+        ChatRequest rq = ChatRequest.builder()
+            .messages(ms)
+            .build();
+
+        lm.chat(rq, new StreamingChatResponseHandler() {
+            @Override
+            public void onError(Throwable ex ) {
+                CoreLogger.warn(ex.toString());
+                throw new CruxExemption ( ex );
+            }
+            @Override
+            public void onPartialResponse (String rs ) {
+                callback.accept(rs);
+            }
+            @Override
+            public void onCompleteResponse(ChatResponse rp) {
+                // Nothing to do
+            }
+        });
+    }
+
+    public static String chat(String model, Set<String> tools, List<Map> messages) {
+        ChatLanguageModel lm = getChatModel(model);
+        List<ChatMessage> ms = toChatMessages(messages);
+        List<ToolSpecification> ts = toToolSpecifications(tools);
+
+        ChatRequest rq = ChatRequest.builder()
+            .toolSpecifications(ts)
+            .messages(ms)
+            .build();
+
+        ChatResponse rp = lm.chat(rq);
+        AiMessage am = rp.aiMessage();
+
+        StringBuilder sb = new StringBuilder(rp.toString());
+
+        while (am != null && am.hasToolExecutionRequests()) {
+            ms.add(am);
+
+            // 调用工具
+            List<ToolExecutionRequest> tes = am.toolExecutionRequests();
+            tes.forEach(ter -> {
+                Mathod mat = getToolMethods().get(ter.name());
+                Method met = mat.getMethod ();
+                Class  cla = mat.getMclass ();
+                Object obj = Core.getInstance(cla);
+
+                ToolExecutor te = new DefaultToolExecutor(obj, met);
+                String  rs = te.execute(ter, UUID.randomUUID().toString());
+                ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
+                ms.add (tm);
+            });
+
+            ChatRequest cr = ChatRequest.builder()
+                .toolSpecifications(ts)
+                .messages(ms)
+                .build();
+
+            // 继续执行
+            rp = lm.chat (cr);
+            am = rp.aiMessage( );
+
+            sb.append(rp.toString());
+        }
+
+        return sb.toString();
+    }
+
+    public static void chat(String model, Set<String> tools, List<Map> messages, Consumer<String> callback) {
+        StreamingChatLanguageModel lm = getStreamingModel(model);
+        List<ToolSpecification> ts = toToolSpecifications(tools);
+        List<ChatMessage> ms = toChatMessages(messages);
+
+        ChatRequest rq = ChatRequest.builder()
+            .toolSpecifications(ts)
+            .messages(ms)
+            .build();
+
+        lm.chat(rq, new StreamingChatResponseHandler() {
+            @Override
+            public void onError(Throwable ex ) {
+                CoreLogger.warn(ex.toString());
+                throw new CruxExemption ( ex );
+            }
+            @Override
+            public void onPartialResponse (String rs ) {
+                callback.accept(rs);
+            }
+            @Override
+            public void onCompleteResponse(ChatResponse rp) {
+                AiMessage am = rp.aiMessage();
+                if (am != null && am.hasToolExecutionRequests()) {
+                    ms.add(am);
+
+                    // 调用工具
+                    List<ToolExecutionRequest> tes = am.toolExecutionRequests();
+                    tes.forEach(ter -> {
+                        Mathod mat = getToolMethods().get(ter.name());
+                        Method met = mat.getMethod ();
+                        Class  cla = mat.getMclass ();
+                        Object obj = Core.getInstance(cla);
+
+                        ToolExecutor te = new DefaultToolExecutor(obj, met);
+                        String  rs = te.execute(ter, UUID.randomUUID().toString());
+                        ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
+                        ms.add (tm);
+                    });
+
+                    ChatRequest cr = ChatRequest.builder()
+                        .toolSpecifications(ts)
+                        .messages(ms)
+                        .build();
+
+                    // 递归执行
+                    lm.chat(cr, this);
+                }
+            }
+        });
+    }
+
+    /**
+     * 获取向量
+     * @param parts
+     * @param etype 处理文档还是处理查询
+     * @return
+     */
+    public static List<List<Float>> embed(List<String> parts, ETYPE etype) {
+        return getEmbeddingModel("embedding")
+            .embedAll(parts
+                .stream()
+                .map(
+                    a -> TextSegment.from(a)
+                )
+                .toList()
+            )
+            .content (  )
+            .stream()
+            .map(
+                b -> b.vectorAsList()
+            )
+            .toList();
+    }
+
     /**
      * 拆分文本
      * @param text
@@ -260,119 +399,6 @@ public final class AiUtil {
             .map    (str->str.strip())
             .filter (str->!str.isEmpty())
             .toList ();
-    }
-
-    //** 模板渲染 **/
-
-    /**
-     * 获取渲染引擎
-     * 模板基础目录 etc/magpie/temp
-     * @return
-     */
-    public static Engine getRenderEngine() {
-        return Core.getInstance().got(
-            Engine.class.getName()+":magpie",
-            () -> new Engine()
-                .addSharedMethod(new RenderTempFunc())
-                .setBaseTemplatePath(Core.CONF_PATH+"/magpie/temp")
-        );
-    }
-
-    /**
-     * 获取渲染模板
-     * @param temp
-     * @return
-     */
-    public static Template getRenderTemp(String temp) {
-        return Core.getInstance().got(
-            Template.class.getName()+":magpie:"+temp,
-            () -> getRenderEngine().getTemplate(temp)
-        );
-    }
-
-    /**
-     * 应用指定模板渲染数据
-     * @param temp 模板文件
-     * @param info 数据
-     * @return
-     */
-    public static String renderByTemp(String temp, Map info) {
-        return getRenderTemp(temp).renderToString(info);
-    }
-
-    /**
-     * 应用模板文本渲染数据
-     * @param text 模板文本
-     * @param info 数据
-     * @return
-     */
-    public static String renderByText(String text, Map info) {
-        return getRenderEngine().getTemplateByString(text).renderToString(info);
-    }
-
-    /**
-     * 模板函数
-     */
-    public static class RenderTempFunc {
-        public String indent(String s) {
-            return indent(s, 2);
-        }
-        public String indent(String s, int n) {
-            if (s == null || "".equals(s)) {
-                return "";
-            }
-            return Syno.indent(s, " " .repeat(n)).trim();
-        }
-        public String concat(Object o) {
-            return concat(o, ", ");
-        }
-        public String concat(Object o, String s) {
-            if (o == null || "".equals(o)) {
-                return "";
-            }
-            return Syno.concat(s, Synt.asColl(o)).trim();
-        }
-        public String date_format(Object d, String f) {
-            if (d == null || "".equals(d)) {
-                return "";
-            } else
-            if (d instanceof Date) {
-                return Inst.format((Date) d, f);
-            } else
-            if (d instanceof Instant) {
-                return Inst.format((Instant) d, f);
-            } else
-            {
-                return Inst.format(Synt.asLong(d), f);
-            }
-        }
-        public String strip(String ob, Object sd) {
-            Set    sa;
-            String st;
-            sa = Synt. toSet (sd);
-            st = Synt.declare(ob , "" );
-            if (sa == null) {
-                sa = Synt.setOf("trim"); // 默认清除首尾空字符
-            }
-            if (! sa.isEmpty()) {
-                if (sa.contains("cros") || sa.contains("html")) {
-                    st = Syno.stripCros(st); // 清除脚本
-                }
-                if (sa.contains("tags") || sa.contains("html")) {
-                    st = Syno.stripTags(st); // 清除标签
-                }
-                if (sa.contains("gaps") || sa.contains("html")) {
-                    st = Syno.stripGaps(st); // 空行清理
-                }
-                if (sa.contains("ends") || sa.contains("text")) {
-                    st = Syno.stripEnds(st); // 换行清理
-                }
-                if (sa.contains("trim") || sa.contains("html") || sa.contains("text")) {
-                    st = st.strip();
-                }
-            }
-            return  st;
-        }
     }
 
 }

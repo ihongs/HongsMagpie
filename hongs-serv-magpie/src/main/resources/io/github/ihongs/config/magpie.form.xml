@@ -3,4 +3,6 @@
     <enum name="model">
         <value code="test">Test</value>
     </enum>
+    <enum name="tool">
+    </enum>
 </root>

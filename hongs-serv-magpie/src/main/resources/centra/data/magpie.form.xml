@@ -160,9 +160,13 @@
         </field>
         <field text="说明" name="note" type="textarea">
         </field>
-        <field text="模型" name="model" type="enum" required="yes">
+        <field text="模型" name="model" type="radio" required="yes">
             <param name="conf">magpie</param>
             <param name="enum">model</param>
+        </field>
+        <field text="扩展" name="tools" type="check" repeated="yes">
+            <param name="conf">magpie</param>
+            <param name="enum">tool</param>
         </field>
         <field text="引用参数" name="query" type="string">
             <param name="listable">yes</param>

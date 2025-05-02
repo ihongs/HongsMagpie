@@ -8,14 +8,12 @@ import io.github.ihongs.action.SelectHelper;
 import io.github.ihongs.combat.CombatHelper;
 import io.github.ihongs.combat.anno.Combat;
 import io.github.ihongs.serv.magpie.AiUtil.ETYPE;
+import io.github.ihongs.serv.magpie.tpl.TplEngine;
 import io.github.ihongs.serv.matrix.Data;
-import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 维护命令
@@ -73,7 +71,7 @@ public class AiCmds {
             String bd = (String) item.get("body");
 
             List pa = AiUtil.split(bd);
-            List va = AiUtil.embedding(pa, ETYPE.DOC);
+            List va = AiUtil.embed(pa, ETYPE.DOC);
 
             // 写入记录
             for (int i = 0; i < pa.size(); i ++ ) {
@@ -158,41 +156,41 @@ public class AiCmds {
     }
 
     public static void transform(Data ref, Data mod, List<Map> list) throws CruxException {
-        String  formId = mod.getFormId( );
-        String  temp = "form/" +formId+ ".md";
+        String fid = mod.getFormId();
+        String tpn = "form/" + fid + ".md";
+        TplEngine  eng = TplEngine.getInstance();
 
         for(Map item : list) {
-            String dataId = Synt.asString(item.get(Cnst.ID_KEY));
-            Map info = ref.getOne(Synt.mapOf(
-                Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY),
+            String did = Synt.asString(item.get(Cnst.ID_KEY));
+            Map info = ref.getOne(Synt.mapOf(Cnst.RB_KEY, Synt.setOf(Cnst.ID_KEY),
                 "opts", Synt.mapOf(
                     "from", "transform",
-                    "form_id", formId,
-                    "data_id", dataId
+                    "form_id", fid,
+                    "data_id", did
                 )
             ));
-            String refeId = Synt.asString(info.get(Cnst.ID_KEY));
-            long t = System.currentTimeMillis();
+            String rid = Synt.asString(info.get(Cnst.ID_KEY));
+            long t = System.currentTimeMillis( );
 
-            if (refeId == null) {
-                refeId  = Core.newIdentity();
-                info.put( "args" , Synt.setOf(
-                    "from:transform" ,
-                    "form_id:"+formId,
-                    "data_id:"+dataId
+            if (rid == null) {
+                rid  = Core.newIdentity();
+                info.put("args" , Synt.setOf(
+                    "from:transform",
+                    "form_id:"+fid,
+                    "data_id:"+did
                 ));
-                info.put("state" , 1);
-                info.put("ctime" , t);
-                info.put("mtime" , t);
+                info.put("state", 1);
+                info.put("ctime", t);
+                info.put("mtime", t);
             }
 
-            String text = AiUtil.renderByTemp(temp, item);
+            String text = eng.render (tpn, item);
             info.put("text", text);
 
             String name = mod.getName(item);
             info.put("name", name);
 
-            ref .set(refeId, info, t/1000L);
+            ref .set( rid, info, t / 1000 );
         }
     }
 

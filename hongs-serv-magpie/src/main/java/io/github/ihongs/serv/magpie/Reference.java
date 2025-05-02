@@ -203,7 +203,7 @@ public class Reference extends Segment {
 
         // 获取向量
         if (pl != null) {
-            List vl = AiUtil.embedding(pl, AiUtil.ETYPE.DOC);
+            List vl = AiUtil.embed(pl, AiUtil.ETYPE.DOC);
             List ps = new ArrayList(vl.size());
             for(int i = 0; i < vl.size(); i++) {
             List pa = new ArrayList(2);

@@ -121,21 +121,23 @@ public class MagpieMessage {
     private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
         String sid = Synt.asString(  rd.get("session_id")  );
         String prompt = Synt.declare(rd.get("prompt"), ""  );
-        String remind = prompt;
-
         String system = Synt.declare(rd.get("system"), ""  );
+        String remind = Synt.declare(rd.get("remind"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
         String query  = Synt.declare(rd.get("query" ), ""  );
         float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
         int    maxRn  = Synt.declare(rd.get("max_rn"), 10  );
         int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
-
+        Set<String> tools = Synt.asSet( rd.get ( "tools" ) );
+        
         CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
 
         // 提取上下文
         List<Map> messages = Synt.asList(rd.get("messages"));
         if (messages != null && ! messages.isEmpty()) {
+            messages  = new ArrayList ( messages );
+
             StringBuilder ms = new StringBuilder();
             for (Map ma : messages) {
                 ms.append("- " )
@@ -144,7 +146,11 @@ public class MagpieMessage {
                   .append(Syno.indent((String) ma.get("content"), "  "))
                   .append( "\n");
             }
-            remind = cl.translate("magpie.ai.remind.temp", Synt.mapOf(
+
+            if (remind == null || remind.isBlank()) {
+                remind = cl.getProperty("magpie.assistant.remind");
+            }
+            remind = Syno.inject( remind, Synt.mapOf(
                 "messages", ms , "prompt", prompt
             ));
             CoreLogger.debug("Remind: {}", remind);
@@ -156,14 +162,14 @@ public class MagpieMessage {
                 )
             ));
             CoreLogger.debug("Remind: {}", remind);
-
-            messages = new ArrayList(messages);
         } else {
-            messages = new ArrayList();
+            messages  = new ArrayList () ;
+
+            remind = prompt;
         }
 
         // 获取向量
-        Object vect = AiUtil.embedding(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
+        Object vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
 
         // 查询资料
         Map qry;
@@ -206,7 +212,7 @@ public class MagpieMessage {
             ps .setLength(ps.length()-10);
 
             if (system == null || system.isBlank()) {
-                system = cl.getProperty("magpie.ai.system.temp");
+                system = cl.getProperty("magpie.assistant.system");
             }
             system = Syno.inject( system, Synt.mapOf(
                 "documents", ps
@@ -258,7 +264,7 @@ public class MagpieMessage {
 
             StringBuilder sb = new StringBuilder();
             try {
-                AiUtil.chat(model, messages, (token)-> {
+                AiUtil.chat(model, tools, messages, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             String thunk = "data:{\"text\":\""+Dist.doEscape(token)+"\"}\n\n";
@@ -285,6 +291,7 @@ public class MagpieMessage {
                         String thunk = "data:{\"content\":\""+Dist.doEscape(result)+"\"}";
                         out.write(thunk);
                         out.flush(  );
+                        out.close(  );
                     } catch ( IOException e ) {
                         throw new CruxExemption(e);
                     }
@@ -293,7 +300,7 @@ public class MagpieMessage {
         } else {
             StringBuilder sb = new StringBuilder();
             try {
-                AiUtil.chat(model, messages, (token)-> {
+                AiUtil.chat(model, tools, messages, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             sb.append(token);
