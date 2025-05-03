@@ -7,6 +7,7 @@ import io.github.ihongs.action.ActionDriver;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.serv.magpie.AiUtil;
 import io.github.ihongs.util.Dist;
+import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
 import static io.github.ihongs.util.Synt.asBool;
 import static io.github.ihongs.util.Synt.asByte;
@@ -89,64 +90,11 @@ public class McpAction extends ActionDriver {
             Class   mcl = mat.getMclass();
             Parameter[] mps = met.getParameters();
 
-            /**
-             * Langchain 的 ToolSpecifications 转 JSON 也无法用于 MCP
-             * 只好解析注解并重新组织描述
-             */
+            // 工具描述
             dev.langchain4j.agent.tool.Tool  ta = met.getAnnotation(dev.langchain4j.agent.tool.Tool.class);
             String name = Synt.defxult(ta.name(), met.getName());
-            String desc = String.join("\n", ta.value());
-            Map  ps = new LinkedHashMap(mps.length);
-            List rs = new  ArrayList   (mps.length);
-            int i = 0;
-            for (Parameter mpr : mps) {
-                dev.langchain4j.agent.tool.P pa = mpr.getAnnotation(dev.langchain4j.agent.tool.P.class);
-                io.github.ihongs.serv.tool.E ea = mpr.getAnnotation(io.github.ihongs.serv.tool.E.class);
-                Map pm = new HashMap(0x3);
-                String pn = "arg" + (i++);
-                pm.put("description", "");
-                ps.put(pn, pm);
-                if (ea != null) {
-                    pm.put("enum", ea.value());
-                }
-                if (pa != null) {
-                    pm.put("description", pa.value());
-                    Class pt = mpr.getType();
-                    if (Boolean.class.isAssignableFrom(pt)) {
-                        pm.put("type", "boolean");
-                    } else
-                    if (String.class.isAssignableFrom(pt)) {
-                        pm.put("type", "string");
-                    } else
-                    if (Number.class.isAssignableFrom(pt)
-                    ||  double.class == pt
-                    ||  int   .class == pt
-                    ||  long  .class == pt
-                    ||  float .class == pt
-                    ||  short .class == pt
-                    ||  byte  .class == pt) {
-                        pm.put("type", "number");
-                    } else
-                    if (Map.class.isAssignableFrom(pt)) {
-                        pm.put("type", "object");
-                    } else
-                    if (Set.class.isAssignableFrom(pt)) {
-                        pm.put("type", "array");
-                    } else
-                    if (List.class.isAssignableFrom(pt)) {
-                        pm.put("type", "array");
-                    }
-                    if (pa.required()) {
-                        rs.add(pn);
-                    }
-                }
-            }
-            String sche = Dist.toString(Synt.mapOf(
-                "id", "urn:jsonschema:Operation",
-                "type", "object",
-                "properties", ps,
-                "required"  , rs
-            ));
+            String desc = String.join ("\n", ta.value());
+            String sche = Dist.toString(toSchema( mps ));
 
             server.addTool(
                 new SyncToolSpecification(
@@ -187,4 +135,65 @@ public class McpAction extends ActionDriver {
         actor.service(request, response);
     }
 
+    /**
+     * Langchain 参数结构转 MCP JsonSchema
+     * Langchain ToolSpecifications 转 JSON 也无法用于 MCP, 只好重写之
+     * @param params
+     * @return 
+     */
+    protected Map  toSchema(Parameter[] params) {
+        Map  ps = new LinkedHashMap(params.length);
+        List rs = new ArrayList (params.length);
+        int  i  = 0;
+        
+        for (Parameter param : params) {
+            dev.langchain4j.agent.tool.P pa = param.getAnnotation(dev.langchain4j.agent.tool.P.class);
+            io.github.ihongs.serv.tool.E ea = param.getAnnotation(io.github.ihongs.serv.tool.E.class);
+            Map pm = new HashMap(0x3);
+            String pn = "arg" + (i++);
+            pm.put("description", "");
+            ps.put(pn, pm);
+            if (ea != null) {
+                pm.put("enum", ea.value());
+            }
+            if (pa != null) {
+                pm.put("description", pa.value());
+                Class pt = param.getType();
+                if (Boolean.class.isAssignableFrom(pt)) {
+                    pm.put("type", "boolean");
+                } else
+                if (String.class.isAssignableFrom(pt)) {
+                    pm.put("type", "string");
+                } else
+                if (Number.class.isAssignableFrom(pt)
+                ||  double.class == pt
+                ||  int   .class == pt
+                ||  long  .class == pt
+                ||  float .class == pt
+                ||  short .class == pt
+                ||  byte  .class == pt) {
+                    pm.put("type", "number");
+                } else
+                if (Map.class.isAssignableFrom(pt)) {
+                    pm.put("type", "object");
+                } else
+                if (Set.class.isAssignableFrom(pt)) {
+                    pm.put("type", "array");
+                } else
+                if (List.class.isAssignableFrom(pt)) {
+                    pm.put("type", "array");
+                }
+                if (pa.required()) {
+                    rs.add(pn);
+                }
+            }
+        }
+        return Synt.mapOf(
+            "id", "urn:jsonschema:Operation",
+            "type", "object",
+            "properties", ps,
+            "required"  , rs
+        );
+    }
+    
 }
