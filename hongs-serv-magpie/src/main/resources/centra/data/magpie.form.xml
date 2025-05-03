@@ -164,7 +164,7 @@
             <param name="conf">magpie</param>
             <param name="enum">model</param>
         </field>
-        <field text="扩展" name="tools" type="check" repeated="yes">
+        <field text="工具" name="tools" type="check" repeated="yes">
             <param name="conf">magpie</param>
             <param name="enum">tool</param>
         </field>
@@ -210,13 +210,10 @@
             <param name="default">0</param>
         </field>
         <field text="系统人设" name="system" type="textarea">
-            <param name="form-hint">使用 ${document} 嵌入引用材料</param>
+            <param name="form-hint">使用 ${documents} 嵌入引用材料</param>
         </field>
-        <field text="意图识别" name="intent" type="textarea">
-            <param name="form-hint">填写意图分类描述</param>
-        </field>
-        <field text="意图应用" name="handle" type="text">
-            <param name="form-hint">填写应用 class</param>
+        <field text="回顾设定" name="remind" type="textarea">
+            <param name="form-hint">使用 ${messages} 嵌入对话历史, 使用 ${prompt} 嵌入最新问题</param>
         </field>
         <field text="访问码" name="token" type="text">
             <param name="listable">yes</param>

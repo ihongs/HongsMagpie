@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <rsname>#default</rsname>
+    <menu text="MCP Tools" href="!common/mcp">
+        <role text="Base Tools" name="common/mcp">
+            <action>common/mcp/sse</action>
+            <action>common/mcp/message</action>
+        </role>
+    </menu>
+</root>

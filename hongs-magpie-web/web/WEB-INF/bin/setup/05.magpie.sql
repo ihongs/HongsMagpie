@@ -1,5 +1,6 @@
 ﻿--DB=magpie
 
+--
 -- 数据
 --
 
@@ -28,3 +29,10 @@ CREATE INDEX `IK_a_magpie_data_etime` ON `a_magpie_data` (`etime`);
 CREATE INDEX `IK_a_magpie_data_rtime` ON `a_magpie_data` (`rtime`);
 CREATE INDEX `IK_a_magpie_data_ctime` ON `a_magpie_data` (`ctime` DESC);
 CREATE UNIQUE INDEX `UK_a_magpie_data_uk` ON `a_magpie_data` (`form_id`,`id`,`etime`);
+
+--
+-- 用户
+--
+
+INSERT INTO `a_master_user` (`id`,`password`,`username`,`name`,`head`,`note`,`ctime`,`mtime`,`rtime`,`ptime`,`state`) VALUES ('ai-agent','','','AI Agent',NULL,NULL,'1424075622','1424075622','0','0',1);
+INSERT INTO `a_master_unit_user` VALUES ('ai-agent','0','0');

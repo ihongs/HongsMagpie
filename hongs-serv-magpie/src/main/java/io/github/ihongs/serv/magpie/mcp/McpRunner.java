@@ -31,18 +31,18 @@ public class McpRunner {
     public String execute(Map<String, Object> argumentsMap , Object memoryId) {
         Object[] arguments = prepareArguments(method, argumentsMap, memoryId);
         try {
-            return execute(arguments);
+            return execute (arguments);
         } catch (IllegalAccessException e) {
-            try {
-                method.setAccessible(true);
-                return execute (arguments);
-            } catch (IllegalAccessException e2) {
-                throw  new RuntimeException(e2);
-            } catch (InvocationTargetException e2) {
-                return e2.getCause( ).getMessage();
-            }
+        try {
+            method.setAccessible(true);
+            return execute (arguments);
+        } catch (IllegalAccessException x) {
+            throw  new RuntimeException(x);
+        } catch (InvocationTargetException x) {
+            throw  new RuntimeException(x.getCause());
+        }
         } catch (InvocationTargetException e) {
-            return e.getCause( ).getMessage();
+            throw  new RuntimeException(e.getCause());
         }
     }
 

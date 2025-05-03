@@ -89,7 +89,7 @@
                 <action>centra/data/magpie/assistant-message/revert.act</action>
             </role>
         </menu>
-        <menu text="智能任务" href="centra/data/magpie/applicant/">
+        <menu text="智能体" href="centra/data/magpie/applicant/">
             <role text="查看任务" name="centra/data/magpie/applicant/search">
                 <depend>centra</depend>
                 <action>centra/data/magpie/applicant/search.act</action>
@@ -118,5 +118,6 @@
                 <action>centra/data/magpie/applicant/revert.act</action>
             </role>
         </menu>
+        <import>mcp</import>
     </menu>
 </root>

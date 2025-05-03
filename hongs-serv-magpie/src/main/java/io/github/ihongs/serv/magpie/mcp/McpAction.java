@@ -1,11 +1,24 @@
 package io.github.ihongs.serv.magpie.mcp;
 
 import io.github.ihongs.Core;
+import io.github.ihongs.CoreLogger;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.action.ActionDriver;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.serv.magpie.AiUtil;
+import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
+import static io.github.ihongs.util.Synt.asBool;
+import static io.github.ihongs.util.Synt.asByte;
+import static io.github.ihongs.util.Synt.asDouble;
+import static io.github.ihongs.util.Synt.asFloat;
+import static io.github.ihongs.util.Synt.asInt;
+import static io.github.ihongs.util.Synt.asList;
+import static io.github.ihongs.util.Synt.asLong;
+import static io.github.ihongs.util.Synt.asMap;
+import static io.github.ihongs.util.Synt.asSet;
+import static io.github.ihongs.util.Synt.asShort;
+import static io.github.ihongs.util.Synt.asString;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.McpSyncServer;
@@ -15,6 +28,12 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -30,15 +49,21 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class McpAction extends ActionDriver {
 
-    protected HttpServlet that;
+    protected HttpServlet actor;
 
     @Override
     public void init(ServletConfig conf) throws ServletException {
         super.init(conf);
-        that .init(conf);
 
         String sseUrl = conf.getInitParameter("sse-url");
         String msgUrl = conf.getInitParameter("msg-url");
+        Set<String> tools = Synt.toSet(conf.getInitParameter("tools"));
+
+        if (sseUrl == null || sseUrl.isEmpty()
+        ||  msgUrl == null || msgUrl.isEmpty()
+        ||  tools  == null || tools .isEmpty()) {
+            throw new ServletException("Init params sse-url, msg-url and tools required");
+        }
 
         McpServerTransportProvider provider = HttpServletSseServerTransportProvider
             .builder()
@@ -57,36 +82,101 @@ public class McpAction extends ActionDriver {
             )
             .build();
 
-        Set<String> tools = Synt.toSet(conf.getInitParameter("tools"));
-        Map<String, Mathod> toolz = AiUtil.getToolMethods();
+        Map<String, Mathod> toolz = AiUtil.getTools();
         for(String  tool  : tools) {
             Mathod  mat = toolz.get(tool);
             Method  met = mat.getMethod();
             Class   mcl = mat.getMclass();
+            Parameter[] mps = met.getParameters();
 
-            dev.langchain4j.agent.tool.ToolSpecification spe = dev.langchain4j.agent.tool.ToolSpecifications.toolSpecificationFrom(met);
-            String name = spe.name();
-            String desc = spe.description();
-            String sche = dev.langchain4j.internal.Json.toJson(spe.parameters());
+            /**
+             * Langchain 的 ToolSpecifications 转 JSON 也无法用于 MCP
+             * 只好解析注解并重新组织描述
+             */
+            dev.langchain4j.agent.tool.Tool  ta = met.getAnnotation(dev.langchain4j.agent.tool.Tool.class);
+            String name = Synt.defxult(ta.name(), met.getName());
+            String desc = String.join("\n", ta.value());
+            Map  ps = new LinkedHashMap(mps.length);
+            List rs = new  ArrayList   (mps.length);
+            int i = 0;
+            for (Parameter mpr : mps) {
+                dev.langchain4j.agent.tool.P pa = mpr.getAnnotation(dev.langchain4j.agent.tool.P.class);
+                io.github.ihongs.serv.tool.E ea = mpr.getAnnotation(io.github.ihongs.serv.tool.E.class);
+                Map pm = new HashMap(0x3);
+                String pn = "arg" + (i++);
+                pm.put("description", "");
+                ps.put(pn, pm);
+                if (ea != null) {
+                    pm.put("enum", ea.value());
+                }
+                if (pa != null) {
+                    pm.put("description", pa.value());
+                    Class pt = mpr.getType();
+                    if (Boolean.class.isAssignableFrom(pt)) {
+                        pm.put("type", "boolean");
+                    } else
+                    if (String.class.isAssignableFrom(pt)) {
+                        pm.put("type", "string");
+                    } else
+                    if (Number.class.isAssignableFrom(pt)
+                    ||  double.class == pt
+                    ||  int   .class == pt
+                    ||  long  .class == pt
+                    ||  float .class == pt
+                    ||  short .class == pt
+                    ||  byte  .class == pt) {
+                        pm.put("type", "number");
+                    } else
+                    if (Map.class.isAssignableFrom(pt)) {
+                        pm.put("type", "object");
+                    } else
+                    if (Set.class.isAssignableFrom(pt)) {
+                        pm.put("type", "array");
+                    } else
+                    if (List.class.isAssignableFrom(pt)) {
+                        pm.put("type", "array");
+                    }
+                    if (pa.required()) {
+                        rs.add(pn);
+                    }
+                }
+            }
+            String sche = Dist.toString(Synt.mapOf(
+                "id", "urn:jsonschema:Operation",
+                "type", "object",
+                "properties", ps,
+                "required"  , rs
+            ));
 
             server.addTool(
                 new SyncToolSpecification(
-                    new Tool(name, desc, sche) , (exch, args) -> {
-                        Object obj = Core.getInstance ( mcl );
-                        String mid = UUID.randomUUID().toString( );
-                        String rst = new McpRunner(obj, met ).execute(args, mid);
-                        return new CallToolResult (rst,false);
+                    new Tool(name, desc, sche), (exch, args) -> {
+                        try {
+                            Object obj = Core.getInstance ( mcl );
+                            String mid = UUID.randomUUID().toString();
+                            String rst = new McpRunner(obj, met ).execute(args, mid);
+                            return new CallToolResult (rst,false);
+                        } catch (Exception ex) {
+                            Throwable ax = ex.getCause();
+                            if (ax == null) {
+                                ax  = ex;
+                            }
+                            CoreLogger.error(ax);
+                            String msg = ax.getMessage();
+                            return new CallToolResult (msg, true);
+                        }
                     }
                 )
             );
         }
 
-        that = (HttpServlet) provider;
+        actor = (HttpServlet) provider;
+        actor.init(conf);
     }
 
     public void destory() {
         super.destroy();
-        that .destroy();
+        actor.destroy();
     }
 
     @Override
@@ -94,7 +184,7 @@ public class McpAction extends ActionDriver {
     throws ServletException, IOException {
         HttpServletRequest  request  = helper.getRequest ();
         HttpServletResponse response = helper.getResponse();
-        that .service(request, response);
+        actor.service(request, response);
     }
 
 }

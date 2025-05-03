@@ -205,7 +205,11 @@ public class MagpieMessage {
         float  minUp  = Synt.declare(ad.get("min_up"), 0.5f);
         int    maxRn  = Synt.declare(ad.get("max_rn"), 10  );
         int    maxSn  = Synt.declare(ad.get("max_sn"), 20  );
+        int    maxTr  = Synt.declare(ad.get("max_tr"), 1   );
         int    maxTk  = Synt.declare(ad.get("max_tk"), 0   );
+        double tmpr   = Synt.declare(ad.get("temperature"  ), 0d );
+        double topP   = Synt.declare(ad.get("top_p" ), 0d  );
+        int    topK   = Synt.declare(ad.get("top_k" ), 0   );
         Set<String> tools = Synt.asSet( ad.get ( "tools" ) );
 
         CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
@@ -247,7 +251,7 @@ public class MagpieMessage {
             if (remind == null || remind.isBlank()) {
                 remind = cl.getProperty("magpie.assistant.remind");
             }
-            remind = Syno.inject( remind, Synt.mapOf(
+            remind = Syno.inject( remind , Synt.mapOf(
                 "messages", ms , "prompt", prompt
             ));
             CoreLogger.debug("Remind: {}", remind);
@@ -363,7 +367,7 @@ public class MagpieMessage {
 
             StringBuilder sb = new StringBuilder();
             try {
-                AiUtil.chat(model, tools, messages, (token)-> {
+                AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             String thunk = "data:{\"text\":\""+Dist.doEscape(token)+"\"}\n\n";
@@ -414,7 +418,7 @@ public class MagpieMessage {
         } else {
             StringBuilder sb = new StringBuilder();
             try {
-                AiUtil.chat(model, tools, messages, (token)-> {
+                AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             sb.append(token);
