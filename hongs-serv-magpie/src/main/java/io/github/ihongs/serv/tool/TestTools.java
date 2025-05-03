@@ -33,8 +33,12 @@ public class TestTools {
             case "-" -> Synt.asString(a - b);
             case "*" -> Synt.asString(a * b);
             case "/" -> Synt.asString(a / b);
+            case "add"      -> Synt.asString(a + b);
+            case "subtract" -> Synt.asString(a - b);
+            case "multiply" -> Synt.asString(a * b);
+            case "divide"   -> Synt.asString(a / b);
             default  -> {
-                throw new UnsupportedOperationException("unsupported operation");
+                throw new UnsupportedOperationException("unsupported operation `"+p+"`, must be +,-,*,/,add,subtract,multiply,divide");
             }
         };
     }
