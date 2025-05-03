@@ -139,13 +139,13 @@ public class McpAction extends ActionDriver {
      * Langchain 参数结构转 MCP JsonSchema
      * Langchain ToolSpecifications 转 JSON 也无法用于 MCP, 只好重写之
      * @param params
-     * @return 
+     * @return
      */
     protected Map  toSchema(Parameter[] params) {
         Map  ps = new LinkedHashMap(params.length);
         List rs = new ArrayList (params.length);
         int  i  = 0;
-        
+
         for (Parameter param : params) {
             dev.langchain4j.agent.tool.P pa = param.getAnnotation(dev.langchain4j.agent.tool.P.class);
             io.github.ihongs.serv.tool.E ea = param.getAnnotation(io.github.ihongs.serv.tool.E.class);
@@ -195,5 +195,5 @@ public class McpAction extends ActionDriver {
             "required"  , rs
         );
     }
-    
+
 }
