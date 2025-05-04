@@ -34,7 +34,9 @@ import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
 import io.github.ihongs.util.Synt;
+import io.github.ihongs.util.daemon.Chore.Defer;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -43,7 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 接口工具
@@ -73,6 +78,9 @@ public final class AiUtil {
             .  apiKey (key)
             . baseUrl (url)
             .modelName(mod)
+            .customHeaders(Synt.mapOf(
+                "Accept-Charset", "UTF-8"
+            ))
             .build    (   );
     }
 
@@ -93,6 +101,9 @@ public final class AiUtil {
             .  apiKey (key)
             . baseUrl (url)
             .modelName(mod)
+            .customHeaders(Synt.mapOf(
+                "Accept-Charset", "UTF-8"
+            ))
             .build    (   );
     }
 
@@ -113,6 +124,9 @@ public final class AiUtil {
             .  apiKey (key)
             . baseUrl (url)
             .modelName(mod)
+            .customHeaders(Synt.mapOf(
+                "Accept-Charset", "UTF-8"
+            ))
             .build    (   );
     }
 
@@ -128,9 +142,9 @@ public final class AiUtil {
         return Core.getInstance()
             .got(DocumentSplitter.class.getName(), ()->{
                 CoreConfig cc = CoreConfig.getInstance("magpie");
-                String clsn = cc.getProperty("magpie.splitters.class", DocumentSplitters.class.getName());
-                int maxSegmentSize = cc.getProperty("magpie.splitter.max-segment-size", 1000);
-                int maxOverlaySize = cc.getProperty("magpie.splitter.max-overlay-size", 100 );
+                String clsn = cc.getProperty("document.splitters", DocumentSplitters.class.getName());
+                int maxSegmentSize = cc.getProperty("document.splitter.max-segment-size", 1000);
+                int maxOverlaySize = cc.getProperty("document.splitter.max-overlay-size", 100 );
 
                 try {
                     Class  clso = Class.forName(clsn);
@@ -410,7 +424,7 @@ public final class AiUtil {
      * @param r 工具递归限定, 0 不限
      * @param callback
      */
-    public static void chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Consumer<String> callback) {
+    public static Defer chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Consumer<String> callback) {
         StreamingChatLanguageModel lm = getStreamingModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = toChatMessages(messages);
@@ -444,16 +458,17 @@ public final class AiUtil {
             .messages(ms)
             .build();
 
+        Defer df = new Defer();
+
         lm.chat(rq, new StreamingChatResponseHandler() {
             int x = r;
             @Override
-            public void onError(Throwable ex ) {
-                CoreLogger.warn(ex.toString());
-                throw new CruxExemption ( ex );
-            }
-            @Override
             public void onPartialResponse (String rs ) {
                 callback.accept(rs);
+                
+                if (df.interrupted()) {
+                    throw new CruxExemption("@magpie.stream.cancel");
+                }
             }
             @Override
             public void onCompleteResponse(ChatResponse rp) {
@@ -483,10 +498,20 @@ public final class AiUtil {
                         .build     (  );
 
                     // 递归执行
-                    lm.chat(rx, this);
+                    lm.chat( rx, this );
+                } else {
+                    // 外部放行
+                    df.done();
                 }
             }
+            @Override
+            public void onError(Throwable ex) {
+                // 异常中止
+                df.fail(ex);
+            }
         });
+
+        return  df;
     }
 
     /**

@@ -14,6 +14,7 @@
     <servlet>
         <servlet-name>Acts</servlet-name>
         <servlet-class>io.github.ihongs.action.serv.ActsDriver</servlet-class>
+        <async-supported>true</async-supported>
         <multipart-config>
             <max-file-size>20971520</max-file-size>
             <max-request-size>20971520</max-request-size>
@@ -28,6 +29,7 @@
     <servlet>
         <servlet-name>Apis</servlet-name>
         <servlet-class>io.github.ihongs.action.serv.ApisDriver</servlet-class>
+        <async-supported>true</async-supported>
         <multipart-config>
             <max-file-size>20971520</max-file-size>
             <max-request-size>20971520</max-request-size>
@@ -42,6 +44,7 @@
     <servlet>
         <servlet-name>Rest</servlet-name>
         <servlet-class>io.github.ihongs.action.serv.RestDriver</servlet-class>
+        <async-supported>true</async-supported>
         <multipart-config>
             <max-file-size>20971520</max-file-size>
             <max-request-size>20971520</max-request-size>
@@ -89,6 +92,7 @@
     <filter>
         <filter-name>XsrfFilter</filter-name>
         <filter-class>io.github.ihongs.serv.filter.XsrfFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>url-exclude</param-name>
             <param-value>/centre/sign/open/*</param-value>
@@ -104,6 +108,7 @@
     <filter>
         <filter-name>VarsFilter</filter-name>
         <filter-class>io.github.ihongs.serv.filter.VarsFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>rn-limit</param-name>
             <param-value>100</param-value>
@@ -128,6 +133,7 @@
     <filter>
         <filter-name>AuthFilter</filter-name>
         <filter-class>io.github.ihongs.serv.auth.AuthFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>url-exclude</param-name>
             <param-value>
@@ -146,6 +152,7 @@
     <filter>
         <filter-name>AuthFilter_Centra</filter-name>
         <filter-class>io.github.ihongs.action.serv.AuthFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>config-name</param-name>
             <param-value>centra</param-value>
@@ -178,6 +185,7 @@
     <filter>
         <filter-name>AuthFilter_Centre</filter-name>
         <filter-class>io.github.ihongs.action.serv.AuthFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>config-name</param-name>
             <param-value>centre</param-value>
@@ -211,6 +219,7 @@
     <filter>
         <filter-name>AutoFilter_Centra</filter-name>
         <filter-class>io.github.ihongs.action.serv.AutoFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>layout-path</param-name>
             <param-value>/centra/base</param-value>
@@ -230,6 +239,7 @@
     <filter>
         <filter-name>AutoFilter_Centre</filter-name>
         <filter-class>io.github.ihongs.action.serv.AutoFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
             <param-name>layout-path</param-name>
             <param-value>/centre/base</param-value>

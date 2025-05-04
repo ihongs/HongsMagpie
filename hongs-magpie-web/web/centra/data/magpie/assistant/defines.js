@@ -85,7 +85,7 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
                 if (dat .text) {
                     amap.content += dat.text;
                     abox.text (amap.content);
-                    context.find('[name=cancel]').click();
+                    //context.find('[name=cancel]').click();
                 } else
                 if (dat.references && dat.references.length) {
                     var ul = $('<blockquote class="small"><i>引用资料</i><ul></ul></blockquote>')
