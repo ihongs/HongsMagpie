@@ -33,6 +33,7 @@ import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
+import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Chore;
 import java.io.IOException;
@@ -222,10 +223,11 @@ public final class AiUtil {
         Map<String, Mathod> ts = getTools();
         return tools
             .stream()
-            .map(tool -> {
+            .filter(tool -> tool != null && ! tool.isEmpty())
+            .map   (tool -> {
                 Mathod ma = ts.get(tool);
                 if (ma == null) {
-                    throw new CruxExemption ( "Can not find tool `{}`" , tool );
+                    throw new CruxExemption ( "Can not find tool `$0`" , tool );
                 }
                 return ToolSpecifications.toolSpecificationFrom(ma.getMethod());
             })
@@ -280,8 +282,8 @@ public final class AiUtil {
      */
     public static String chat(String model, List<Map> messages, Set<String> tools) {
         ChatLanguageModel lm = getChatModel(model);
-        List<ChatMessage> ms = toChatMessages(messages);
         List<ToolSpecification> ts = toToolSpecifications(tools);
+        List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
         ChatRequest  rq = ChatRequest.builder()
             .toolSpecifications(ts)
@@ -336,10 +338,8 @@ public final class AiUtil {
      */
     public static String chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r) {
         ChatLanguageModel lm = getChatModel(model);
-        List<ChatMessage> ms = toChatMessages(messages);
         List<ToolSpecification> ts = toToolSpecifications(tools);
-
-        if (r == 0) r = Integer.MAX_VALUE;
+        List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
         DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
         if (temp != 0d) {
@@ -375,6 +375,8 @@ public final class AiUtil {
 
         StringBuilder sb = new StringBuilder(rp.toString());
 
+        int x = r != 0 ? r : Integer.MAX_VALUE;
+
         while (am != null && am.hasToolExecutionRequests()) {
             ms.add(am);
 
@@ -392,7 +394,7 @@ public final class AiUtil {
                 ms.add (tm);
             });
 
-            ChatRequestParameters px = (-- r) > 0 ? ps : pz ;
+            ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
 
             ChatRequest rx = ChatRequest.builder()
                 .parameters(px)
@@ -420,12 +422,12 @@ public final class AiUtil {
      * @param maxT max output tokens
      * @param r 工具递归限定, 0 不限
      * @param callback
-     * @return 
+     * @return
      */
     public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Consumer<String> callback) {
         StreamingChatLanguageModel lm = getStreamingModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
-        List<ChatMessage> ms = toChatMessages(messages);
+        List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
         DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
         if (temp != 0d) {
@@ -459,11 +461,11 @@ public final class AiUtil {
         Chore.Defer<ChatResponse> df = new Chore.Defer();
 
         lm.chat(rq, new StreamingChatResponseHandler() {
-            int x = r;
+            int x = r != 0 ? r : Integer.MAX_VALUE;
             @Override
             public void onPartialResponse (String rs ) {
                 callback.accept(rs);
-                
+
                 // 中止读取
                 if (df.interrupted()) {
                     throw new CruxExemption("@magpie.stream.cancel");
@@ -471,36 +473,43 @@ public final class AiUtil {
             }
             @Override
             public void onCompleteResponse(ChatResponse rp) {
-                AiMessage am = rp.aiMessage();
-                if (am != null && am.hasToolExecutionRequests()) {
-                    ms.add(am);
+                try {
+                    AiMessage am = rp.aiMessage();
+                    if (am != null && am.hasToolExecutionRequests()) {
+                        ms.add(am);
 
-                    // 调用工具
-                    List<ToolExecutionRequest> tes = am.toolExecutionRequests();
-                    tes.forEach(ter -> {
-                        Mathod mat = getTools().get(ter.name());
-                        Method met = mat.getMethod ();
-                        Class  cla = mat.getMclass ();
-                        Object obj = Core.getInstance(cla);
+                        // 调用工具
+                        List<ToolExecutionRequest> tes = am.toolExecutionRequests();
+                        tes.forEach(ter -> {
+                            Mathod mat = getTools().get(ter.name());
+                            Method met = mat.getMethod ();
+                            Class  cla = mat.getMclass ();
+                            Object obj = Core.getInstance(cla);
 
-                        ToolExecutor te = new DefaultToolExecutor(obj, met);
-                        String  rs = te.execute(ter, UUID.randomUUID().toString());
-                        ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
-                        ms.add (tm);
-                    });
+                            ToolExecutor te = new DefaultToolExecutor(obj, met);
+                            String  rs = te.execute(ter, UUID.randomUUID().toString());
+                            ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
+                            ms.add (tm);
 
-                    ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
+                            callback.accept("<tool>{\"name\":\""+Dist.doEscape(ter.name())+"\",\"params\":"+ter.arguments()+",\"result\":\""+rs+"\"}</tool>\n");
+                        });
 
-                    ChatRequest rx = ChatRequest.builder()
-                        .parameters(px)
-                        .messages  (ms)
-                        .build     (  );
+                        ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
 
-                    // 递归执行
-                    lm.chat(rx, this);
-                } else {
-                    // 外部放行
-                    df.done(rp);
+                        ChatRequest rx = ChatRequest.builder()
+                            .parameters(px)
+                            .messages  (ms)
+                            .build     (  );
+
+                        // 递归执行
+                        lm.chat(rx, this);
+                    } else {
+                        // 调用完成
+                        df.done(rp);
+                    }
+                } catch (Exception ex) {
+                    // 异常终止
+                    df.fail(ex);
                 }
             }
             @Override

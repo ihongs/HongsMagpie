@@ -207,9 +207,9 @@ public class MagpieMessage {
         int    maxSn  = Synt.declare(ad.get("max_sn"), 20  );
         int    maxTr  = Synt.declare(ad.get("max_tr"), 1   );
         int    maxTk  = Synt.declare(ad.get("max_tk"), 0   );
-        double tmpr   = Synt.declare(ad.get("temperature"  ), 0d );
-        double topP   = Synt.declare(ad.get("top_p" ), 0d  );
         int    topK   = Synt.declare(ad.get("top_k" ), 0   );
+        double topP   = Synt.declare(ad.get("top_p" ), 0d  );
+        double tmpr   = Synt.declare(ad.get("temperature"  ), 0d );
         Set<String> tools = Synt.asSet( ad.get ( "tools" ) );
 
         CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
@@ -315,19 +315,22 @@ public class MagpieMessage {
             ps .setLength(ps.length()-10);
 
             if (system == null || system.isBlank()) {
-                system = cl.getProperty("magpie.assistant.system");
+                system = cl.getProperty("magpie.assistant.relate");
             }
             system = Syno.inject( system, Synt.mapOf(
-                "documents", ps
+                "sections", ps
             ));
             CoreLogger.debug("System: {}", system);
-
-            messages.add(0, Synt.mapOf(
-                "role", "system",
-                "content", system
-            ));
+        } else {
+            if (system == null || system.isBlank()) {
+                system = cl.getProperty("magpie.assistant.system");
+            }
         }
 
+        messages.add(0, Synt.mapOf(
+            "role", "system",
+            "content", system
+        ));
         messages.add(Synt.mapOf(
             "role", "user",
             "content", prompt

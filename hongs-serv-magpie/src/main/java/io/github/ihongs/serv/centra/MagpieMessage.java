@@ -44,11 +44,15 @@ public class MagpieMessage {
         String system = Synt.declare(rd.get("system"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
         String query  = Synt.declare(rd.get("query" ), ""  );
+        int    stream = Synt.declare(rd.get("stream"), 0   );
         float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
         int    maxRn  = Synt.declare(rd.get("max_rn"), 10  );
         int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
-        int    stream = Synt.declare(rd.get("stream"), 0   );
+        int    topK   = Synt.declare(rd.get("top_k" ), 0   );
+        double topP   = Synt.declare(rd.get("top_p" ), 0d  );
+        double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
+        Set<String> tools = Synt.asSet( rd.get ( "tools" ) );
 
         // 会话ID
         if (sid == null || sid.isEmpty()) {
@@ -71,6 +75,10 @@ public class MagpieMessage {
             "max_rn", maxRn ,
             "max_sn", maxSn ,
             "max_tk", maxTk ,
+            "temperature", tmpr,
+            "top_p" , topP  ,
+            "top_k" , topK  ,
+            "tools" , tools ,
             "session_id" , sid
         ), 30);
         helper.reply(Synt.mapOf(
@@ -130,9 +138,9 @@ public class MagpieMessage {
         int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
         int    maxTr  = Synt.declare(rd.get("max_tr"), 1   );
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
-        double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
-        double topP   = Synt.declare(rd.get("top_p" ), 0d  );
         int    topK   = Synt.declare(rd.get("top_k" ), 0   );
+        double topP   = Synt.declare(rd.get("top_p" ), 0d  );
+        double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
         Set<String> tools = Synt.asSet( rd.get ( "tools" ) );
 
         CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
@@ -216,19 +224,22 @@ public class MagpieMessage {
             ps .setLength(ps.length()-10);
 
             if (system == null || system.isBlank()) {
-                system = cl.getProperty("magpie.assistant.system");
+                system = cl.getProperty("magpie.assistant.relate");
             }
             system = Syno.inject( system, Synt.mapOf(
-                "documents", ps
+                "sections", ps
             ));
             CoreLogger.debug("System: {}", system);
-
-            messages.add(0, Synt.mapOf(
-                "role", "system",
-                "content", system
-            ));
+        } else {
+            if (system == null || system.isBlank()) {
+                system = cl.getProperty("magpie.assistant.system");
+            }
         }
 
+        messages.add(0, Synt.mapOf(
+            "role", "system",
+            "content", system
+        ));
         messages.add(Synt.mapOf(
             "role", "user",
             "content", prompt
@@ -276,7 +287,14 @@ public class MagpieMessage {
                 try {
                     ft.get();
                 } catch (Exception ex) {
-                    CoreLogger.trace(ex.toString());
+                    String error = ex.getLocalizedMessage();
+                    try {
+                        sb.append(error);
+                        out.write(error);
+                        out.flush(  );
+                    } catch ( IOException e ) {
+                        throw new CruxExemption(e);
+                    }
                 }
             } finally {
                 Core.getInterior().remove("magpie.stream."+ sid);
@@ -307,7 +325,8 @@ public class MagpieMessage {
                 try {
                     ft.get();
                 } catch (Exception ex) {
-                    CoreLogger.trace(ex.toString());
+                    String error = ex.getLocalizedMessage();
+                    sb.append( error );
                 }
             } finally {
                 Core.getInterior().remove("magpie.stream."+ sid);

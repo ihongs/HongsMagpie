@@ -13,6 +13,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group" data-name="tools">
+                    <label class="form-label control-label form-control-static">工具</label>
+                    <div>
+                        <input type="hidden" name="tools." class="form-final">
+                        <div class="checkbox" data-fn="tools." data-ft="_check"></div>
+                    </div>
+                </div>
                 <div class="form-group" data-name="query">
                     <label class="form-label control-label form-control-static">引用参数</label>
                     <div>
@@ -50,23 +57,23 @@
                     <div>
                         <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-system" name="system" placeholder=""></textarea>
                         <div class="help-block text-error form-control-static"></div>
-                        <div class="help-block text-muted form-control-static">使用 ${documents} 嵌入引用材料</div>
+                        <div class="help-block text-muted form-control-static">扮演何种角色</div>
                     </div>
                 </div>
-                <div class="form-group row" data-name="remind">
-                    <label class="form-label control-label form-control-static">回顾设定</label>
+                <div class="form-group" data-name="relate">
+                    <label class="form-label control-label form-control-static">引用人设</label>
+                    <div>
+                        <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-relate" name="relate" placeholder=""></textarea>
+                        <div class="help-block text-error form-control-static"></div>
+                        <div class="help-block text-muted form-control-static">处理资料引用, 使用 ${sections} 嵌入引用材料</div>
+                    </div>
+                </div>
+                <div class="form-group" data-name="remind">
+                    <label class="form-label control-label form-control-static">回顾人设</label>
                     <div>
                         <textarea class="form-field form-control" id="centra-data-magpie-assistant-form-remind" name="remind" placeholder=""></textarea>
                         <div class="help-block text-error form-control-static"></div>
-                        <div class="help-block text-muted form-control-static">使用 ${messages} 嵌入对话历史, 使用 ${prompt} 嵌入最新问题</div>
-                    </div>
-                </div>
-                <div class="form-group" data-name="handle">
-                    <label class="form-label control-label form-control-static">意图应用</label>
-                    <div>
-                        <input class="form-field form-control" id="centra-data-magpie-assistant-form-handle" name="handle" placeholder=""/>
-                        <div class="help-block text-error form-control-static"></div>
-                        <div class="help-block text-muted form-control-static">填写应用 class</div>
+                        <div class="help-block text-muted form-control-static">总结历史消息, 使用 ${messages} 嵌入对话历史, 使用 ${prompt} 嵌入最新问题</div>
                     </div>
                 </div>
             </div><!-- end form-body -->

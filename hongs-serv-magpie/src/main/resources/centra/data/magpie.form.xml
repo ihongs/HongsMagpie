@@ -160,11 +160,11 @@
         </field>
         <field text="说明" name="note" type="textarea">
         </field>
-        <field text="模型" name="model" type="radio" required="yes">
+        <field text="模型" name="model" type="select" required="yes">
             <param name="conf">magpie</param>
             <param name="enum">model</param>
         </field>
-        <field text="工具" name="tools" type="check" repeated="yes">
+        <field text="工具" name="tools" type="check"  repeated="yes">
             <param name="conf">magpie</param>
             <param name="enum">tool</param>
         </field>
@@ -210,10 +210,13 @@
             <param name="default">0</param>
         </field>
         <field text="系统人设" name="system" type="textarea">
-            <param name="form-hint">使用 ${documents} 嵌入引用材料</param>
+            <param name="form-hint">扮演何种角色</param>
         </field>
-        <field text="回顾设定" name="remind" type="textarea">
-            <param name="form-hint">使用 ${messages} 嵌入对话历史, 使用 ${prompt} 嵌入最新问题</param>
+        <field text="引用人设" name="relate" type="textarea">
+            <param name="form-hint">处理资料引用, 使用 ${sections} 嵌入引用材料</param>
+        </field>
+        <field text="回顾人设" name="remind" type="textarea">
+            <param name="form-hint">总结历史消息, 使用 ${messages} 嵌入对话历史, 使用 ${prompt} 嵌入最新问题</param>
         </field>
         <field text="访问码" name="token" type="text">
             <param name="listable">yes</param>
@@ -300,7 +303,7 @@
         </field>
     </form>
     <form name="applicant">
-        <field text="智能任务">
+        <field text="任务">
             <param name="db-name">magpie/data/applicant</param>
             <param name="db-path">magpie/data/applicant</param>
             <param name="db-table">magpie.data</param>
