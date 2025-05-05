@@ -34,9 +34,8 @@ import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
 import io.github.ihongs.util.Synt;
-import io.github.ihongs.util.daemon.Chore.Defer;
+import io.github.ihongs.util.daemon.Chore;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -45,10 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 接口工具
@@ -423,8 +420,9 @@ public final class AiUtil {
      * @param maxT max output tokens
      * @param r 工具递归限定, 0 不限
      * @param callback
+     * @return 
      */
-    public static Defer chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Consumer<String> callback) {
+    public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Consumer<String> callback) {
         StreamingChatLanguageModel lm = getStreamingModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = toChatMessages(messages);
@@ -458,7 +456,7 @@ public final class AiUtil {
             .messages(ms)
             .build();
 
-        Defer df = new Defer();
+        Chore.Defer<ChatResponse> df = new Chore.Defer();
 
         lm.chat(rq, new StreamingChatResponseHandler() {
             int x = r;
@@ -466,6 +464,7 @@ public final class AiUtil {
             public void onPartialResponse (String rs ) {
                 callback.accept(rs);
                 
+                // 中止读取
                 if (df.interrupted()) {
                     throw new CruxExemption("@magpie.stream.cancel");
                 }
@@ -498,10 +497,10 @@ public final class AiUtil {
                         .build     (  );
 
                     // 递归执行
-                    lm.chat( rx, this );
+                    lm.chat(rx, this);
                 } else {
                     // 外部放行
-                    df.done();
+                    df.done(rp);
                 }
             }
             @Override

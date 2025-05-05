@@ -16,7 +16,6 @@ import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
-import io.github.ihongs.util.daemon.Chore.Defer;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -24,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -89,7 +89,7 @@ public class MagpieMessage {
             throw new CruxException(400, "session_id required");
         }
 
-        Defer df = (Defer) Core.getInterior().get("magpie.stream."+id);
+        Future df = (Future) Core.getInterior().get("magpie.stream."+id);
         if (df != null) {
             df.cancel (true);
             helper.reply("");
@@ -256,7 +256,7 @@ public class MagpieMessage {
 
             StringBuilder sb = new StringBuilder();
             try {
-                Defer df = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
+                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             String thunk = "data:{\"text\":\""+Dist.doEscape(token)+"\"}\n\n";
@@ -272,9 +272,9 @@ public class MagpieMessage {
                     }
                 });
                 // 登记任务并等待
-                Core.getInterior().put("magpie.stream."+sid, df);
+                Core.getInterior().put("magpie.stream."+sid, ft);
                 try {
-                    df.get();
+                    ft.get();
                 } catch (Exception ex) {
                     CoreLogger.trace(ex.toString());
                 }
@@ -297,15 +297,15 @@ public class MagpieMessage {
         } else {
             StringBuilder sb = new StringBuilder();
             try {
-                Defer df = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
+                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
                     if (!token.isEmpty()) {
                         sb.append(token);
                     }
                 });
                 // 登记任务并等待
-                Core.getInterior().put("magpie.stream."+sid, df);
+                Core.getInterior().put("magpie.stream."+sid, ft);
                 try {
-                    df.get();
+                    ft.get();
                 } catch (Exception ex) {
                     CoreLogger.trace(ex.toString());
                 }
