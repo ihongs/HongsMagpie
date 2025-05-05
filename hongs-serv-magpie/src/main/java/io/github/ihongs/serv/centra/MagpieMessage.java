@@ -180,32 +180,40 @@ public class MagpieMessage {
             remind = prompt;
         }
 
-        // 获取向量
-        Object vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
-
-        // 查询资料
-        Map qry;
-        if (query.startsWith("?")) {
-            qry = ActionHelper.parseQuery(query);
-        } else {
-            qry = Synt.toMap(query);
-        }
-        qry.put("vect" , Synt.mapOf(
-            Cnst.AT_REL, vect,
-            Cnst.UP_REL, minUp
-        ));
-        qry.put("state", Synt.mapOf(
-            Cnst.GT_REL, 0
-        ));
-        qry.put(Cnst.OB_KEY, Synt.setOf("-"));
-        qry.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
+        Map        find;
+        Object     vect = null;
+        Data.Loop  loop = null;
+        List<Map>  refs = new ArrayList();
         Data ref = Data.getInstance("centra/data/magpie", "reference");
         Data seg = Data.getInstance("centra/data/magpie", "reference-segment");
-        Data.Loop loop = seg.search(qry, 0, maxRn);
+
+        if (!query.startsWith("?") ) {
+            find = Synt.toMap(query);
+        } else {
+            find = ActionHelper.parseQuery( query );
+        }
+
+        // 获取向量
+        if (! Synt.declare(rd.get("imbed"), false)) {
+            vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
+            find.put("vect" , Synt.mapOf(
+                Cnst.AT_REL , vect,
+                Cnst.UP_REL , minUp
+            ));
+        }
+
+        // 查询资料
+        if (find != null && ! find.isEmpty()) {
+            find.put("state", Synt.mapOf(
+                Cnst.GT_REL , 0
+            ));
+            find.put(Cnst.OB_KEY, Synt.setOf("-"));
+            find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
+            loop = seg.search(find, 0, maxRn);
+        }
 
         // 引用资料
-        List<Map> refs = new ArrayList();
-        if (loop.count() > 0 ) {
+        if (loop != null && loop.count() > 0 ) {
             StringBuilder ps = new StringBuilder();
             Set rb = Synt.toSet(ref.getParams().get("showable"));
             Set rl = new HashSet( );

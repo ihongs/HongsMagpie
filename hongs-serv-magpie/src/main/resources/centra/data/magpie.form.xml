@@ -175,11 +175,11 @@
         <field text="参数对象" name="quest" type="object">
             <param name="disabled">yes</param>
         </field>
-        <field text="直接引用" name="direct" type="select">
-            <param name="enum">assistant_state</param>
+        <field text="直接引用" name="imbed" type="select">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="default">0</param>
+            <param name="form-hint">跳过文档匹配, 直接嵌入引用</param>
         </field>
         <field text="最低匹配度" name="min_up" type="number">
             <param name="listable">yes</param>
@@ -380,6 +380,10 @@
             <param name="unwritable">yes</param>
         </field>
     </form>
+    <enum name="imbed">
+        <value code="0">否</value>
+        <value code="1">是</value>
+    </enum>
     <enum name="reference_state">
         <value code="1">正常</value>
         <value code="0">封存</value>
