@@ -202,12 +202,19 @@
             <param name="max">50</param>
             <param name="default">20</param>
         </field>
-        <field text="限定 Token" name="max_tk" type="number">
+        <field text="输出限定"   name="max_tk" type="number">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">0</param>
             <param name="max">500</param>
             <param name="default">0</param>
+        </field>
+        <field text="Temperature" name="temperature" type="number">
+            <param name="listable">yes</param>
+            <param name="type">double</param>
+            <param name="min">0</param>
+            <param name="max">1</param>
+            <param name="default">0.0</param>
         </field>
         <field text="系统人设" name="system" type="textarea">
             <param name="form-hint">扮演何种角色</param>
