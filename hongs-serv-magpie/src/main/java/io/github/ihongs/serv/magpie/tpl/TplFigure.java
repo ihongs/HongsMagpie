@@ -91,7 +91,8 @@ public class TplFigure extends Directive {
                 writer.write(T);
                 writer.write(v);
                 writer.write(R);
-            } else {
+            } else
+            {
                 writer.write(l);
                 writer.write(T);
                 writer.write(v);
