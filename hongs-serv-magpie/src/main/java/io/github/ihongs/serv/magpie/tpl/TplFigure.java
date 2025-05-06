@@ -39,7 +39,7 @@ public class TplFigure extends Directive {
                 value = exprList.getExpr(1);
                 strip = null;
             }
-            default -> throw new ParseException("Params must be label,value,style or label,value", location);
+            default -> throw new ParseException("Params must be label,value or label,value,strip", location);
         }
     }
 
