@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package io.github.ihongs.serv.magpie.tpl;
 
 import io.github.ihongs.util.Inst;
@@ -69,14 +65,26 @@ public class TplMethod {
             if (sa.contains("tags") || sa.contains("html")) {
                 st = Syno.stripTags(st); // 清除标签
             }
-            if (sa.contains("ends") || sa.contains("html") || sa.contains("text")) {
-                st = Syno.stripEnds(st); // 首尾清理
+            if (sa.contains("trim") || sa.contains("html")) {
+                st = Syno.strip    (st); // 清理首尾
             }
-            if (sa.contains("trim") || sa.contains("html") || sa.contains("text")) {
-                st = st.strip();
+            if (sa.contains("gaps")) {
+                st = Syno.stripGaps(st); // 清除空行
+            }
+            if (sa.contains("ends")) {
+                st = Syno.stripEnds(st); // 清除换行
+            }
+            if (sa.contains("unis")) {
+                st = Syno.unifyEnds(st); // 统一换行
+            }
+            if (sa.contains("ind" ) || sa.contains("mul" )) {
+                st = Syno.indent(st, S); // 段首缩进
+                st = st.trim( );
             }
         }
         return  st;
     }
-    
+
+    private static final String S = "  ";
+
 }
