@@ -10,6 +10,7 @@ import com.jfinal.template.stat.Scope;
 import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -46,9 +47,25 @@ public class TplFigure extends Directive {
     @Override
     public void exec(Env env, Scope scope, Writer writer) {
         try {
-            String v = Synt.asString(value.eval(scope));
-            if (v == null || v.isBlank()) return;
-            String l = Synt.asString(label.eval(scope));
+            Object lab = label.eval(scope);
+            Object val = value.eval(scope);
+
+            // 多个值用逗号分隔
+            if (val != null) {
+            if (val instanceof Collection) {
+                val = Syno.concat(", ", (Collection) val);
+            } else
+            if (val instanceof Object [ ]) {
+                val = Syno.concat(", ", (Object [ ]) val);
+            }}
+
+            String l = Synt.asString(lab);
+            String v = Synt.asString(val);
+
+            // 跳过空值
+            if (v == null || v.isBlank()) {
+                return;
+            }
 
             // 清理内容
             Set s = Synt.toTerms(strip != null ? strip.eval(scope) : null);
