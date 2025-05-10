@@ -62,7 +62,7 @@ public class TplFigure extends Directive {
             String l = Synt.asString(lab);
             String v = Synt.asString(val);
 
-            // 跳过空值
+            // 空值跳过
             if (v == null || v.isBlank()) {
                 return;
             }
