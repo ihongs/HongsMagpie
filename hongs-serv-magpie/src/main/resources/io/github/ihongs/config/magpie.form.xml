@@ -4,7 +4,7 @@
         <value code="qwen">QWen</value>
     </enum>
     <enum name="tool">
-        <value code="echo">Echo</value>
-        <value code="calc">Calculator</value>
+        <value code="echo">echo: Echo</value>
+        <value code="calc">calc: Calculator</value>
     </enum>
 </root>

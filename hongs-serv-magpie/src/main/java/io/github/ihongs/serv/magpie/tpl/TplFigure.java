@@ -14,7 +14,22 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- *
+ * 模板输出
+ * 
+ * <pre>
+ * 使用方法: #f("标签", 变量) 或 #f("标签", 变量, "操作")
+ * 操作可选: 可用多个, 逗号分隔
+ *  html 等同 cros,tags,trim
+ *  cros 清除脚本
+ *  tags 清除标签
+ *  trim 清除首尾
+ *  gaps 清除空行
+ *  ends 清除换行
+ *  unis 统一换行
+ *  ind  第二行开始缩进
+ *  mul  新起一行且缩进
+ * </pre>
+ * 
  * @author Hongs
  */
 public class TplFigure extends Directive {
