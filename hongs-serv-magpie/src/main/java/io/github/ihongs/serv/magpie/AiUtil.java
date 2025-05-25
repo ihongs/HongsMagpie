@@ -468,7 +468,7 @@ public final class AiUtil {
                 callback.accept(rs);
 
                 // 中止读取
-                if (df.interrupted()) {
+                if (df.interrupted() || Thread.interrupted()) {
                     throw new CruxExemption("@magpie.stream.cancel");
                 }
             }
