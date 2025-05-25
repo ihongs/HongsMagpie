@@ -36,6 +36,7 @@ import io.github.ihongs.CruxExemption;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Chore;
+import io.github.ihongs.util.daemon.Defer;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
@@ -458,7 +459,7 @@ public final class AiUtil {
             .messages(ms)
             .build();
 
-        Chore.Defer<ChatResponse> df = new Chore.Defer();
+        Defer<ChatResponse> df = new Defer();
 
         lm.chat(rq, new StreamingChatResponseHandler() {
             int x = r != 0 ? r : Integer.MAX_VALUE;
