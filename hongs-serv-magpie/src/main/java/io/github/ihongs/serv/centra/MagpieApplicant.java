@@ -241,16 +241,16 @@ public class MagpieApplicant {
         if (! Synt.declare(rd.get("reflow"), false)) {
         if (sta == 1) {
             // 排队数
-           long t = Synt.declare(inf.get("mtime"), 0L);
-            int w = ent.search(Synt.mapOf(
+            long t = Synt.declare(inf.get("mtime"), 0L);
+            long w = ent.search(Synt.mapOf(
                 "mtime", Synt.mapOf(Cnst.LT_REL, t),
                 "state", Synt.mapOf(Cnst.EQ_REL, 1),
                 Cnst.ID_KEY, Synt.mapOf(Cnst.NE_REL, id)
-            ), 0, 0).hits();
-            int r = ent.search(Synt.mapOf(
+            ), 0, 0).total();
+            long r = ent.search(Synt.mapOf(
                 "state", Synt.mapOf(Cnst.EQ_REL, 2),
                 Cnst.ID_KEY, Synt.mapOf(Cnst.NE_REL, id)
-            ), 0, 0).hits();
+            ), 0, 0).total();
             log.accept("WAITING " + w + " RUNNING " + r);
         } else {
             // 读日志

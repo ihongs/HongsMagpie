@@ -59,8 +59,9 @@ public class AiCmds {
             rearrange(ref, lis);
 
             bn  = bn + lop.size( );
-            CombatHelper.println("Refreshed " + bn + "/" + lop.hits());
+            CombatHelper.printlr("Refreshed " + bn + "/" + lop.total());
         } while (rn <= lop.size());
+        CombatHelper.printed( );
     }
 
     public static void rearrange(Data ref, List<Map> list) throws CruxException {
@@ -151,8 +152,9 @@ public class AiCmds {
             transform(ref, mod, lis);
 
             bn  = bn + lop.size( );
-            CombatHelper.println("Rebuilded " + bn + "/" + lop.hits());
+            CombatHelper.printlr("Rebuilded " + bn + "/" + lop.total());
         } while (rn <= lop.size());
+        CombatHelper.printed( );
     }
 
     public static void transform(Data ref, Data mod, List<Map> list) throws CruxException {
