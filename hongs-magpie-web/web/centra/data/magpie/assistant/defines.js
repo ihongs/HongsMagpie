@@ -1,4 +1,12 @@
 
+function in_centra_data_magpie_assistant_list(context, listobj) {
+    context.find('thead ._admin .dropdown-menu').prepend('<li><a href="javascript:;" class="launch">应用</a></li>');
+    
+    listobj.openBind([
+        ["centra/data/magpie/assistant/test.html?id={ID}&readonly=1", ".launch", "@"]
+    ]);
+}
+
 function in_centra_data_magpie_assistant_test(context, formobj) {
     var ssid ;
     var msgs = [];

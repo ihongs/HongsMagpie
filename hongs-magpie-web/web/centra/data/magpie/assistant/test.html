@@ -87,17 +87,6 @@
                 </div>
             </div><!-- end form-body -->
             </div><!-- end panel -->
-            <div class="panel panel-default">
-            <div class="form-foot">
-                <div class="form-group">
-                    <div>
-                        <div class="btn-toolbar">
-                            <button type="submit" class="commit btn btn-default">转存为智能助理</button>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- end form-foot -->
-            </div><!-- end panel -->
             </form>
         </div>
         <div class="col col-xs-6 magpie-msgsbox">
@@ -119,7 +108,7 @@
                             &nbsp; &nbsp;
                             <button name="cancel" type="button" class="btn btn-warning">停止</button>
                             &nbsp; &nbsp;
-                            <button name="cleans" type="button" class="btn btn-link pull-right">清空</button> 
+                            <button name="cleans" type="button" class="btn btn-link pull-right">清空</button>
                         </div>
                     </div>
                 </div>
@@ -156,7 +145,9 @@
     }
 
     var formobj = context.hsForm({
-        _url : "centra/data/magpie/assistant/recipe.act?ab=.enfo,.info,.fall,_fork,_text",
+        _url : loaddat['id']
+             ? "centra/data/magpie/assistant/recite.act?ab=.enfo,.info,.fall,_fork,_text"
+             : "centra/data/magpie/assistant/recipe.act?ab=.enfo,.info,.fall,_fork,_text",
          loadData: loaddat,
          initInfo: initinf,
         _fill__file: hsFormFillFile,
@@ -193,6 +184,11 @@
 
         // 加载数据
         formobj.load();
+
+        // 只读控制
+        if (loaddat['readonly']) {
+            formbox.find("input,selet,textarea").prop("readonly", true);console.log(formbox.find("input,selet,textarea"))
+        }
 
         }); // End Promise
     });
