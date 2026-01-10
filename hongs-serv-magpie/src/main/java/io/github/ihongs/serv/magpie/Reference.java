@@ -193,8 +193,8 @@ public class Reference extends Segment {
         // 拆分文本, 获取向量
         String nt = Synt.asString(rd.get("text")); // 新的内容
         String ot = Synt.asString(dd.get("text")); // 旧的内容
-        String sp = Synt.defxult(Synt.asString(rd.get("slit")), Synt.asString(dd.get("slit")), "default");
         if (nt != null && ! nt.equals(ot)) {
+            String sp = Synt.defxult(Synt.asString(rd.get("slit")), Synt.asString(dd.get("slit")), "default");
             List pl = AiUtil.split(nt, sp);
             List vl = AiUtil.embed(pl, AiUtil.ETYPE.DOC);
             List ps = new ArrayList(vl.size());
