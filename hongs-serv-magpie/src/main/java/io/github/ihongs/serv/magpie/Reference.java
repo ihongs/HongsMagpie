@@ -5,7 +5,6 @@ import io.github.ihongs.Core;
 import io.github.ihongs.CruxException;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Dict;
-import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.verify.Wrong;
 import java.util.ArrayList;
@@ -191,18 +190,12 @@ public class Reference extends Segment {
 
         int n = 0;
 
-        // 新旧内容
-        Object nt = rd.get("text");
-        Object ot = dd.get("text");
-
-        // 拆分文本
-        List pl = Synt.asList(rd.get("parts"));
-        if (pl == null && nt != null && ! nt.equals(ot)) {
-            pl = AiUtil.split(nt.toString(  ));
-        }
-
-        // 获取向量
-        if (pl != null) {
+        // 拆分文本, 获取向量
+        String nt = Synt.asString(rd.get("text")); // 新的内容
+        String ot = Synt.asString(dd.get("text")); // 旧的内容
+        String sp = Synt.defxult(Synt.asString(rd.get("slit")), Synt.asString(dd.get("slit")), "default");
+        if (nt != null && ! nt.equals(ot)) {
+            List pl = AiUtil.split(nt, sp);
             List vl = AiUtil.embed(pl, AiUtil.ETYPE.DOC);
             List ps = new ArrayList(vl.size());
             for(int i = 0; i < vl.size(); i++) {
@@ -211,8 +204,8 @@ public class Reference extends Segment {
                 pa.add(vl.get(i));
                 ps.add(pa);
             }
-            dd.put("parts", ps  );
-            dd.put("part" , Dist.toString(ps, true));
+            dd.put("slit" , sp);
+            dd.put("parts", ps);
             sync ++ ;
             n ++ ;
         }
@@ -224,9 +217,8 @@ public class Reference extends Segment {
 
     @Override
     protected boolean missable(String fn, Object fo, Object fr) {
-        if (fn.startsWith("add-") // 增加标签
-        ||  fn.startsWith("del-") // 删减标签
-        ||  fn.equals ("part")) { // 上面查过
+        if (fn.startsWith("add-")    // 增加标签
+        ||  fn.startsWith("del-")) { // 删减标签
             return true;
         }
         if (super.missable(fn, fo, fr)) {
@@ -239,19 +231,19 @@ public class Reference extends Segment {
     }
 
     public void updateSegments(String id, Map data) throws CruxException {
-        Data seg = getSegment();
-
-        List parts = Synt.asList(data.get("parts"));
-        if ( parts == null) {
-             parts = Synt.toList(data.get("part" ));
+        List parts  = Synt.asList(data.get("parts"));
+        if ( parts == null ) {
+             return ;
         }
+
+        Data seg = getSegment();
 
         // 写入新的
         int i = 0;
-        if (parts != null && ! parts.isEmpty()) {
-            Map da = new HashMap();
+        if (! parts.isEmpty() ) {
+            Map da = new HashMap(syns.size());
             for(Object kn : syns ) {
-                da.put(kn , data.get(kn));
+                da.put(kn , data . get( kn ));
             }
             for(Object po : parts) {
                 List   pa = (List) po;

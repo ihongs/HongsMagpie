@@ -55,22 +55,24 @@
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
         </field>
-        <!--field text="文档" name="file" type="file">
+        <field text="文档" name="file" type="file">
             <param name="listable">yes</param>
             <param name="accept">.md,.txt,.html,.docx,.xlsx,.pptx,.pdf</param>
             <param name="path">static/upload/magpie/reference/${id:split}</param>
             <param name="href">static/upload/magpie/reference/${id:split}</param>
             <param name="naming">keep:file.dat</param>
             <param name="hash-status">yes</param>
-        </field-->
+        </field>
         <field text="内容" name="text" type="textarea" required="yes">
             <param name="filtable">yes</param>
         </field>
-        <field text="分块" name="part" type="stored">
-            <param name="disabled">yes</param>
-        </field>
         <field text="链接" name="href" type="text">
             <param name="listable">yes</param>
+        </field>
+        <field text="分块模式" name="slit" type="enum" required="yes">
+            <param name="listable">yes</param>
+            <param name="enum">splitter</param>
+            <param name="default">default</param>
         </field>
         <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>
@@ -178,6 +180,7 @@
         <field text="引用方式" name="quote" type="select">
             <param name="listable">yes</param>
             <param name="type">int</param>
+            <param name="enum">assistant_quote</param>
             <param name="default">1</param>
             <param name="form-hint">直接内嵌会将文档全部嵌入上下文作为参考，不进行匹配查询</param>
         </field>
@@ -387,10 +390,8 @@
             <param name="unwritable">yes</param>
         </field>
     </form>
-    <enum name="quote">
-        <value code="1">引用片段</value>
-        <value code="2">引用全文</value>
-        <value code="0">直接内嵌</value>
+    <enum name="splitter">
+        <value code="default">默认</value>
     </enum>
     <enum name="reference_state">
         <value code="1">正常</value>
@@ -399,6 +400,11 @@
     <enum name="assistant_state">
         <value code="1">正常</value>
         <value code="0">停用</value>
+    </enum>
+    <enum name="assistant_quote">
+        <value code="1">引用片段</value>
+        <value code="2">引用全文</value>
+        <value code="0">直接内嵌</value>
     </enum>
     <enum name="applicant_state">
         <value code="1">待执行</value>

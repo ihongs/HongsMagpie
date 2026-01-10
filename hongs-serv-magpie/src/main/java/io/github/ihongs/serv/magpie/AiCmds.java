@@ -7,7 +7,6 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.SelectHelper;
 import io.github.ihongs.combat.CombatHelper;
 import io.github.ihongs.combat.anno.Combat;
-import io.github.ihongs.serv.magpie.AiUtil.ETYPE;
 import io.github.ihongs.serv.magpie.tpl.TplEngine;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Synt;
@@ -28,7 +27,7 @@ public class AiCmds {
      * @param args
      * @throws CruxException
      */
-    @Combat("reference/rearrange")
+    @Combat("reference.rearrange")
     public static void rearrange(String[] args) throws CruxException {
         Map opts = CombatHelper.getOpts(args, new String[] {
             "find:s",
@@ -40,7 +39,7 @@ public class AiCmds {
         String user = (String) opts.get("user");
         user = Synt.defoult(user, Cnst.ADM_UID);
         find = Synt.defoult(find, "");
-        
+
         Map qry = ActionHelper.parseQuery(find);
         ActionHelper.getInstance( ).setSessibute( Cnst.UID_SES, user );
 
@@ -67,24 +66,25 @@ public class AiCmds {
 
     public static void rearrange(Data ref, List<Map> list) throws CruxException {
         Data seg = ((Reference) ref).getSegment();
-        
+
         Set  syn = Synt.toSet (ref.getParams().get("syncable"));
         Map  sub = new HashMap(syn.size() + 5);
-        
+
         for(Map item : list) {
             String id = (String) item.get( "id" );
             String bd = (String) item.get("text");
-            
-            List pa = AiUtil.split(bd);
-            List va = AiUtil.embed(pa, ETYPE.DOC);
+            String st = (String) item.get("slit");
+
+            List   pa = AiUtil.split(bd, st);
+            List   va = AiUtil.embed(pa, AiUtil.ETYPE.DOC);
 
             // 同步数据
-            for(Object kn : syn) {
+            for (Object kn : syn) {
                 sub.put(kn, item.get(kn));
             }
 
             // 写入记录
-            for (int i = 0; i < pa.size(); i ++ ) {
+            for (int i = 0; i < pa.size(); i ++) {
                 String d = id+"-"+i ;
                 Object p = pa.get(i);
                 Object v = va.get(i);
@@ -115,20 +115,22 @@ public class AiCmds {
      * @param args
      * @throws CruxException
      */
-    @Combat("reference/transform")
+    @Combat("reference.transform")
     public static void transform(String[] args) throws CruxException {
         Map opts = CombatHelper.getOpts(args, new String[] {
             "conf=s",
             "form=s",
             "find:s",
             "user:s",
-            "?Usage: rebuild --conf CONF --form FORM --find QUERY"
+            "slit:s",
+            "?Usage: rebuild --conf CONF --form FORM --find QUERY --slit SPLITTER"
         });
 
         String conf = (String) opts.get("conf");
         String form = (String) opts.get("form");
         String find = (String) opts.get("find");
         String user = (String) opts.get("user");
+        String slit = (String) opts.get("slit");
 
         Map qry = ActionHelper.parseQuery(find);
         user = Synt.defoult(user, Cnst.ADM_UID);
@@ -137,10 +139,10 @@ public class AiCmds {
         Data mod = Data.getInstance(conf, form);
         Data ref = Data.getInstance("centra/data/magpie", "reference");
 
-        AiCmds.transform(ref, mod, qry);
+        AiCmds.transform(ref, mod, qry, slit);
     }
 
-    public static void transform(Data ref, Data mod, Map qry) throws CruxException {
+    public static void transform(Data ref, Data mod, Map qry, String slit) throws CruxException {
         SelectHelper sh = new SelectHelper().addItemsByForm(mod.getFields());
         byte st  = SelectHelper.TEXT | SelectHelper.LINK
                  | SelectHelper.FORK | SelectHelper.FALL;
@@ -157,7 +159,7 @@ public class AiCmds {
             rsp = Synt.mapOf( "list", lis );
             sh.inject(rsp, st );
 
-            transform(ref, mod, lis);
+            transform(ref, mod, lis, slit );
 
             bn  = bn + lop.size( );
             CombatHelper.printlr("Rebuilded " + bn + "/" + lop.total());
@@ -165,7 +167,7 @@ public class AiCmds {
         CombatHelper.printed( );
     }
 
-    public static void transform(Data ref, Data mod, List<Map> list) throws CruxException {
+    public static void transform(Data ref, Data mod, List<Map> list, String slit) throws CruxException {
         String fid = mod.getFormId();
         String tpn = "form/" + fid + ".md";
         TplEngine  eng = TplEngine.getInstance();
@@ -189,6 +191,7 @@ public class AiCmds {
                     "form_id:"+fid,
                     "data_id:"+did
                 ));
+                info.put("slit" , slit);
                 info.put("state", 1);
                 info.put("ctime", t);
                 info.put("mtime", t);

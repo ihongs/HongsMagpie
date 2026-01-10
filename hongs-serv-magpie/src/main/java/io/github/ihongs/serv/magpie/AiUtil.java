@@ -13,8 +13,8 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.request.DefaultChatRequestParameters;
@@ -36,7 +36,6 @@ import io.github.ihongs.CruxExemption;
 import io.github.ihongs.serv.tool.Env;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
-import io.github.ihongs.util.daemon.Chore;
 import io.github.ihongs.util.daemon.Defer;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -66,7 +65,7 @@ public final class AiUtil {
      * @param name
      * @return
      */
-    public static ChatLanguageModel getChatModel(String name) {
+    public static ChatModel getChatModel(String name) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
         String api = cc.getProperty("magpie.llm."+name+".api", name);
         String mod = cc.getProperty("magpie.llm."+name+".mod");
@@ -89,7 +88,7 @@ public final class AiUtil {
      * @param name
      * @return
      */
-    public static StreamingChatLanguageModel getStreamingModel(String name) {
+    public static StreamingChatModel getStreamingModel(String name) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
         String api = cc.getProperty("magpie.llm."+name+".api", name);
         String mod = cc.getProperty("magpie.llm."+name+".mod");
@@ -133,18 +132,19 @@ public final class AiUtil {
     /**
      * 获取文档拆分器
      * 配置:
-     * magpie.splitter.class=拆分器类名, 带静态方法 recursive(int, int)
-     * magpie.splitter.max-segment-size=分块大小
-     * magpie.splitter.max-overlay-size=重叠大小
+     * TYPE.splitter.class=拆分器类名, 带静态方法 recursive(int, int)
+     * TYPE.splitter.max-segment-size=分块大小
+     * TYPE.splitter.max-overlay-size=重叠大小
+     * @param type
      * @return
      */
-    public static DocumentSplitter getDocumentSplitter() {
+    public static DocumentSplitter getDocumentSplitter(String type) {
         return Core.getInstance()
-            .got(DocumentSplitter.class.getName(), ()->{
+            .got(DocumentSplitter.class.getName()+":"+type, ()->{
                 CoreConfig cc = CoreConfig.getInstance("magpie");
-                String clsn = cc.getProperty("document.splitters", DocumentSplitters.class.getName());
-                int maxSegmentSize = cc.getProperty("document.splitter.max-segment-size", 1000);
-                int maxOverlaySize = cc.getProperty("document.splitter.max-overlay-size", 100 );
+                String clsn = cc.getProperty(type+".splitter.class", DocumentSplitters.class.getName());
+                int maxSegmentSize = cc.getProperty(type+".splitter.max-segment-size", 1000);
+                int maxOverlaySize = cc.getProperty(type+".splitter.max-overlay-size", 100 );
 
                 try {
                     Class  clso = Class.forName(clsn);
@@ -263,7 +263,7 @@ public final class AiUtil {
      * @return
      */
     public static String chat(String model, List<Map> messages) {
-        ChatLanguageModel lm = getChatModel(model);
+        ChatModel lm = getChatModel(model);
         List<ChatMessage> ms = toChatMessages(messages);
 
         ChatRequest  rq = ChatRequest.builder()
@@ -283,7 +283,7 @@ public final class AiUtil {
      * @return
      */
     public static String chat(String model, List<Map> messages, Set<String> tools) {
-        ChatLanguageModel lm = getChatModel(model);
+        ChatModel lm = getChatModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
@@ -335,11 +335,12 @@ public final class AiUtil {
      * @param topP
      * @param topK
      * @param maxT max output tokens
-     * @param r 工具递归限定, 0 不限
+     * @param r   工具递归限定, 0 不限
+     * @param env 工具调用环境
      * @return
      */
-    public static String chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r) {
-        ChatLanguageModel lm = getChatModel(model);
+    public static String chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Map env) {
+        ChatModel lm = getChatModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
@@ -422,12 +423,13 @@ public final class AiUtil {
      * @param topP
      * @param topK
      * @param maxT max output tokens
-     * @param r 工具递归限定, 0 不限
+     * @param r   工具递归限定, 0 不限
+     * @param env 工具调用环境
      * @param callback
      * @return
      */
     public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Map env, Consumer<String> callback) {
-        StreamingChatLanguageModel lm = getStreamingModel(model);
+        StreamingChatModel lm = getStreamingModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
@@ -555,10 +557,11 @@ public final class AiUtil {
     /**
      * 拆分文本
      * @param text
+     * @param type
      * @return
      */
-    public static List<String> split(String text) {
-        return getDocumentSplitter()
+    public static List<String> split(String text, String type) {
+        return getDocumentSplitter(type)
             .split  (Document.from(text))
             .stream ()
             .map    (seg->seg.text ())
