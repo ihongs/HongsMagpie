@@ -28,13 +28,13 @@
                         <div class="help-block text-muted form-control-static">格式: ?键=值&键=值 或 键:值,键:值 或直接写 JSON</div>
                     </div>
                 </div>
-                <div class="form-group" data-name="imbed">
-                    <label class="form-label control-label form-control-static">直接引用</label>
+                <div class="form-group" data-name="quote">
+                    <label class="form-label control-label form-control-static">引用方式</label>
                     <div>
-                        <select class="form-field form-control" name="imbed">
+                        <select class="form-field form-control" name="quote">
                         </select>
                         <div class="help-block text-error form-control-static"></div>
-                        <div class="help-block text-muted form-control-static">跳过文档匹配, 直接嵌入引用</div>
+                        <div class="help-block text-muted form-control-static">直接内嵌会将文档全部嵌入上下文作为参考，不进行匹配查询</div>
                     </div>
                 </div>
                 <div class="form-group" data-name="max_rn">
@@ -145,9 +145,7 @@
     }
 
     var formobj = context.hsForm({
-        _url : loaddat['id']
-             ? "centra/data/magpie/assistant/recite.act?ab=.enfo,.info,.fall,_fork,_text"
-             : "centra/data/magpie/assistant/recipe.act?ab=.enfo,.info,.fall,_fork,_text",
+        _url : "centra/data/magpie/assistant/recipe.act?ab=.enfo,.info,.fall,_fork,_text",
          loadData: loaddat,
          initInfo: initinf,
         _fill__file: hsFormFillFile,
@@ -184,11 +182,6 @@
 
         // 加载数据
         formobj.load();
-
-        // 只读控制
-        if (loaddat['readonly']) {
-            formbox.find("input,selet,textarea").prop("readonly", true);console.log(formbox.find("input,selet,textarea"))
-        }
 
         }); // End Promise
     });

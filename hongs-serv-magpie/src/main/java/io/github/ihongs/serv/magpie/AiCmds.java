@@ -14,6 +14,7 @@ import io.github.ihongs.util.Synt;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 维护命令
@@ -37,9 +38,10 @@ public class AiCmds {
 
         String find = (String) opts.get("find");
         String user = (String) opts.get("user");
-
-        Map qry = ActionHelper.parseQuery(find);
         user = Synt.defoult(user, Cnst.ADM_UID);
+        find = Synt.defoult(find, "");
+        
+        Map qry = ActionHelper.parseQuery(find);
         ActionHelper.getInstance( ).setSessibute( Cnst.UID_SES, user );
 
         Data ref = Data.getInstance("centra/data/magpie", "reference");
@@ -59,33 +61,39 @@ public class AiCmds {
             rearrange(ref, lis);
 
             bn  = bn + lop.size( );
-            CombatHelper.printlr("Refreshed " + bn + "/" + lop.total());
+            CombatHelper.println("Refreshed " + bn + "/" + lop.hits());
         } while (rn <= lop.size());
-        CombatHelper.printed( );
     }
 
     public static void rearrange(Data ref, List<Map> list) throws CruxException {
         Data seg = ((Reference) ref).getSegment();
-
+        
+        Set  syn = Synt.toSet (ref.getParams().get("syncable"));
+        Map  sub = new HashMap(syn.size() + 5);
+        
         for(Map item : list) {
             String id = (String) item.get( "id" );
-            String bd = (String) item.get("body");
-
+            String bd = (String) item.get("text");
+            
             List pa = AiUtil.split(bd);
             List va = AiUtil.embed(pa, ETYPE.DOC);
+
+            // 同步数据
+            for(Object kn : syn) {
+                sub.put(kn, item.get(kn));
+            }
 
             // 写入记录
             for (int i = 0; i < pa.size(); i ++ ) {
                 String d = id+"-"+i ;
                 Object p = pa.get(i);
                 Object v = va.get(i);
-                seg.set( d, Synt.mapOf(
-                    "rf"  , id,
-                    "id"  , d ,
-                    "sn"  , i ,
-                    "text", p ,
-                    "vect", v
-                ), 0);
+                sub.put("rf", id);
+                sub.put("id", d );
+                sub.put("sn", i );
+                sub.put("text", p);
+                sub.put("vect", v);
+                seg.set(d, new HashMap(sub), 0);
             }
 
             // 删除多余

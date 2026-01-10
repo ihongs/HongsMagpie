@@ -27,7 +27,7 @@
             <param name="diverse">treeset</param>
         </field>
         <field text="参数" name="args" type="text" repeated="yes">
-            <param name="form-hint">用于标识数据, 供内部查询; 格式: xxx 或 xxx:字串 或 xxx=数值; 查询: ?opts.xxx=abc&amp;nums.xxx=[18,35]</param>
+            <param name="form-hint">用于标识数据, 供内部查询; 格式: xxx 或 xxx:字串 或 xxx=数值; 查询: ?opts.xxx=abc&amp;nums.xxx.on=[18,35]</param>
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
             <param name="diverse">treeset</param>
@@ -175,11 +175,11 @@
         <field text="参数对象" name="quest" type="object">
             <param name="disabled">yes</param>
         </field>
-        <field text="直接引用" name="imbed" type="select">
+        <field text="引用方式" name="quote" type="select">
             <param name="listable">yes</param>
             <param name="type">int</param>
-            <param name="default">0</param>
-            <param name="form-hint">跳过文档匹配, 直接嵌入引用</param>
+            <param name="default">1</param>
+            <param name="form-hint">直接内嵌会将文档全部嵌入上下文作为参考，不进行匹配查询</param>
         </field>
         <field text="最低匹配度" name="min_up" type="number">
             <param name="listable">yes</param>
@@ -387,9 +387,10 @@
             <param name="unwritable">yes</param>
         </field>
     </form>
-    <enum name="imbed">
-        <value code="0">否</value>
-        <value code="1">是</value>
+    <enum name="quote">
+        <value code="1">引用片段</value>
+        <value code="2">引用全文</value>
+        <value code="0">直接内嵌</value>
     </enum>
     <enum name="reference_state">
         <value code="1">正常</value>

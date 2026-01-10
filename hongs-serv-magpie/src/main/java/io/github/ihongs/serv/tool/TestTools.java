@@ -18,7 +18,7 @@ public class TestTools {
         return "You say: " + text;
     }
 
-    @Tool("simple calculation")
+    @Tool("calc: Calculator. Simple calculation")
     public String calc(
         @P("operation")
         @E({"+", "-", "*", "/", "add", "subtract", "multiply", "divide"})

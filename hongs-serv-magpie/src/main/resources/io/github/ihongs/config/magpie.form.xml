@@ -6,5 +6,6 @@
     <enum name="tool">
         <value code="echo">echo: Echo</value>
         <value code="calc">calc: Calculator</value>
+        <value code="refs">refs: Referencer</value>
     </enum>
 </root>

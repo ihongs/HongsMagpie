@@ -182,63 +182,47 @@ public class MagpieMessage {
         stream(helper, rd, 1);
     }
 
-    private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
-        String aid = Synt.asString(rd.get("assistant_id"));
-        String sid = Synt.asString(rd.get(  "session_id"));
-        String uid = Synt.asString(rd.get(     "user_id"));
-        String nid = Synt.asString(rd.get(     "anno_id"));
-        String nip = Synt.asString(rd.get(     "anno_ip"));
-        String prompt = Synt.declare(rd.get("prompt"), "");
+    private void stream(ActionHelper helper, Map xd, int stream) throws CruxException {
+        String aid = Synt.asString(xd.get("assistant_id"));
+        String sid = Synt.asString(xd.get(  "session_id"));
+        String uid = Synt.asString(xd.get(     "user_id"));
+        String nid = Synt.asString(xd.get(     "anno_id"));
+        String nip = Synt.asString(xd.get(     "anno_ip"));
+        String prompt = Synt.declare(xd.get("prompt"), "");
 
         Data bot = Data.getInstance("centra/data/magpie", "assistant");
-        Map  ad  = bot .getOne(Synt.mapOf(
+        Map  rd  = bot .getOne(Synt.mapOf(
             Cnst.ID_KEY, aid
         ));
-        if (ad == null || ad.isEmpty( )) {
+        if (rd == null || rd.isEmpty( )) {
             throw new CruxException(400, "Assistant is not found");
         }
+        
+        // 下同 io.github.ihongs.serv.centra.MagpieMessage
 
-        String system = Synt.declare(ad.get("system"), ""  );
-        String remind = Synt.declare(ad.get("remind"), ""  );
-        String model  = Synt.declare(ad.get("model" ), ""  );
-        String query  = Synt.declare(ad.get("query" ), ""  );
-        float  minUp  = Synt.declare(ad.get("min_up"), 0.5f);
-        int    maxRn  = Synt.declare(ad.get("max_rn"), 10  );
-        int    maxSn  = Synt.declare(ad.get("max_sn"), 20  );
-        int    maxTr  = Synt.declare(ad.get("max_tr"), 1   );
-        int    maxTk  = Synt.declare(ad.get("max_tk"), 0   );
-        int    topK   = Synt.declare(ad.get("top_k" ), 0   );
-        double topP   = Synt.declare(ad.get("top_p" ), 0d  );
-        double tmpr   = Synt.declare(ad.get("temperature"  ), 0d );
-        Set<String> tools = Synt.asSet( ad.get ( "tools" ) );
+        String system = Synt.declare(rd.get("system"), ""  );
+        String relate = Synt.declare(rd.get("relate"), ""  );
+        String remind = Synt.declare(rd.get("remind"), ""  );
+        String model  = Synt.declare(rd.get("model" ), ""  );
+        String query  = Synt.declare(rd.get("query" ), ""  );
+        int    quote  = Synt.declare(rd.get("quote" ), 1   );
+        float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
+        int    maxRn  = Synt.declare(rd.get("max_rn"), 10  );
+        int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
+        int    maxTr  = Synt.declare(rd.get("max_tr"), 1   );
+        int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
+        int    topK   = Synt.declare(rd.get("top_k" ), 0   );
+        double topP   = Synt.declare(rd.get("top_p" ), 0d  );
+        double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
+        Set<String>  tools = Synt.asSet (rd.get( "tools"  ));
+        List<Map> messages = Synt.asList(rd.get("messages"));
 
         CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
 
-        // 获取历史消息
-        Data mod = Data.getInstance("centra/data/magpie", "assistant-message");
-        List<Map> rows = mod.search(Synt.mapOf(
-            "assistant_id", aid,
-              "session_id", sid,
-            Cnst.OB_KEY, Synt.setOf("ctime!"),
-            Cnst.RB_KEY, Synt.setOf("prompt", "result")
-        ), 0, maxSn).toList();
-        List<Map> messages = new ArrayList(2 + 2 * rows.size()); // 系统人设一条, 当前消息一条, 对话每组两条
-
-        // 反向放入列表
-        for(int  i  = rows.size( ) -1 ; i > -1 ; i -- ) {
-            Map row = rows.get (i);
-            Map ro0 = new HashMap( 2 );
-            ro0.put("role"   , "user");
-            ro0.put("content", row.get("prompt"));
-            messages.add(ro0);
-            Map ro1 = new HashMap( 2 );
-            ro1.put("role"   , "assistant");
-            ro1.put("content", row.get("result"));
-            messages.add(ro1);
-        }
-
         // 提取上下文
-        if (! messages.isEmpty()) {
+        if (messages != null && ! messages.isEmpty()) {
+            messages  = new ArrayList ( messages );
+
             StringBuilder ms = new StringBuilder();
             for (Map ma : messages) {
                 ms.append("- " )
@@ -264,67 +248,126 @@ public class MagpieMessage {
             ));
             CoreLogger.debug("Remind: {}", remind);
         } else {
+            messages  = new ArrayList () ;
+
             remind = prompt;
         }
 
-        Map        find;
-        Object     vect = null;
-        Data.Loop  loop = null;
-        List<Map>  refs = new ArrayList();
-        Data ref = Data.getInstance("centra/data/magpie", "reference");
-        Data seg = Data.getInstance("centra/data/magpie", "reference-segment");
+        List<Map>     refs = new ArrayList();
+        StringBuilder scts = new StringBuilder();
 
-        if (!query.startsWith("?") ) {
-            find = Synt.toMap(query);
-        } else {
-            find = ActionHelper.parseQuery( query );
-        }
+        // 查询并引用资料, 使用 refs 工具则跳过
+        if (query != null && ! query.isEmpty ( )
+        && (tools == null || ! tools.contains("refs"))) {
+            Map        find;
+            Object     vect;
+            Data.Loop  loop;
+            Data ref = Data.getInstance("centra/data/magpie", "reference");
+            Data seg = Data.getInstance("centra/data/magpie", "reference-segment");
+            Set rb = Synt.toSet( ref.getParams( ).get("showable") );
+            Map rq = Synt.mapOf(Cnst.RB_KEY, rb, Cnst.ID_KEY, null);
+            Set rz = new HashSet( );
 
-        // 获取向量
-        if (! Synt.declare(rd.get("imbed"), false)) {
-            vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
-            find.put("vect" , Synt.mapOf(
-                Cnst.AT_REL , vect,
-                Cnst.UP_REL , minUp
-            ));
-        }
+            if (query.startsWith("?")
+            ||  query.startsWith("&")) {
+                find = ActionHelper.parseQuery(query.substring(1));
+            } else {
+                find = Synt.toMap(query);
+            }
 
-        // 查询资料
-        if (find != null && ! find.isEmpty()) {
             find.put("state", Synt.mapOf(
                 Cnst.GT_REL , 0
             ));
-            find.put(Cnst.OB_KEY, Synt.setOf("-"));
-            find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
-            loop = seg.search(find, 0, maxRn);
+
+            switch (quote) {
+            case 0:
+                // 引用全文
+                rb.add("text");
+                find.put(Cnst.RB_KEY, rb);
+                loop = ref.search(find, 0, maxRn);
+                if (loop != null && loop.count() > 0) {
+                    for (Map pa : loop) {
+                        Object rf = pa.get("id");
+                        if (! rz.contains ( rf )) {
+                              rz.add(rf);
+                            refs.add(pa);
+                        }
+
+                        scts.append(pa.get("text"))
+                            .append("\n========\n");
+                          pa.remove("text");
+                    }
+                    scts.setLength(scts.length() - 10);
+                }
+                break;
+            case 1:
+                // 向量转换，查询片段
+                find.put(Cnst.OB_KEY, Synt.setOf("-" ));
+                find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
+                vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
+                find.put("vect" , Synt.mapOf(
+                    Cnst.AT_REL , vect,
+                    Cnst.UP_REL , minUp
+                ));
+                loop = seg.search(find, 0, maxRn);
+                if (loop != null && loop.count() > 0) {
+                    for (Map pa : loop) {
+                        Object rf = pa.get("rf");
+                        if (! rz.contains ( rf )) {
+                              rz.add( rf );
+                              rq.put(Cnst.ID_KEY, rf);
+                            Map pr = ref.getOne ( rq);
+                            refs.add(pr);
+                        }
+
+                        scts.append(pa.get("text"))
+                            .append("\n========\n");
+                        //pa.remove("text");
+                    }
+                    scts.setLength(scts.length() - 10);
+                }
+                break;
+            case 2:
+                // 向量转换，查询片段，再查全文
+                rb.add("text");
+                find.put(Cnst.OB_KEY, Synt.setOf("-" ));
+                find.put(Cnst.RB_KEY, Synt.setOf("rf"));
+                vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
+                find.put("vect" , Synt.mapOf(
+                    Cnst.AT_REL , vect,
+                    Cnst.UP_REL , minUp
+                ));
+                loop = seg.search(find, 0, maxRn * 3);
+                if (loop != null && loop.count() > 0) {
+                    for (Map pa : loop) {
+                        Object rf = pa.get("rf");
+                        if (! rz.contains ( rf )) {
+                            rz.add( rf );
+                            rq.put(Cnst.ID_KEY, rf);
+                            Map pr = ref.getOne(rq);
+                            refs.add(pr);
+
+                            scts.append(pr.get("text"))
+                                .append("\n========\n");
+                              pr.remove("text");
+                        }
+                    }
+                    scts.setLength(scts.length() - 10);
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported quote mode: "+quote);
+            }
         }
 
-        // 引用资料
-        if (loop != null && loop.count() > 0 ) {
-            StringBuilder ps = new StringBuilder();
-            Set rb = Synt.toSet(ref.getParams().get("showable"));
-            Set rl = new HashSet( );
-            for(Map pa : loop) {
-                Object rf = pa.get("rf");
-                if (! rl.contains ( rf )) {
-                      rl.add(rf);
-                    refs.add(ref.getOne(Synt.mapOf(
-                        Cnst.ID_KEY, Synt.mapOf(Cnst.IN_REL, rf),
-                        Cnst.RB_KEY, rb
-                    )));
-                }
-                ps.append(pa.get("text"))
-                  .append("\n========\n");
+        if (! refs.isEmpty()) {
+            if (relate == null || relate.isBlank()) {
+                relate = cl.getProperty("magpie.assistant.relate");
             }
-            ps .setLength(ps.length()-10);
-
-            if (system == null || system.isBlank()) {
-                system = cl.getProperty("magpie.assistant.relate");
-            }
-            system = Syno.inject( system, Synt.mapOf(
-                "sections", ps
+            system = Syno.inject( relate, Synt.mapOf(
+                "sections", scts
             ));
-            CoreLogger.debug("System: {}", system);
+            CoreLogger.debug("Relate: {}", system);
         } else {
             if (system == null || system.isBlank()) {
                 system = cl.getProperty("magpie.assistant.system");
@@ -339,6 +382,11 @@ public class MagpieMessage {
             "role", "user",
             "content", prompt
         ));
+
+        // 参数放入环境, 以便工具读取
+        Map env = new HashMap(1);
+        env.put("REQUEST"   , rd  );
+        env.put("REFERENCES", refs);
 
         if (stream != 0) {
             HttpServletResponse rsp = helper.getResponse();
@@ -362,7 +410,7 @@ public class MagpieMessage {
 
             StringBuilder sb = new StringBuilder();
             try {
-                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
+                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             String thunk = "data:{\"text\":\""+Dist.doEscape(token)+"\"}\n\n";
@@ -382,7 +430,14 @@ public class MagpieMessage {
                 try {
                     ft.get();
                 } catch (Exception ex) {
-                    CoreLogger.trace(ex.toString());
+                    String error = ex.getLocalizedMessage();
+                    try {
+                        sb.append(error);
+                        out.write(error);
+                        out.flush(  );
+                    } catch ( IOException e ) {
+                        throw new CruxExemption(e);
+                    }
                 }
             } finally {
                 Core.getInterior().remove("magpie.stream."+ sid);
@@ -403,7 +458,7 @@ public class MagpieMessage {
         } else {
             StringBuilder sb = new StringBuilder();
             try {
-                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, (token)-> {
+                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
                     if (!token.isEmpty()) {
                         sb.append(token);
                     }
@@ -413,7 +468,8 @@ public class MagpieMessage {
                 try {
                     ft.get();
                 } catch (Exception ex) {
-                    CoreLogger.trace(ex.toString());
+                    String error = ex.getLocalizedMessage();
+                    sb.append( error );
                 }
             } finally {
                 Core.getInterior().remove("magpie.stream."+ sid);

@@ -33,6 +33,7 @@ import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
+import io.github.ihongs.serv.tool.Env;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Chore;
@@ -425,7 +426,7 @@ public final class AiUtil {
      * @param callback
      * @return
      */
-    public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Consumer<String> callback) {
+    public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Map env, Consumer<String> callback) {
         StreamingChatLanguageModel lm = getStreamingModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
@@ -486,6 +487,11 @@ public final class AiUtil {
                             Method met = mat.getMethod ();
                             Class  cla = mat.getMclass ();
                             Object obj = Core.getInstance(cla);
+
+                            // 绑定环境
+                            if (obj instanceof Env) {
+                               ((Env) obj).env(env);
+                            }
 
                             ToolExecutor te = new DefaultToolExecutor(obj, met);
                             String  rs = te.execute(ter, UUID.randomUUID().toString());
