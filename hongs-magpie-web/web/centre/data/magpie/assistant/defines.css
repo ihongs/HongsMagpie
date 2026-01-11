@@ -8,3 +8,8 @@
     margin-top: 0;
     height: 100vh;
 }
+
+.magpie-msgsbox .rollbox > .msgs-list > div > .alert {
+    border-color: #ccc;
+    white-space : pre-wrap;
+}
