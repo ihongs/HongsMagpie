@@ -1,0 +1,10 @@
+
+#context ,
+#bodybox {
+    padding: 0;
+}
+
+#bodybox>.container {
+    margin-top: 0;
+    height: 100vh;
+}

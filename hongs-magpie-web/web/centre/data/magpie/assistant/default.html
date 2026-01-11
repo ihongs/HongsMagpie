@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+    <head>
+        <title>智能助理</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <base href="/">
+        <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+        <link rel="stylesheet" type="text/css" href="static/assets/css/common.min.css"/>
+        <link rel="stylesheet" type="text/css" href="static/assets/css/centre.min.css"/>
+        <link rel="stylesheet" type="text/css" href="centre/data/magpie/assistant/defines.css"/>
+        <!--[if glt IE8.0]>
+        <script type="text/javascript" src="static/addons/respond/respond.min.js"></script>
+        <![endif]-->
+        <script type="text/javascript" src="static/assets/common.min.js"></script>
+        <script type="text/javascript" src="common/conf/default.js"></script>
+        <script type="text/javascript" src="common/lang/default.js"></script>
+        <script type="text/javascript" src="common/auth/centre.js" ></script>
+        <script type="text/javascript" src="centre/data/magpie/assistant/defines.js" ></script>
+    </head>
+    <body class="toper-open">
+        <div id="context">
+            <div id="bodybox">
+                <div id="main-context" class="container">
+                    <div class="magpie-msgsbox">
+                        <div class="rollbox panel panel-default">
+                        <div class="form-body msgs-list">
+                        </div><!-- end form-body -->
+                        </div><!-- end panel -->
+                        <div class="panel panel-default">
+                        <div class="form-foot">
+                            <form onsubmit="return false">
+                            <div class="form-group">
+                                <div>
+                                    <input type="text" name="prompt" class="form-control"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div>
+                                    <div class="btn-toolbar">
+                                        <button name="submit" type="submit" class="btn btn-primary">发送</button>
+                                        &nbsp; &nbsp;
+                                        <button name="cancel" type="button" class="btn btn-warning">停止</button>
+                                        &nbsp; &nbsp;
+                                        <button name="cleans" type="button" class="btn btn-link pull-right">清空</button>
+                                    </div>
+                                </div>
+                            </div>
+                            </form>
+                        </div><!-- end form-foot -->
+                        </div><!-- end panel -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            (function($) {
+                var context = $("#main-context");
+                $.when(in_centre_data_magpie_assistant(context))
+                 .then(function() {
+                    // 自适滚动
+                    hsFlexRoll(context.find(".rollbox"), $("#main-context"), true);
+                });
+            })(jQuery);
+        </script>
+    </body>
+</html>
+

@@ -51,9 +51,15 @@ public class RefsTool implements Env {
         }
 
         StringBuilder scts = new StringBuilder();
-        List< Map >   refs = Synt.asList(ENV.get("REFERENCES"));
+        List<Map> refs = Synt.asList(ENV.get("REFS"));
+        List<Map> segs = Synt.asList(ENV.get("SEGS"));
         if (refs == null) {
             refs  = new ArrayList();
+            ENV.put( "REFS", refs );
+        }
+        if (segs == null) {
+            segs  = new ArrayList();
+            ENV.put( "SEGS", segs );
         }
 
         Map        find;
@@ -119,7 +125,9 @@ public class RefsTool implements Env {
 
                     scts.append(pa.get("text"))
                         .append("\n========\n");
-                    //pa.remove("text");
+                      pa.remove("text");
+
+                    segs.add(pa);
                 }
                 scts.setLength(scts.length() - 10);
             }
@@ -148,6 +156,8 @@ public class RefsTool implements Env {
                             .append("\n========\n");
                           pr.remove("text");
                     }
+
+                    seg.add(pa);
                 }
                 scts.setLength(scts.length() - 10);
             }

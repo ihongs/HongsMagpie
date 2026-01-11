@@ -11,10 +11,12 @@
             <role text="添加资料" name="centra/data/magpie/reference/create">
                 <depend>centra</depend>
                 <action>centra/data/magpie/reference/create.act</action>
+                <action>centra/data/magpie/reference/upload.act</action>
             </role>
             <role text="更新资料" name="centra/data/magpie/reference/update">
                 <depend>centra/data/magpie/reference/search</depend>
                 <action>centra/data/magpie/reference/update.act</action>
+                <action>centra/data/magpie/reference/upload.act</action>
             </role>
             <role text="删除资料" name="centra/data/magpie/reference/delete">
                 <depend>centra/data/magpie/reference/search</depend>
@@ -37,7 +39,7 @@
                 <depend>centra</depend>
                 <action>centra/data/magpie/assistant/search.act</action>
                 <action>centra/data/magpie/assistant/recite.act</action>
-                <action>centra/data/magpie/assistant-message/censor.act</action>
+                <action>centra/data/magpie/assistant-message/aerate.act</action>
             </role>
             <role text="创建助理" name="centra/data/magpie/assistant/create">
                 <depend>centra</depend>
@@ -94,7 +96,6 @@
                 <depend>centra</depend>
                 <action>centra/data/magpie/applicant/search.act</action>
                 <action>centra/data/magpie/applicant/recite.act</action>
-                <action>centra/data/magpie/applicant/censor.act</action>
                 <action>centra/data/magpie/applicant/stream.act</action>
             </role>
             <role text="创建任务" name="centra/data/magpie/applicant/create">
@@ -103,7 +104,6 @@
                 <action>centra/data/magpie/applicant/update.act</action>
             </role>
             <role text="删除任务" name="centra/data/magpie/applicant/delete">
-                <depend>centra</depend>
                 <depend>centra/data/magpie/applicant/search</depend>
                 <action>centra/data/magpie/applicant/delete.act</action>
             </role>

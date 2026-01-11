@@ -1,14 +1,61 @@
 
-function in_centra_data_magpie_assistant_info(context, listobj) {
-    var btng = context.find('.form-foot .btn-group');
-}
+function in_centre_data_magpie_assistant(context) {
+    var tok = H$('&t' );
+    var aid = H$('&id');
+    if (! aid) {
+        $.hsMask({
+            mode : "warn",
+            glass: "alert-danger",
+            title: "参数错误"
+        });
+        return;
+    }
 
-function in_centra_data_magpie_assistant_test(context, formobj) {
+    var anam ;
+    var unam ;
     var ssid ;
+    var that = {
+        note: $.hsNote,
+        warn: $.hsWarn
+    };
     var msgs = [];
-    var that = formobj;
     var mbox = context.find(".msgs-list");
     var uinp = context.find('[name=prompt]');
+
+    $.hsAjax({
+        url : hsFixUri("centre/data/magpie/assistant-message/search.act"),
+        data: {
+            token: tok,
+            assistant_id: aid,
+            ab: [ "assistant", "user", "no-list" ]
+        },
+        cache : false,
+        async : false,
+        type    : "post",
+        dataType: "json",
+        dataKind: "json",
+        complete: function(rst) {
+            rst = hsResponse(rst, 3);
+            if (! rst.ok) {
+                $.hsMask({
+                    mode : "warn",
+                    glass: "alert-danger",
+                    title: rst.msg || rst.err || "未知错误"
+                });
+                throw new Error(rst.err || rst.msg);
+            }
+
+            anam = rst.assistant.name;
+            unam = rst.user.name || "我";
+
+            if (rst.assistant.regard) {
+                $('<div><b>'+anam+':</b><div class="alert"></div></div>')
+                    .appendTo(mbox).find('div')
+                    .text(rst.assistant.regard);
+            }
+        }
+    });
+
     context.find('[name=cleans]').click(function() {
         msgs.length = 0;
         mbox.empty( );
@@ -17,14 +64,10 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
         if (! ssid) {
             return;
         }
-        fetch(hsFixUri("centra/data/magpie/assistant-message/cancel.act?session_id="+ssid));
+        fetch(hsFixUri("centre/data/magpie/assistant-message/cancel.act?session_id="+ssid));
     });
     context.find('.form-foot>form').on("submit", function() {
         // 校验
-        if (! that.validate()) {
-            that.note("请检查错误项, 修改后重试", "danger");
-            return;
-        }
         if (! uinp.val() ) {
             that.note("请先输入消息", "warning");
             return;
@@ -35,12 +78,14 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
         }
         that._waiting = true;
 
-        var data = hsSerialDat(that.formBox);
+        var data = {};
         var umsg = uinp.val();
         data.messages = msgs;
         data.prompt   = umsg;
+        data.token    =  tok;
+        data.assistant_id = aid;
 
-        fetch(hsFixUri("centra/data/magpie/assistant-message/aerate.act?stream=2"), {
+        fetch(hsFixUri("centre/data/magpie/assistant-message/aerate.act?stream=2"), {
             body    : JSON.stringify(data),
             method  : "POST",
             headers : {
@@ -61,8 +106,6 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
 
             ssid = rsp.session_id;
 
-            var unam = '我';
-            var anam = context.find('[name=model]>:selected').text();
             var ubox = $('<div><b>'+unam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
             var abox = $('<div><b>'+anam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
             var umap = {
@@ -79,7 +122,7 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
             ubox.text(umsg);
             uinp.val ( "" );
 
-            const  evts = new EventSource(hsFixUri('centra/data/magpie/assistant-message/stream.act?session_id='+ssid));
+            const  evts = new EventSource(hsFixUri('centre/data/magpie/assistant-message/stream.act?session_id='+ssid));
             evts.onmessage = function(ev) {
                 var dat = JSON.parse((ev.data));
                 if (dat .content) {
@@ -97,10 +140,10 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
                             .find( 'ul' );
                     for(var i = 0; i < dat.references.length; i ++) {
                         var m = dat.references[i];
-                        var a = $('<li><a href="javascript:;" data-toggle="hsOpen" data-target="@"></a></li>')
+                        var a = $('<li><a href="javascript:;"></a></li>')
                             .appendTo(ul)
                             .find( 'a'  );
-                        a.attr("data-href", 'centra/data/magpie/reference/info.html?id=' + m.id);
+                        a.attr("data-href", 'centre/data/magpie/reference/info.html?id=' + m.id);
                         a.text( m.name  );
                     }
                 }

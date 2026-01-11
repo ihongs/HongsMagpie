@@ -34,10 +34,20 @@ import javax.servlet.http.HttpServletResponse;
 @Action("centra/data/magpie/assistant-message")
 public class MagpieMessage {
 
-    @Action("censor")
+    @Action("create")
+    public void create(ActionHelper helper) throws CruxException {
+        throw new CruxException(404, "Unsupported");
+    }
+
+    @Action("update")
+    public void update(ActionHelper helper) throws CruxException {
+        throw new CruxException(404, "Unsupported");
+    }
+
+    @Action("aerate")
     @Preset(conf="", form="")
     @CustomReplies
-    public void censor(ActionHelper helper) throws CruxException {
+    public void aerate(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
 
         String sid = Synt.asString(  rd.get("session_id")  );
@@ -48,7 +58,7 @@ public class MagpieMessage {
         int    quote  = Synt.declare(rd.get("quote" ), 1   );
         int    stream = Synt.declare(rd.get("stream"), 0   );
         float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
-        int    maxRn  = Synt.declare(rd.get("max_rn"), 10  );
+        int    maxRn  = Synt.declare(rd.get("max_rn"), 20  );
         int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
         int    topK   = Synt.declare(rd.get("top_k" ), 0   );
@@ -68,8 +78,13 @@ public class MagpieMessage {
             return;
         }
 
+        helper.reply(Synt.mapOf(
+            "session_id" , sid
+        ));
+
         // 缓存半分钟, 等下个接口取
         Roster.put("magpie.stream."+sid, Synt.mapOf(
+            "session_id" , sid,
             "prompt", prompt,
             "system", system,
             "model" , model ,
@@ -82,13 +97,9 @@ public class MagpieMessage {
             "top_p" , topP  ,
             "top_k" , topK  ,
             "temperature", tmpr,
-            "tools"    , tools ,
             "messages" , mesgs ,
-            "session_id" , sid
+            "tools"    , tools
         ), 30);
-        helper.reply(Synt.mapOf(
-            "session_id" , sid
-        ));
     }
 
     @Action("cancel")
@@ -133,15 +144,15 @@ public class MagpieMessage {
 
     private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
         String sid = Synt.asString(  rd.get("session_id")  );
+        List<Map> messages = Synt.asList(rd.get("messages"));
         String prompt = Synt.declare(rd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
-        String relate = Synt.declare(rd.get("relate"), ""  );
         String remind = Synt.declare(rd.get("remind"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
         String query  = Synt.declare(rd.get("query" ), ""  );
         int    quote  = Synt.declare(rd.get("quote" ), 1   );
         float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
-        int    maxRn  = Synt.declare(rd.get("max_rn"), 10  );
+        int    maxRn  = Synt.declare(rd.get("max_rn"), 20  );
         int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
         int    maxTr  = Synt.declare(rd.get("max_tr"), 1   );
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
@@ -149,7 +160,10 @@ public class MagpieMessage {
         double topP   = Synt.declare(rd.get("top_p" ), 0d  );
         double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
         Set<String>  tools = Synt.asSet (rd.get( "tools"  ));
-        List<Map> messages = Synt.asList(rd.get("messages"));
+
+        if (maxSn *2 <= messages.size()) {
+            throw new CruxException(400, "Message limit exceeded");
+        }
 
         CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
 
@@ -188,6 +202,7 @@ public class MagpieMessage {
         }
 
         List<Map>     refs = new ArrayList();
+        List<Map>     segs = new ArrayList();
         StringBuilder scts = new StringBuilder();
 
         // 查询并引用资料, 使用 refs 工具则跳过
@@ -236,7 +251,7 @@ public class MagpieMessage {
                 break;
             case 1:
                 // 向量转换，查询片段
-                find.put(Cnst.OB_KEY, Synt.setOf("-" ));
+                find.put(Cnst.OB_KEY, Synt.setOf("-"));
                 find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
                 vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
                 find.put("vect" , Synt.mapOf(
@@ -256,7 +271,9 @@ public class MagpieMessage {
 
                         scts.append(pa.get("text"))
                             .append("\n========\n");
-                        //pa.remove("text");
+                          pa.remove("text");
+
+                        segs.add(pa);
                     }
                     scts.setLength(scts.length() - 10);
                 }
@@ -264,8 +281,8 @@ public class MagpieMessage {
             case 2:
                 // 向量转换，查询片段，再查全文
                 rb.add("text");
-                find.put(Cnst.OB_KEY, Synt.setOf("-" ));
-                find.put(Cnst.RB_KEY, Synt.setOf("rf"));
+                find.put(Cnst.OB_KEY, Synt.setOf("-"));
+                find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn"));
                 vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
                 find.put("vect" , Synt.mapOf(
                     Cnst.AT_REL , vect,
@@ -285,6 +302,8 @@ public class MagpieMessage {
                                 .append("\n========\n");
                               pr.remove("text");
                         }
+
+                        segs.add(pa);
                     }
                     scts.setLength(scts.length() - 10);
                 }
@@ -294,19 +313,12 @@ public class MagpieMessage {
             }
         }
 
-        if (! refs.isEmpty()) {
-            if (relate == null || relate.isBlank()) {
-                relate = cl.getProperty("magpie.assistant.relate");
-            }
-            system = Syno.inject( relate, Synt.mapOf(
-                "sections", scts
-            ));
-            CoreLogger.debug("Relate: {}", system);
-        } else {
-            if (system == null || system.isBlank()) {
-                system = cl.getProperty("magpie.assistant.system");
-            }
+        if (system == null || system.isBlank()) {
+            system = cl.getProperty("magpie.assistant.system");
         }
+        system = Syno.inject( system, Synt.mapOf(
+            "sections", ! scts.isEmpty() ? scts.toString() : null
+        ));
 
         messages.add(0, Synt.mapOf(
             "role", "system",
@@ -319,8 +331,11 @@ public class MagpieMessage {
 
         // 参数放入环境, 以便工具读取
         Map env = new HashMap(1);
-        env.put("REQUEST"   , rd  );
-        env.put("REFERENCES", refs);
+        env.put("REQUEST", rd);
+        env.put("REFS" , refs);
+        env.put("SEGS" , segs);
+
+        StringBuilder sb = new StringBuilder();
 
         if (stream != 0) {
             HttpServletResponse rsp = helper.getResponse();
@@ -342,7 +357,6 @@ public class MagpieMessage {
                 throw new CruxException(e);
             }
 
-            StringBuilder sb = new StringBuilder();
             try {
                 Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
                     try {
@@ -390,7 +404,6 @@ public class MagpieMessage {
                 }
             }
         } else {
-            StringBuilder sb = new StringBuilder();
             try {
                 Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
                     if (!token.isEmpty()) {

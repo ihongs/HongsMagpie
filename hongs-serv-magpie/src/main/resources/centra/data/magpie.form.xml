@@ -13,8 +13,14 @@
             <param name="showable">name,file,href,form_id,data_id,id</param><!-- 对话中展示 -->
         </field>
         <field text="ID" name="id" type="hidden">
-            <param name="deforce">create</param>
+            <param name="deforce">aerate</param>
             <param name="default">@id</param>
+        </field>
+        <field name="form_id" type="hidden">
+            <param name="disabled">yes</param>
+        </field>
+        <field name="data_id" type="hidden">
+            <param name="disabled">yes</param>
         </field>
         <field text="名称" name="name" type="text" required="yes">
             <param name="listable">yes</param>
@@ -57,10 +63,10 @@
         </field>
         <field text="文档" name="file" type="file">
             <param name="listable">yes</param>
-            <param name="accept">.md,.txt,.html,.docx,.xlsx,.pptx,.pdf</param>
+            <param name="accept">.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx</param>
             <param name="path">static/upload/magpie/reference/${id:split}</param>
             <param name="href">static/upload/magpie/reference/${id:split}</param>
-            <param name="naming">keep:file.dat</param>
+            <param name="naming">keep:file.</param>
             <param name="hash-status">yes</param>
         </field>
         <field text="内容" name="text" type="textarea" required="yes">
@@ -150,6 +156,9 @@
         <field text="名称" name="name" type="text" required="yes">
             <param name="listable">yes</param>
         </field>
+        <field text="说明" name="note" type="textarea">
+            <param name="listable">yes</param>
+        </field>
         <field text="头像" name="icon" type="image" rule="Thumb">
             <param name="listable">yes</param>
             <param name="path">static/upload/magpie/assistant/${id:split}</param>
@@ -159,8 +168,6 @@
             <param name="thumb-kind">png</param>
             <param name="thumb-mode">keep</param>
             <param name="thumb-size">300*300</param>
-        </field>
-        <field text="说明" name="note" type="textarea">
         </field>
         <field text="模型" name="model" type="select" required="yes">
             <param name="conf">magpie</param>
@@ -196,7 +203,7 @@
             <param name="type">int</param>
             <param name="min">1</param>
             <param name="max">50</param>
-            <param name="default">10</param>
+            <param name="default">20</param>
         </field>
         <field text="会话限长"   name="max_sn" type="number">
             <param name="listable">yes</param>
@@ -209,7 +216,7 @@
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">0</param>
-            <param name="max">500</param>
+            <param name="max">5000</param>
             <param name="default">0</param>
         </field>
         <field text="Temperature" name="temperature" type="number">
@@ -220,15 +227,12 @@
             <param name="default">0.0</param>
         </field>
         <field text="系统人设" name="system" type="textarea">
-            <param name="form-hint">扮演何种角色</param>
+            <param name="form-hint">使用 ${sections|无} 嵌入引用材料</param>
         </field>
-        <field text="引用人设" name="relate" type="textarea">
-            <param name="form-hint">处理资料引用, 使用 ${sections} 嵌入引用材料</param>
+        <field text="欢迎提示" name="regard" type="textarea">
+            <param name="form-hint">开始对话前可显示的欢迎语或提示语</param>
         </field>
-        <field text="回顾人设" name="remind" type="textarea">
-            <param name="form-hint">总结历史消息, 使用 ${messages} 嵌入对话历史, 使用 ${prompt} 嵌入最新问题</param>
-        </field>
-        <field text="访问码" name="token" type="text">
+        <field text="密钥" name="token" type="text">
             <param name="listable">yes</param>
         </field>
         <field text="状态" name="state" type="enum">

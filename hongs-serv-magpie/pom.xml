@@ -36,7 +36,7 @@
             <artifactId>enjoy</artifactId>
             <version>5.2.2</version>
         </dependency>
-        <!-- 大模型 -->
+        <!-- LLM -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
@@ -52,7 +52,17 @@
             <artifactId>langchain4j-open-ai</artifactId>
             <version>1.10.0</version>
         </dependency>
-        <!-- MCP Server -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-poi</artifactId>
+            <version>1.10.0-beta18</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-pdfbox</artifactId>
+            <version>1.10.0-beta18</version>
+        </dependency>
+        <!-- MCP -->
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
             <artifactId>mcp</artifactId>
