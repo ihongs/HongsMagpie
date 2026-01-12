@@ -5,8 +5,8 @@
             <param name="part_id">0</param>
             <param name="db-name">magpie/data/reference</param>
             <param name="db-path">magpie/data/reference</param>
-            <param name="db-table">magpie.data</param>
             <param name="db-class">io.github.ihongs.serv.magpie.Reference</param>
+            <param name="db-table">magpie.data</param>
             <param name="srchable">name,text,tags</param>
             <param name="wordable">name,text,tags</param>
             <param name="syncable">tags,args,opts,state</param><!-- 同步给分块 -->
@@ -107,7 +107,6 @@
             <param name="part_id">1</param>
             <param name="db-name">magpie/data/reference</param>
             <param name="db-path">magpie/data/reference</param>
-            <param name="db-table">magpie.data</param>
             <param name="db-class">io.github.ihongs.serv.magpie.Segment</param>
             <param name="db-table">none</param>
             <param name="srchable">@not</param>
@@ -170,10 +169,12 @@
             <param name="thumb-size">300*300</param>
         </field>
         <field text="模型" name="model" type="select" required="yes">
+            <param name="listable">yes</param>
             <param name="conf">magpie</param>
             <param name="enum">model</param>
         </field>
         <field text="工具" name="tools" type="check"  repeated="yes">
+            <param name="listable">yes</param>
             <param name="conf">magpie</param>
             <param name="enum">tool</param>
         </field>
@@ -261,10 +262,10 @@
         <field text="对话记录">
             <param name="db-name">magpie/data/assistant-message</param>
             <param name="db-path">magpie/data/assistant-message</param>
-            <param name="db-table">magpie.data</param>
+            <param name="db-table">none</param>
+            <param name="listable">@all</param>
             <param name="srchable">prompt,remind,answer</param>
             <param name="wordable">prompt,remind,answer</param>
-            <param name="listable">@all</param>
         </field>
         <field text="ID" name="id" type="hidden">
             <param name="deforce">create</param>

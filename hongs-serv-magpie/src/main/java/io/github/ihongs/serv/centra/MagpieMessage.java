@@ -143,8 +143,15 @@ public class MagpieMessage {
     }
 
     private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
-        String sid = Synt.asString(  rd.get("session_id")  );
+        String sid = Synt.asString(rd.get("session_id"));
+
         List<Map> messages = Synt.asList(rd.get("messages"));
+        if (messages != null && ! messages.isEmpty()) {
+            messages = new ArrayList(messages);
+        } else {
+            messages = new ArrayList(2);
+        }
+
         String prompt = Synt.declare(rd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
         String remind = Synt.declare(rd.get("remind"), ""  );
@@ -159,55 +166,22 @@ public class MagpieMessage {
         int    topK   = Synt.declare(rd.get("top_k" ), 0   );
         double topP   = Synt.declare(rd.get("top_p" ), 0d  );
         double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
-        Set<String>  tools = Synt.asSet (rd.get( "tools"  ));
+        Set<String> tools = Synt.asSet ( rd.get( "tools" ) );
 
-        if (maxSn *2 <= messages.size()) {
+        if (messages.size() >= maxSn * 2 ) {
             throw new CruxException(400, "Message limit exceeded");
         }
 
-        CoreLocale cl = CoreLocale.getInstance ( "magpie"  );
-
         // 提取上下文
-        if (messages != null && ! messages.isEmpty()) {
-            messages  = new ArrayList ( messages );
-
-            StringBuilder ms = new StringBuilder();
-            for (Map ma : messages) {
-                ms.append("- " )
-                  .append(ma.get("role"))
-                  .append(":\n")
-                  .append(Syno.indent((String) ma.get("content"), "  "))
-                  .append( "\n");
-            }
-
-            if (remind == null || remind.isBlank()) {
-                remind = cl.getProperty("magpie.assistant.remind");
-            }
-            remind = Syno.inject( remind , Synt.mapOf(
-                "messages", ms , "prompt", prompt
-            ));
-            CoreLogger.debug("Remind: {}", remind);
-
-            remind = AiUtil.chat("reminding", Synt.listOf(
-                Synt.mapOf(
-                    "role", "user",
-                    "content", remind
-                )
-            ));
-            CoreLogger.debug("Remind: {}", remind);
-        } else {
-            messages  = new ArrayList () ;
-
-            remind = prompt;
-        }
-
         List<Map>     refs = new ArrayList();
         List<Map>     segs = new ArrayList();
         StringBuilder scts = new StringBuilder();
 
+        CoreLocale cl = CoreLocale.getInstance("magpie");
+
         // 查询并引用资料, 使用 refs 工具则跳过
         if (query != null && ! query.isEmpty ( )
-        && (tools == null || ! tools.contains("refs"))) {
+        && (tools == null || ! tools.contains("refs")) ) {
             Map        find;
             Object     vect;
             Data.Loop  loop;
@@ -231,7 +205,8 @@ public class MagpieMessage {
             switch (quote) {
             case 0:
                 // 引用全文
-                rb.add("text");
+                rb = new HashSet(rb);
+                rb . add(  "text"  );
                 find.put(Cnst.RB_KEY, rb);
                 loop = ref.search(find, 0, maxRn);
                 if (loop != null && loop.count() > 0) {
@@ -249,46 +224,19 @@ public class MagpieMessage {
                     scts.setLength(scts.length() - 10);
                 }
                 break;
-            case 1:
-                // 向量转换，查询片段
-                find.put(Cnst.OB_KEY, Synt.setOf("-"));
-                find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
-                vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
-                find.put("vect" , Synt.mapOf(
-                    Cnst.AT_REL , vect,
-                    Cnst.UP_REL , minUp
-                ));
-                loop = seg.search(find, 0, maxRn);
-                if (loop != null && loop.count() > 0) {
-                    for (Map pa : loop) {
-                        Object rf = pa.get("rf");
-                        if (! rz.contains ( rf )) {
-                              rz.add( rf );
-                              rq.put(Cnst.ID_KEY, rf);
-                            Map pr = ref.getOne ( rq);
-                            refs.add(pr);
-                        }
-
-                        scts.append(pa.get("text"))
-                            .append("\n========\n");
-                          pa.remove("text");
-
-                        segs.add(pa);
-                    }
-                    scts.setLength(scts.length() - 10);
-                }
-                break;
             case 2:
-                // 向量转换，查询片段，再查全文
-                rb.add("text");
+                // 查询片段，引用全文
+                rb = new HashSet(rb);
+                rb . add(  "text"  );
                 find.put(Cnst.OB_KEY, Synt.setOf("-"));
                 find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn"));
+              remind = remind(messages, prompt, remind, cl);
                 vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
                 find.put("vect" , Synt.mapOf(
                     Cnst.AT_REL , vect,
                     Cnst.UP_REL , minUp
                 ));
-                loop = seg.search(find, 0, maxRn * 3);
+                loop = seg.search(find, 0, maxRn * 5);
                 if (loop != null && loop.count() > 0) {
                     for (Map pa : loop) {
                         Object rf = pa.get("rf");
@@ -298,12 +246,50 @@ public class MagpieMessage {
                             Map pr = ref.getOne(rq);
                             refs.add(pr);
 
-                            scts.append(pr.get("text"))
-                                .append("\n========\n");
-                              pr.remove("text");
+                        scts.append(pr.get("text"))
+                            .append("\n========\n");
+                          pr.remove("text");
                         }
 
                         segs.add(pa);
+
+                        if (refs.size() >= maxRn) {
+                            break;
+                        }
+                    }
+                    scts.setLength(scts.length() - 10);
+                }
+                break;
+            case 1:
+                // 查询片段, 引用片段
+                find.put(Cnst.OB_KEY, Synt.setOf("-"));
+                find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
+              remind = remind(messages, prompt, remind, cl);
+                vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
+                find.put("vect" , Synt.mapOf(
+                    Cnst.AT_REL , vect,
+                    Cnst.UP_REL , minUp
+                ));
+                loop = seg.search(find, 0, maxRn * 5);
+                if (loop != null && loop.count() > 0) {
+                    for (Map pa : loop) {
+                        Object rf = pa.get("rf");
+                        if (! rz.contains ( rf )) {
+                            rz.add( rf );
+                            rq.put(Cnst.ID_KEY, rf);
+                            Map pr = ref.getOne(rq);
+                            refs.add(pr);
+                        }
+
+                        scts.append(pa.get("text"))
+                            .append("\n========\n");
+                          pa.remove("text");
+
+                        segs.add(pa);
+
+                        if (refs.size() >= maxRn) {
+                            break;
+                        }
                     }
                     scts.setLength(scts.length() - 10);
                 }
@@ -432,6 +418,47 @@ public class MagpieMessage {
                 }
             }
         }
+    }
+
+    /**
+     * 根据上下文补全问题
+     * @param messages
+     * @param prompt
+     * @param remind
+     * @param cl
+     * @return
+     */
+    private String remind(List<Map> messages, String prompt, String remind, CoreLocale cl) {
+        if (messages.isEmpty()) {
+            return prompt;
+        }
+
+        StringBuilder ms = new StringBuilder();
+        for (Map ma : messages) {
+            ms.append("- " )
+              .append(ma.get("role"))
+              .append(":\n")
+              .append(Syno.indent((String) ma.get("content"), "  "))
+              .append( "\n");
+        }
+
+        if (remind == null || remind.isBlank()) {
+            remind = cl.getProperty("magpie.assistant.remind");
+        }
+        remind = Syno.inject( remind , Synt.mapOf(
+            "messages", ms , "prompt", prompt
+        ));
+        CoreLogger.debug("Remind: {}", remind);
+
+        remind = AiUtil.chat("reminding", Synt.listOf(
+            Synt.mapOf(
+                "role", "user",
+                "content", remind
+            )
+        ));
+        CoreLogger.debug("Remind: {}", remind);
+
+        return remind;
     }
 
 }

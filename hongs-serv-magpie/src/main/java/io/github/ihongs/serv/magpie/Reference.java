@@ -263,7 +263,7 @@ public class Reference extends Segment {
         // 删除多余
         List<Map> rows = seg.search(Synt.mapOf(
             "rf", id,
-            "rn", Synt.mapOf(Cnst.GE_REL, i),
+            "sn", Synt.mapOf(Cnst.GE_REL, i),
             Cnst.OB_KEY, Synt.setOf("sn!"),
             Cnst.RB_KEY, Synt.setOf("id" )
         ) , 0, 0).toList( );
@@ -280,9 +280,10 @@ public class Reference extends Segment {
 
         // 删除全部
         List<Map> rows = seg.search(Synt.mapOf(
-            Cnst.RB_KEY, Synt.setOf("id"),
-        //  "rn", Synt.mapOf(Cnst.GE_REL , 0 ),
-            "rf", id
+            "rf", id,
+        //  "sn", Synt.mapOf(Cnst.GE_REL, 0),
+        //  Cnst.OB_KEY, Synt.setOf("sn!"),
+            Cnst.RB_KEY, Synt.setOf("id" )
         ) , 0, 0).toList( );
         for(Map row : rows) {
             String jd = (String) row.get("id");

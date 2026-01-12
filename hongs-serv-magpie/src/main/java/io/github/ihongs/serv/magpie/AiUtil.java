@@ -266,64 +266,14 @@ public final class AiUtil {
         ChatModel lm = getChatModel(model);
         List<ChatMessage> ms = toChatMessages(messages);
 
-        ChatRequest  rq = ChatRequest.builder()
-            .messages(ms)
-            .build();
-
-        ChatResponse rp = lm.chat(rq);
-
-        return rp.toString();
-    }
-
-    /**
-     * 快捷对话
-     * @param model
-     * @param messages
-     * @param tools
-     * @return
-     */
-    public static String chat(String model, List<Map> messages, Set<String> tools) {
-        ChatModel lm = getChatModel(model);
-        List<ToolSpecification> ts = toToolSpecifications(tools);
-        List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
-
-        ChatRequest  rq = ChatRequest.builder()
-            .toolSpecifications(ts)
+        ChatRequest rq = ChatRequest.builder()
             .messages(ms)
             .build();
 
         ChatResponse rp = lm.chat(rq);
         AiMessage am = rp.aiMessage();
 
-        StringBuilder sb = new StringBuilder(rp.toString());
-
-        if (am != null && am.hasToolExecutionRequests()) {
-            ms.add(am);
-
-            // 调用工具
-            List<ToolExecutionRequest> tes = am.toolExecutionRequests();
-            tes.forEach(ter -> {
-                Mathod mat = getTools().get(ter.name());
-                Method met = mat.getMethod ();
-                Class  cla = mat.getMclass ();
-                Object obj = Core.getInstance(cla);
-
-                ToolExecutor te = new DefaultToolExecutor(obj, met);
-                String  rs = te.execute(ter, UUID.randomUUID().toString());
-                ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
-                ms.add (tm);
-            });
-
-            rq = ChatRequest.builder()
-                .messages(ms)
-                .build();
-
-            rp = lm.chat (rq);
-
-            sb.append( rp.toString() );
-        }
-
-        return sb.toString( );
+        return am.text( );
     }
 
     /**
@@ -368,19 +318,32 @@ public final class AiUtil {
             ps  = pz;
         }
 
+        // 工具调用记录
+        final List<Map> ls;
+        if (ts != null && ! ts.isEmpty()) {
+            List<Map> lx = Synt.asList(env.get("TOOLS"));
+            if (lx == null) {
+                lx = new ArrayList();
+                env.put("TOOLS", lx);
+            }
+            ls = lx;
+        } else {
+            ls = null;
+        }
+
         ChatRequest rq = ChatRequest.builder()
-            .parameters( ps )
+            .parameters(ps)
             .messages(ms)
             .build();
 
         ChatResponse rp = lm.chat(rq);
         AiMessage am = rp.aiMessage();
 
-        StringBuilder sb = new StringBuilder(rp.toString());
+        StringBuilder sb = new StringBuilder(am.text());
 
         int x = r != 0 ? r : Integer.MAX_VALUE;
 
-        while (am != null && am.hasToolExecutionRequests()) {
+        while (am.hasToolExecutionRequests()) {
             ms.add(am);
 
             // 调用工具
@@ -391,10 +354,17 @@ public final class AiUtil {
                 Class  cla = mat.getMclass ();
                 Object obj = Core.getInstance(cla);
 
+                // 绑定环境
+                if (obj instanceof Env) {
+                   ((Env) obj).env(env);
+                }
+
                 ToolExecutor te = new DefaultToolExecutor(obj, met);
                 String  rs = te.execute(ter, UUID.randomUUID().toString());
                 ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
                 ms.add (tm);
+
+                ls.add(Synt.mapOf("name", ter.name(), "args", ter.arguments(), "result", rs));
             });
 
             ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
@@ -408,10 +378,10 @@ public final class AiUtil {
             rp = lm.chat ( rx );
             am = rp.aiMessage();
 
-            sb.append( rp.toString() );
+            sb.append(am.text());
         }
 
-        return sb.toString( );
+        return sb.toString();
     }
 
     /**
@@ -457,8 +427,21 @@ public final class AiUtil {
             ps  = pz;
         }
 
+        // 工具调用记录
+        final List<Map> ls;
+        if (ts != null && ! ts.isEmpty()) {
+            List<Map> lx = Synt.asList(env.get("TOOLS"));
+            if (lx == null) {
+                lx = new ArrayList();
+                env.put("TOOLS", lx);
+            }
+            ls = lx;
+        } else {
+            ls = null;
+        }
+
         ChatRequest rq = ChatRequest.builder()
-            .parameters( ps )
+            .parameters(ps)
             .messages(ms)
             .build();
 
@@ -500,7 +483,7 @@ public final class AiUtil {
                             ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
                             ms.add (tm);
 
-                            callback.accept("<tool>{\"name\":\""+Dist.doEscape(ter.name())+"\",\"params\":"+ter.arguments()+",\"result\":\""+rs+"\"}</tool>\n");
+                            ls.add(Synt.mapOf("name", ter.name(), "args", ter.arguments(), "result", rs));
                         });
 
                         ChatRequestParameters px = (-- x) > 0 ? ps : pz ;

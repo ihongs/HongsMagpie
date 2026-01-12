@@ -39,6 +39,7 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
         var umsg = uinp.val();
         data.messages = msgs;
         data.prompt   = umsg;
+        data.session_id = ssid;
 
         fetch(hsFixUri("centra/data/magpie/assistant-message/aerate.act?stream=2"), {
             body    : JSON.stringify(data),

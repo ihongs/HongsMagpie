@@ -44,7 +44,7 @@ public class RefsTool implements Env {
 
         CoreLocale cl = CoreLocale.getInstance("magpie");
         if (remind == null || remind.isBlank()) {
-            return cl.getProperty("magpie.assistant.remide.empty");
+            return cl.getProperty("magpie.assistant.remind.empty");
         }
         if ( query == null ||  query.isEmpty()) {
             return cl.getProperty("magpie.assistant.relate.empty");
@@ -85,7 +85,8 @@ public class RefsTool implements Env {
         switch (quote) {
         case 0:
             // 引用全文
-            rb.add("text");
+            rb = new HashSet(rb);
+            rb . add(  "text"  );
             find.put(Cnst.RB_KEY, rb);
             loop = ref.search(find, 0, maxRn);
             if (loop != null && loop.count() > 0) {
@@ -103,46 +104,18 @@ public class RefsTool implements Env {
                 scts.setLength(scts.length() - 10);
             }
             break;
-        case 1:
-            // 向量转换，查询片段
-            find.put(Cnst.OB_KEY, Synt.setOf("-" ));
-            find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
-            vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
-            find.put("vect" , Synt.mapOf(
-                Cnst.AT_REL , vect,
-                Cnst.UP_REL , minUp
-            ));
-            loop = seg.search(find, 0, maxRn);
-            if (loop != null && loop.count() > 0) {
-                for (Map pa : loop) {
-                    Object rf = pa.get("rf");
-                    if (! rz.contains ( rf )) {
-                          rz.add( rf );
-                          rq.put(Cnst.ID_KEY, rf);
-                        Map pr = ref.getOne ( rq);
-                        refs.add(pr);
-                    }
-
-                    scts.append(pa.get("text"))
-                        .append("\n========\n");
-                      pa.remove("text");
-
-                    segs.add(pa);
-                }
-                scts.setLength(scts.length() - 10);
-            }
-            break;
         case 2:
-            // 向量转换，查询片段，再查全文
-            rb.add("text");
+            // 查询片段，引用全文
+            rb = new HashSet(rb);
+            rb . add(  "text"  );
             find.put(Cnst.OB_KEY, Synt.setOf("-" ));
-            find.put(Cnst.RB_KEY, Synt.setOf("rf"));
+            find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn"));
             vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
             find.put("vect" , Synt.mapOf(
                 Cnst.AT_REL , vect,
                 Cnst.UP_REL , minUp
             ));
-            loop = seg.search(find, 0, maxRn * 3);
+            loop = seg.search(find, 0, maxRn * 5);
             if (loop != null && loop.count() > 0) {
                 for (Map pa : loop) {
                     Object rf = pa.get("rf");
@@ -152,12 +125,49 @@ public class RefsTool implements Env {
                         Map pr = ref.getOne(rq);
                         refs.add(pr);
 
-                        scts.append(pr.get("text"))
-                            .append("\n========\n");
-                          pr.remove("text");
+                    scts.append(pr.get("text"))
+                        .append("\n========\n");
+                      pr.remove("text");
                     }
 
                     seg.add(pa);
+
+                    if (refs.size() >= maxRn) {
+                        break;
+                    }
+                }
+                scts.setLength(scts.length() - 10);
+            }
+            break;
+        case 1:
+            // 查询片段, 引用片段
+            find.put(Cnst.OB_KEY, Synt.setOf("-" ));
+            find.put(Cnst.RB_KEY, Synt.setOf("rf", "id", "sn", "text"));
+            vect = AiUtil.embed(Synt.listOf(remind), AiUtil.ETYPE.QRY).get(0);
+            find.put("vect" , Synt.mapOf(
+                Cnst.AT_REL , vect,
+                Cnst.UP_REL , minUp
+            ));
+            loop = seg.search(find, 0, maxRn * 5);
+            if (loop != null && loop.count() > 0) {
+                for (Map pa : loop) {
+                    Object rf = pa.get("rf");
+                    if (! rz.contains ( rf )) {
+                        rz.add( rf );
+                        rq.put(Cnst.ID_KEY, rf);
+                        Map pr = ref.getOne(rq);
+                        refs.add(pr);
+                    }
+
+                    scts.append(pa.get("text"))
+                        .append("\n========\n");
+                      pa.remove("text");
+
+                    segs.add(pa);
+
+                    if (refs.size() >= maxRn) {
+                        break;
+                    }
                 }
                 scts.setLength(scts.length() - 10);
             }

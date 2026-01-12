@@ -86,6 +86,7 @@ function in_centre_data_magpie_assistant_talk(context) {
                 data.prompt   = umsg;
                 data.token    =  tok;
                 data.assistant_id = aid;
+                data.session_id =  ssid;
 
                 fetch(hsFixUri("centre/data/magpie/assistant-message/aerate.act?stream=2"), {
                     body    : JSON.stringify(data),
