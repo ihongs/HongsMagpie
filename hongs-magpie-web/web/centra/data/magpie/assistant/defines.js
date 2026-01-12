@@ -46,6 +46,7 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
     var msgs = [];
     var that = formobj;
     var mbox = context.find(".msgs-list");
+    var rbox = mbox.closest( ".rollbox" );
     var uinp = context.find('[name=prompt]');
 
     context.find('[name=cleans]').click(function() {
@@ -143,7 +144,7 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
                         a.text( m.name  );
                     }
                 }
-                mbox.scrollTop(mbox.prop("scrollHeight"));
+                rbox.scrollTop(rbox.prop("scrollHeight"));
             };
             evts.onerror = function(ev) {
                 evts.close ();

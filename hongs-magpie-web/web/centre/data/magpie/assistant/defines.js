@@ -20,6 +20,7 @@ function in_centre_data_magpie_assistant_talk(context) {
     };
     var msgs = [];
     var mbox = context.find(".msgs-list");
+    var rbox = mbox.closest( ".rollbox" );
     var uinp = context.find('[name=prompt]');
 
     $.hsAjax({
@@ -149,7 +150,7 @@ function in_centre_data_magpie_assistant_talk(context) {
                                 a.text( m.name  );
                             }
                         }
-                        mbox.scrollTop(mbox.prop("scrollHeight"));
+                        rbox.scrollTop(rbox.prop("scrollHeight"));
                     };
                     evts.onerror = function(ev) {
                         evts.close ();
