@@ -53,8 +53,8 @@ function in_centre_data_magpie_assistant_talk(context) {
             unam = rst.user.name || "我";
 
             if (rst.assistant.regard) {
-                $('<div><b>'+anam+':</b><div class="alert"></div></div>')
-                    .appendTo(mbox).find('div')
+                $('<div><div class="alert alert-info text-info"></div></div>')
+                    .insertBefore(mbox).find('div')
                     .text(rst.assistant.regard);
             }
 
@@ -109,8 +109,8 @@ function in_centre_data_magpie_assistant_talk(context) {
 
                     ssid = rsp.session_id;
 
-                    var ubox = $('<div><b>'+unam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
-                    var abox = $('<div><b>'+anam+':</b><div class="alert"></div></div>').appendTo(mbox).find('div');
+                    var ubox = $('<div><h4>'+unam+'</h4><div class="alert"></div></div>').appendTo(mbox).find('div');
+                    var abox = $('<div><h4>'+anam+'</h4><div class="alert"></div></div>').appendTo(mbox).find('div');
                     var umap = {
                         role    : "user",
                         content :  umsg
@@ -135,7 +135,6 @@ function in_centre_data_magpie_assistant_talk(context) {
                         if (dat .text) {
                             amap.content += dat.text;
                             abox.text (amap.content);
-                            //context.find('[name=cancel]').click();
                         } else
                         if (dat.references && dat.references.length) {
                             var ul = $('<blockquote class="small"><i>引用资料</i><ul></ul></blockquote>')
@@ -150,6 +149,7 @@ function in_centre_data_magpie_assistant_talk(context) {
                                 a.text( m.name  );
                             }
                         }
+                        mbox.scrollTop(mbox.prop("scrollHeight"));
                     };
                     evts.onerror = function(ev) {
                         evts.close ();

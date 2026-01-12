@@ -33,8 +33,8 @@
             </role>
         </menu>
         <menu text="智能助理" href="centra/data/magpie/assistant/">
-            <menu text="全部助理" href="!centra/data/magpie/assistant/#a" hrel="centra/data/magpie/assistant/list.html"></menu>
-            <menu text="自由聊"   href="!centra/data/magpie/assistant/#t" hrel="centra/data/magpie/assistant/test.html"></menu>
+            <menu text="全部" href="!centra/data/magpie/assistant/#a" hrel="centra/data/magpie/assistant/list.html"></menu>
+            <menu text="测试" href="!centra/data/magpie/assistant/#t" hrel="centra/data/magpie/assistant/test.html"></menu>
             <role text="查看助理" name="centra/data/magpie/assistant/search">
                 <depend>centra</depend>
                 <action>centra/data/magpie/assistant/search.act</action>

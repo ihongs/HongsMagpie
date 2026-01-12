@@ -1,14 +1,53 @@
 
-function in_centra_data_magpie_assistant_info(context, listobj) {
-    var btng = context.find('.form-foot .btn-group');
+function in_centra_data_magpie_assistant_info(context, formobj) {
+    context.on("loadBack", function(evt, rst) {
+        if (! rst.ok) return;
+
+        // 增加按钮
+        var btng = $('<div class="btn-group"></div>').insertBefore(context.find('.form-foot .btn-group'));
+        $('<button type="button" class="btn btn-default"><span class="text-normal">应用</span></button>')
+            .appendTo( btng )
+            .click(function() {
+                window.open("centre/data/magpie/assistant/#id="+ rst.info.id +"&t="+ rst.info.token);
+            });
+        $('<button type="button" class="btn btn-default"><span class="text-normal">测试</span></button>')
+            .appendTo( btng )
+            .click(function() {
+                context.hsFind("@").hsOpen("centra/data/magpie/assistant/test.html#id="+rst.info.id);
+            });
+    });
 }
 
 function in_centra_data_magpie_assistant_test(context, formobj) {
+    // 加载已有设定
+    var prms = hsSerialDic(formobj.loadBox);
+    if (prms['id']) {
+        fetch(hsFixUri("centra/data/magpie/assistant/recite.act?id="+prms['id']))
+        .then(rsp => {
+            if (! rsp.ok) {
+                throw new Error("网络错误, 请检查网络后重试...");
+            }
+            return rsp.json();
+        })
+        .then(rsp => {
+            if (! rsp.ok) {
+                throw new Error(rsp.msg || rsp.err || "未知错误");
+            }
+
+            formobj.loadBack(rsp);
+
+            if (prms['readonly']) {
+                formobj.formBox.find("input,select,textarea").prop("readonly", true);
+            }
+        });
+    }
+
     var ssid ;
     var msgs = [];
     var that = formobj;
     var mbox = context.find(".msgs-list");
     var uinp = context.find('[name=prompt]');
+
     context.find('[name=cleans]').click(function() {
         msgs.length = 0;
         mbox.empty( );
@@ -90,7 +129,6 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
                 if (dat .text) {
                     amap.content += dat.text;
                     abox.text (amap.content);
-                    //context.find('[name=cancel]').click();
                 } else
                 if (dat.references && dat.references.length) {
                     var ul = $('<blockquote class="small"><i>引用资料</i><ul></ul></blockquote>')
@@ -105,6 +143,7 @@ function in_centra_data_magpie_assistant_test(context, formobj) {
                         a.text( m.name  );
                     }
                 }
+                mbox.scrollTop(mbox.prop("scrollHeight"));
             };
             evts.onerror = function(ev) {
                 evts.close ();

@@ -1,10 +1,10 @@
-<h2 class="hide">创建智能助理</h2>
+<h2 class="hide">测试</h2>
 <div id="centra-data-magpie-assistant-test" class="centra-data-magpie-assistant-test create-form">
     <div class="row">
         <div class="col col-xs-6 magpie-formbox">
-            <form>
             <div class="rollbox panel panel-default">
             <div class="form-body">
+            <form onsubmit="return false">
                 <div class="form-group" data-name="model">
                     <label class="form-label control-label form-control-static">模型</label>
                     <div>
@@ -69,18 +69,19 @@
                         <div class="help-block text-muted form-control-static">使用 ${sections|无} 嵌入引用材料</div>
                     </div>
                 </div>
+            </form>
             </div><!-- end form-body -->
             </div><!-- end panel -->
-            </form>
         </div>
         <div class="col col-xs-6 magpie-msgsbox">
             <div class="rollbox panel panel-default">
-            <div class="form-body msgs-list">
+            <div class="form-body">
+                <div class="msgs-list"></div>
             </div><!-- end form-body -->
             </div><!-- end panel -->
             <div class="panel panel-default">
             <div class="form-foot">
-                <form onsubmit="return false">
+            <form onsubmit="return false">
                 <div class="form-group">
                     <div>
                         <input type="text" name="prompt" class="form-control"/>
@@ -97,7 +98,7 @@
                         </div>
                     </div>
                 </div>
-                </form>
+            </form>
             </div><!-- end form-foot -->
             </div><!-- end panel -->
         </div>
