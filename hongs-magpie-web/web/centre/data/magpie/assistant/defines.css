@@ -12,7 +12,7 @@
     margin-top: 20px;
 }
 
-.centre-data-magpie-assistant-talk .magpie-msgsbox .rollbox > .msgs-list > div > .alert {
+.centre-data-magpie-assistant-talk .magpie-msgsbox .msgs-list .alert {
     border-color: #ccc;
     white-space : pre-wrap;
 }
