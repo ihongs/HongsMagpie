@@ -22,47 +22,10 @@
         <div id="context">
             <div id="bodybox">
                 <div id="main-context" class="container">
-                    <div class="magpie-msgsbox">
-                        <div class="rollbox panel panel-default">
-                        <div class="form-body msgs-list">
-                        </div><!-- end form-body -->
-                        </div><!-- end panel -->
-                        <div class="panel panel-default">
-                        <div class="form-foot">
-                            <form onsubmit="return false">
-                            <div class="form-group">
-                                <div>
-                                    <input type="text" name="prompt" class="form-control"/>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div>
-                                    <div class="btn-toolbar">
-                                        <button name="submit" type="submit" class="btn btn-primary">发送</button>
-                                        &nbsp; &nbsp;
-                                        <button name="cancel" type="button" class="btn btn-warning">停止</button>
-                                        &nbsp; &nbsp;
-                                        <button name="cleans" type="button" class="btn btn-link pull-right">清空</button>
-                                    </div>
-                                </div>
-                            </div>
-                            </form>
-                        </div><!-- end form-foot -->
-                        </div><!-- end panel -->
-                    </div>
+                    <div data-load="centre/data/magpie/assistant/talk.html"></div>
                 </div>
             </div>
         </div>
-        <script type="text/javascript">
-            (function($) {
-                var context = $("#main-context");
-                $.when(in_centre_data_magpie_assistant(context))
-                 .then(function() {
-                    // 自适滚动
-                    hsFlexRoll(context.find(".rollbox"), $("#main-context"), true);
-                });
-            })(jQuery);
-        </script>
     </body>
 </html>
 

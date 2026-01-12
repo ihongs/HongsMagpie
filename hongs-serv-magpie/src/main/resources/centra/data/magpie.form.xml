@@ -232,7 +232,7 @@
         <field text="欢迎提示" name="regard" type="textarea">
             <param name="form-hint">开始对话前可显示的欢迎语或提示语</param>
         </field>
-        <field text="密钥" name="token" type="text">
+        <field text="口令" name="token" type="text">
             <param name="listable">yes</param>
         </field>
         <field text="状态" name="state" type="enum">
