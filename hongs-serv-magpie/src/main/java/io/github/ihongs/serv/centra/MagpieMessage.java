@@ -160,7 +160,7 @@ public class MagpieMessage {
         int    quote  = Synt.declare(rd.get("quote" ), 1   );
         float  minUp  = Synt.declare(rd.get("min_up"), 0.5f);
         int    maxRn  = Synt.declare(rd.get("max_rn"), 20  );
-        int    maxSn  = Synt.declare(rd.get("max_sn"), 20  );
+        int    maxCn  = Synt.declare(rd.get("max_cn"), 5   );
         int    maxTr  = Synt.declare(rd.get("max_tr"), 1   );
         int    maxTk  = Synt.declare(rd.get("max_tk"), 0   );
         int    topK   = Synt.declare(rd.get("top_k" ), 0   );
@@ -168,16 +168,17 @@ public class MagpieMessage {
         double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
         Set<String> tools = Synt.asSet ( rd.get( "tools" ) );
 
-        if (messages.size() >= maxSn * 2 ) {
-            throw new CruxException(400, "Message limit exceeded");
-        }
-
-        // 提取上下文
+        List<Map>     tols = new ArrayList();
         List<Map>     refs = new ArrayList();
         List<Map>     segs = new ArrayList();
         StringBuilder scts = new StringBuilder();
 
         CoreLocale cl = CoreLocale.getInstance("magpie");
+
+        // 限定上下文长度
+        if (maxCn > 0 && maxCn * 2 < messages.size()) {
+            messages = new ArrayList(messages.subList(messages.size() - (maxCn * 2), messages.size()));
+        }
 
         // 查询并引用资料, 使用 refs 工具则跳过
         if (query != null && ! query.isEmpty ( )
@@ -320,6 +321,7 @@ public class MagpieMessage {
         env.put("REQUEST", rd);
         env.put("REFS" , refs);
         env.put("SEGS" , segs);
+        env.put("TOOLS", tols);
 
         StringBuilder sb = new StringBuilder();
 
@@ -334,11 +336,11 @@ public class MagpieMessage {
             try {
                 out.write("data:"
                   + Dist.toString(Synt.mapOf(
-                        "references", refs,
-                        "session_id", sid
+                        "session_id", sid,
+                        "references", refs
                     ), true)
-                  + "\n\n");
-                out.flush();
+                  + "\n\n" );
+                out.flush( );
             } catch (IOException e) {
                 throw new CruxException(e);
             }
@@ -347,8 +349,15 @@ public class MagpieMessage {
                 Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
                     try {
                         if (!token.isEmpty()) {
-                            String thunk = "data:{\"text\":\""+Dist.doEscape(token)+"\"}\n\n";
-                            sb.append(token);
+                            String thunk;
+                            if (token.startsWith("TOOL{") && token.endsWith("}")) {
+                                thunk = token.substring( 4 );
+                                thunk = "data:{\"tool\":"  + thunk +  "}\n\n";
+                            } else {
+                                thunk = Dist.doEscape(token);
+                                thunk = "data:{\"text\":\""+ thunk +"\"}\n\n";
+                                sb.append(token);
+                            }
                             out.write(thunk);
                             out.flush(  );
                         } else {
@@ -365,6 +374,9 @@ public class MagpieMessage {
                     ft.get();
                 } catch (Exception ex) {
                     String error = ex.getLocalizedMessage();
+                    if (error == null) {
+                        error = ex.getMessage();
+                    }
                     try {
                         sb.append(error);
                         out.write(error);
@@ -380,10 +392,16 @@ public class MagpieMessage {
 
                     // 完整内容
                     try {
-                        String thunk = "data:{\"content\":\""+Dist.doEscape(result)+"\"}";
+                        String thunk ="data:"
+                          + Dist.toString(Synt.mapOf(
+                                "content", result,
+                                "session_id", sid,
+                                "references", refs
+                            ), true)
+                          + "\n\n";
                         out.write(thunk);
-                        out.flush(  );
-                        out.close(  );
+                        out.flush( );
+                        out.close( );
                     } catch ( IOException e ) {
                         throw new CruxExemption(e);
                     }
@@ -402,6 +420,9 @@ public class MagpieMessage {
                     ft.get();
                 } catch (Exception ex) {
                     String error = ex.getLocalizedMessage();
+                    if (error == null) {
+                        error = ex.getMessage();
+                    }
                     sb.append( error );
                 }
             } finally {
@@ -411,9 +432,9 @@ public class MagpieMessage {
 
                     // 输出结果
                     helper.reply(Synt.mapOf(
-                        "references", refs,
-                        "session_id", sid ,
-                        "content", result
+                        "content", result,
+                        "session_id", sid,
+                        "references", refs
                     ));
                 }
             }

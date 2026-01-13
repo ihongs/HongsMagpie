@@ -206,12 +206,12 @@
             <param name="max">50</param>
             <param name="default">20</param>
         </field>
-        <field text="会话限长"   name="max_sn" type="number">
+        <field text="上下文轮数" name="max_cn" type="number">
             <param name="listable">yes</param>
             <param name="type">int</param>
             <param name="min">0</param>
             <param name="max">50</param>
-            <param name="default">20</param>
+            <param name="default">5</param>
         </field>
         <field text="输出限定"   name="max_tk" type="number">
             <param name="listable">yes</param>
@@ -282,6 +282,8 @@
         </field>
         <field name="anon_ip" type="hidden">
         </field>
+        <field name="session_id" type="hidden">
+        </field>
         <field text="助理" name="assistant_id" type="fork" required="yes">
             <param name="data-at">centra/data/magpie/assistant/search</param>
             <param name="pass-id">yes</param>
@@ -294,7 +296,7 @@
         </field>
         <field name="segment_id" type="hidden" repeated="yes">
         </field>
-        <field name="session_id" type="hidden">
+        <field name="tools"      type="stored" repeated="not">
         </field>
         <field text="用户消息" name="prompt" type="textarea">
             <param name="listable">yes</param>
@@ -310,12 +312,14 @@
             <param name="default">=%time</param>
             <param name="deforce">create</param>
         </field>
+        <!--
         <field text="输入 Tokens" name="prompt_tokens" type="number">
             <param name="type">int</param>
         </field>
         <field text="输出 Tokens" name="result_tokens" type="number">
             <param name="type">int</param>
         </field>
+        //-->
     </form>
     <form name="applicant">
         <field text="任务">

@@ -346,6 +346,8 @@ public final class AiUtil {
         while (am.hasToolExecutionRequests()) {
             ms.add(am);
 
+            sb.append("\n");
+
             // 调用工具
             List<ToolExecutionRequest> tes = am.toolExecutionRequests();
             tes.forEach(ter -> {
@@ -360,11 +362,21 @@ public final class AiUtil {
                 }
 
                 ToolExecutor te = new DefaultToolExecutor(obj, met);
-                String  rs = te.execute(ter, UUID.randomUUID().toString());
+                String rs =  te.execute(ter, UUID.randomUUID().toString());
                 ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
-                ms.add (tm);
+                ms.add(tm);
 
-                ls.add(Synt.mapOf("name", ter.name(), "args", ter.arguments(), "result", rs));
+                Map lt = Synt.mapOf(
+                    "name"  , ter.name(),
+                    "args"  , ter.arguments(),
+                    "result", rs
+                );
+                ls.add(lt);
+                /*
+                sb.append( "<tool>"  )
+                  .append(Dist.toString(lt, true))
+                  .append("</tool>\n");
+                */
             });
 
             ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
@@ -479,11 +491,17 @@ public final class AiUtil {
                             }
 
                             ToolExecutor te = new DefaultToolExecutor(obj, met);
-                            String  rs = te.execute(ter, UUID.randomUUID().toString());
+                            String rs =  te.execute(ter, UUID.randomUUID().toString());
                             ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
-                            ms.add (tm);
+                            ms.add(tm);
 
-                            ls.add(Synt.mapOf("name", ter.name(), "args", ter.arguments(), "result", rs));
+                            Map lt = Synt.mapOf(
+                                "name"  , ter.name(),
+                                "args"  , ter.arguments(),
+                                "result", rs
+                            );
+                            ls.add(lt);
+                            callback.accept("TOOL"+Dist.toString(lt, true));
                         });
 
                         ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
