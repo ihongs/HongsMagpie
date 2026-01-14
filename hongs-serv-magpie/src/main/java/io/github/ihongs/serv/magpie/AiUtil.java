@@ -33,7 +33,7 @@ import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
-import io.github.ihongs.serv.tool.Env;
+import io.github.ihongs.agent.tool.Env;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
@@ -68,19 +68,27 @@ public final class AiUtil {
     public static ChatModel getChatModel(String name) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
         String api = cc.getProperty("magpie.llm."+name+".api", name);
-        String mod = cc.getProperty("magpie.llm."+name+".mod");
+        String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
+        Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+api+".param"));
+        Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
 
-        return OpenAiChatModel
-            .builder  (   )
+        OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel
+            . builder (   )
             .  apiKey (key)
             . baseUrl (url)
             .modelName(mod)
             .customHeaders(Synt.mapOf(
                 "Accept-Charset", "UTF-8"
-            ))
-            .build    (   );
+            ));
+        if (prm != null && ! prm.isEmpty()) {
+            builder.customParameters (prm);
+        }
+        if (qry != null && ! qry.isEmpty()) {
+            builder.customQueryParams(qry);
+        }
+        return builder.build();
     }
 
     /**
@@ -91,19 +99,27 @@ public final class AiUtil {
     public static StreamingChatModel getStreamingModel(String name) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
         String api = cc.getProperty("magpie.llm."+name+".api", name);
-        String mod = cc.getProperty("magpie.llm."+name+".mod");
+        String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
+        Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+api+".param"));
+        Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
 
-        return OpenAiStreamingChatModel
-            .builder  (   )
+        OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder builder = OpenAiStreamingChatModel
+            . builder (   )
             .  apiKey (key)
             . baseUrl (url)
             .modelName(mod)
             .customHeaders(Synt.mapOf(
                 "Accept-Charset", "UTF-8"
-            ))
-            .build    (   );
+            ));
+        if (prm != null && ! prm.isEmpty()) {
+            builder.customParameters (prm);
+        }
+        if (qry != null && ! qry.isEmpty()) {
+            builder.customQueryParams(qry);
+        }
+        return builder.build();
     }
 
     /**
@@ -114,19 +130,31 @@ public final class AiUtil {
     public static EmbeddingModel getEmbeddingModel(String name) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
         String api = cc.getProperty("magpie.llm."+name+".api", name);
-        String mod = cc.getProperty("magpie.llm."+name+".mod");
+        String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
+        String enc = cc.getProperty("magpie.llm."+api +".encoding_format" );
+        int    dim = cc.getProperty("magpie.llm."+api +".dimensions" , 0  );
+        Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
 
-        return OpenAiEmbeddingModel
-            .builder  (   )
+        OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder builder = OpenAiEmbeddingModel
+            . builder (   )
             .  apiKey (key)
             . baseUrl (url)
             .modelName(mod)
             .customHeaders(Synt.mapOf(
                 "Accept-Charset", "UTF-8"
-            ))
-            .build    (   );
+            ));
+        if (dim > 0) {
+            builder.dimensions(dim);
+        }
+        if (enc != null && ! enc.isEmpty()) {
+            builder.encodingFormat(enc);
+        }
+        if (qry != null && ! qry.isEmpty()) {
+            builder.customQueryParams(qry);
+        }
+        return builder.build();
     }
 
     /**
@@ -176,11 +204,11 @@ public final class AiUtil {
      * @return
      */
     public static Map<String, Mathod> getTools() {
-        return Core.getInterior().got("magpie.tools", () -> {
+        return Core.getInterior().got("magpie.agent.tools", () -> {
             try {
                 String[] ps = CoreConfig
                         .getInstance( "magpie" )
-                        .getProperty( "magpie.tools", "io.github.ihongs.serv.tool.**")
+                        .getProperty( "magpie.agent.tools", "io.github.ihongs.serv.agent.tool.**" )
                         .split(";");
                 Map<String, Mathod> ts = new HashMap (ps.length);
                 for(String pn : ps) {
@@ -351,9 +379,14 @@ public final class AiUtil {
             // 调用工具
             List<ToolExecutionRequest> tes = am.toolExecutionRequests();
             tes.forEach(ter -> {
-                Mathod mat = getTools().get(ter.name());
-                Method met = mat.getMethod ();
-                Class  cla = mat.getMclass ();
+                String tn = ter.name();
+                String ta = ter.arguments();
+                if (tn == null || tn.isEmpty()) {
+                    return;
+                }
+                Mathod mat = getTools().get(tn);
+                Method met = mat.getMethod();
+                Class  cla = mat.getMclass();
                 Object obj = Core.getInstance(cla);
 
                 // 绑定环境
@@ -362,14 +395,14 @@ public final class AiUtil {
                 }
 
                 ToolExecutor te = new DefaultToolExecutor(obj, met);
-                String rs =  te.execute(ter, UUID.randomUUID().toString());
-                ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
+                String tr =  te.execute(ter, UUID.randomUUID().toString());
+                ChatMessage  tm = ToolExecutionResultMessage.from(ter, tr);
                 ms.add(tm);
 
                 Map lt = Synt.mapOf(
-                    "name"  , ter.name(),
-                    "args"  , ter.arguments(),
-                    "result", rs
+                    "name"  , tn,
+                    "args"  , ta,
+                    "result", tr
                 );
                 ls.add(lt);
                 /*
@@ -480,9 +513,14 @@ public final class AiUtil {
                         // 调用工具
                         List<ToolExecutionRequest> tes = am.toolExecutionRequests();
                         tes.forEach(ter -> {
-                            Mathod mat = getTools().get(ter.name());
-                            Method met = mat.getMethod ();
-                            Class  cla = mat.getMclass ();
+                            String tn = ter.name();
+                            String ta = ter.arguments();
+                            if (tn == null || tn.isEmpty()) {
+                                return;
+                            }
+                            Mathod mat = getTools().get(tn);
+                            Method met = mat.getMethod();
+                            Class  cla = mat.getMclass();
                             Object obj = Core.getInstance(cla);
 
                             // 绑定环境
@@ -491,14 +529,14 @@ public final class AiUtil {
                             }
 
                             ToolExecutor te = new DefaultToolExecutor(obj, met);
-                            String rs =  te.execute(ter, UUID.randomUUID().toString());
-                            ChatMessage  tm = ToolExecutionResultMessage.from(ter, rs);
+                            String tr =  te.execute(ter, UUID.randomUUID().toString());
+                            ChatMessage  tm = ToolExecutionResultMessage.from(ter, tr);
                             ms.add(tm);
 
                             Map lt = Synt.mapOf(
-                                "name"  , ter.name(),
-                                "args"  , ter.arguments(),
-                                "result", rs
+                                "name"  , tn,
+                                "args"  , ta,
+                                "result", tr
                             );
                             ls.add(lt);
                             callback.accept("TOOL"+Dist.toString(lt, true));

@@ -296,7 +296,7 @@
         </field>
         <field name="segment_id" type="hidden" repeated="yes">
         </field>
-        <field name="tools"      type="stored" repeated="not">
+        <field name="tools"      type="stored" repeated="no" >
         </field>
         <field text="用户消息" name="prompt" type="textarea">
             <param name="listable">yes</param>

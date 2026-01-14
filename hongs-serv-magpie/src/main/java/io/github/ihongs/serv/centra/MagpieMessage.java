@@ -376,7 +376,9 @@ public class MagpieMessage {
                     String error = ex.getLocalizedMessage();
                     if (error == null) {
                         error = ex.getMessage();
-                    }
+                    if (error == null) {
+                        error = ex.toString();
+                    }}
                     try {
                         sb.append(error);
                         out.write(error);
@@ -422,7 +424,9 @@ public class MagpieMessage {
                     String error = ex.getLocalizedMessage();
                     if (error == null) {
                         error = ex.getMessage();
-                    }
+                    if (error == null) {
+                        error = ex.toString();
+                    }}
                     sb.append( error );
                 }
             } finally {
