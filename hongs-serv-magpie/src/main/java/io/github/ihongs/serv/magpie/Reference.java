@@ -29,14 +29,10 @@ import org.apache.lucene.search.BooleanQuery;
  */
 public class Reference extends Data {
 
-    private final Set syns; // 需同步的字段
-    private       int sync; // 当前同步数
-    private       Map data; // 当前数据
-
+    private List parts;
+    
     protected Reference(String conf, String form) {
         super(conf, form);
-
-        syns = Synt.toSet(getParams().get("syncable"));
     }
 
     public static Reference getInstance(String conf, String form) {
@@ -49,48 +45,30 @@ public class Reference extends Data {
 
     @Override
     public int add(String id, Map rd, long time) throws CruxException {
-        sync = 0;
-        data = null;
-
+        parts = null;
         int n = super.add(id, rd, time);
-        if (sync > 0) {
-            updateSegments(id, data);
-        }
-
-        sync = 0;
-        data = null;
+        updateSegments(id, parts);
+        parts = null;
 
         return n;
     }
 
     @Override
     public int put(String id, Map rd, long time) throws CruxException {
-        sync = 0;
-        data = null;
-
+        parts = null;
         int n = super.put(id, rd, time);
-        if (sync > 0) {
-            updateSegments(id, data);
-        }
-
-        sync = 0;
-        data = null;
+        updateSegments(id, parts);
+        parts = null;
 
         return n;
     }
 
     @Override
     public int set(String id, Map rd, long time) throws CruxException {
-        sync = 0;
-        data = null;
-
+        parts = null;
         int n = super.set(id, rd, time);
-        if (sync > 0) {
-            updateSegments(id, data);
-        }
-
-        sync = 0;
-        data = null;
+        updateSegments(id, parts);
+        parts = null;
 
         return n;
     }
@@ -111,10 +89,11 @@ public class Reference extends Data {
 
     @Override
     public int rev(String id, Map rd, long time) throws CruxException {
+        parts = null;
         int n = super.rev(id, rd, time);
-        if (n > 0) {
-            updateSegments(id, get(id));
-        }
+        updateSegments(id, parts);
+        parts = null;
+
         return n;
     }
 
@@ -221,8 +200,6 @@ public class Reference extends Data {
             rd.put("nums", nums);
         }
 
-        int n = 0;
-
         // 拆分文本, 获取向量
         String nt = Synt.asString(rd.get("text")); // 新的内容
         String ot = Synt.asString(dd.get("text")); // 旧的内容
@@ -239,13 +216,10 @@ public class Reference extends Data {
             }
             dd.put("slit" , sp);
             dd.put("parts", ps);
-            sync ++ ;
-            n ++ ;
+            parts = ps;
         }
 
-        data = dd;
-
-        return n + super.padDif(dd, rd);
+        return super.padDif(dd, rd);
     }
 
     @Override
@@ -305,16 +279,12 @@ public class Reference extends Data {
         if (super.missable(fn, fo, fr)) {
             return true;
         }
-        if (syns .contains(fn)) {
-            sync ++ ;
-        }
         return false;
     }
 
-    public void updateSegments(String id, Map data) throws CruxException {
-        List parts  = Synt.asList(data.get("parts"));
-        if ( parts == null ) {
-             return ;
+    public void updateSegments(String id, List parts) throws CruxException {
+        if (parts == null) {
+            return;
         }
 
         Data seg = getSegment();
@@ -322,15 +292,10 @@ public class Reference extends Data {
         // 写入新的
         int i = 0;
         if (! parts.isEmpty() ) {
-            Map da = new HashMap(syns.size());
-            for(Object kn : syns ) {
-                da.put(kn , data . get( kn ));
-            }
             for(Object po : parts) {
                 List   pa = (List) po;
                 String jd = id+"-"+Synt.asString(i);
-                Map ba = new HashMap(da.size() + 5);
-                ba.putAll(da);
+                Map ba = new HashMap(5);
                 ba.put ("id" , jd);
                 ba.put ("rf" , id);
                 ba.put ("sn" , i );

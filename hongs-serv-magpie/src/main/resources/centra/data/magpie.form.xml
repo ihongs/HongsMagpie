@@ -9,7 +9,6 @@
             <param name="db-table">magpie.data</param>
             <param name="srchable">name,text,tags</param>
             <param name="wordable">name,text,tags</param>
-            <param name="syncable">tags,args,opts,state</param><!-- 同步给分块 -->
             <param name="showable">name,file,href,form_id,data_id,id</param><!-- 对话中展示 -->
         </field>
         <field text="ID" name="id" type="hidden">
