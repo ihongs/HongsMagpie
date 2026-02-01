@@ -34,15 +34,13 @@ public class Segment extends Data {
         super.padDoc(doc, map, rep);
 
         // 写入数值选项
-        Map opts = Synt.asMap(map.get("opts"));
-        if (opts != null && !opts.isEmpty ()) {
-            for (Object ot : opts.entrySet()) {
+        Map nums = Synt.asMap(map.get("nums"));
+        if (nums != null && !nums.isEmpty ()) {
+            for (Object ot : nums.entrySet()) {
                 Map.Entry et = (Map.Entry) ot ;
                 Object k = et.getKey  ();
                 Object v = et.getValue();
-                if (v instanceof Number) {
-                    doc.add(new DoublePoint("@n."+k, Synt.declare(v, 0D)));
-                }
+                doc.add(new DoublePoint("@n."+k, Synt.declare(v, 0D)));
             }
         }
     }

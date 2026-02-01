@@ -577,6 +577,49 @@ public final class AiUtil {
      * @return
      */
     public static List<List<Float>> embed(List<String> parts, ETYPE etype) {
+        if (parts == null || parts.isEmpty()) {
+            return new ArrayList();
+        }
+
+        // 分批处理
+        int d = CoreConfig.getInstance("magpie").getProperty("magpie.llm.embedding.batch", 0);
+        if (d > 0) {
+            List<List<Float>> vects = new ArrayList(parts.size());
+            List<List<Float>> vecs;
+            List<String>      pars;
+            int i = 0;
+            int j = i + d;
+            if (j > parts.size()) {
+                j = parts.size();
+            }
+
+            while (i < j) {
+                pars = parts.subList(i, j);
+                vecs = getEmbeddingModel("embedding")
+                    .embedAll(pars
+                        .stream()
+                        .map(
+                            a -> TextSegment.from (a)
+                        )
+                        .toList()
+                    )
+                    .content (  )
+                    .stream()
+                    .map(
+                        b -> b.vectorAsList()
+                    )
+                    .toList();
+                vects.addAll (vecs);
+
+                i = j;
+                j = i + d;
+                if (j > parts.size()) {
+                    j = parts.size();
+                }
+            }
+            return vects;
+        }
+
         return getEmbeddingModel("embedding")
             .embedAll(parts
                 .stream()
@@ -600,6 +643,10 @@ public final class AiUtil {
      * @return
      */
     public static List<String> split(String text, String type) {
+        if (text == null || text.isBlank()) {
+            return new ArrayList();
+        }
+
         return getDocumentSplitter(type)
             .split  (Document.from(text))
             .stream ()

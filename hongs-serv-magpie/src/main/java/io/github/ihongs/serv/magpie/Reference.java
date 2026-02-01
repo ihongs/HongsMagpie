@@ -10,9 +10,11 @@ import io.github.ihongs.util.verify.Wrong;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
@@ -116,7 +118,7 @@ public class Reference extends Segment {
         Set args = rd.containsKey("args") ? Synt.asSet(rd.get("args")) : Synt.asSet(dd.get("args"));
 
         // 合并标签
-        Set addTags  = Synt.toSet(rd.get("add-tags"));
+        Set addTags  = Synt.toSet(rd.get("add_tags"));
         if (addTags != null && ! addTags.isEmpty()) {
             if (tags != null) {
                 tags.addAll(addTags);
@@ -125,7 +127,7 @@ public class Reference extends Segment {
             }
             rd.put("tags", tags);
         }
-        Set delTags  = Synt.toSet(rd.get("del-tags"));
+        Set delTags  = Synt.toSet(rd.get("del_tags"));
         if (delTags != null && ! delTags.isEmpty()) {
             if (tags != null) {
                 tags.removeAll(delTags);
@@ -134,7 +136,7 @@ public class Reference extends Segment {
         }
 
         // 合并参数
-        Set addArgs  = Synt.toSet(rd.get("add-args"));
+        Set addArgs  = Synt.toSet(rd.get("add_args"));
         if (addArgs != null && ! addArgs.isEmpty()) {
             if (args != null) {
                 args.addAll(addArgs);
@@ -143,7 +145,7 @@ public class Reference extends Segment {
             }
             rd.put("args", args);
         }
-        Set delArgs  = Synt.toSet(rd.get("del-args"));
+        Set delArgs  = Synt.toSet(rd.get("del_args"));
         if (delArgs != null && ! delArgs.isEmpty()) {
             if (args != null) {
                 args.removeAll(delArgs);
@@ -153,39 +155,64 @@ public class Reference extends Segment {
 
         // 解析参数
         if (rd.containsKey("args")) {
-            Map opts;
-            opts = new TreeMap();
             args = Synt.asSet(rd.get("args"));
-            Pattern p = Pattern.compile("^[^\\s\\[\\]\\.:=?&#%]+$");
-            for(Object obj : args) {
-                String arg = Synt.asString( obj );
-                int i = arg.indexOf(":");
+            Set argz = new TreeSet();
+            Map opts = new TreeMap();
+            Map nums = new TreeMap();
+            Pattern pat = Pattern.compile("^[^\\s\\[\\]\\.:=?&#%]+$");
+
+            // 反向遍历, 以便处理后面的覆盖前面的
+            ListIterator l = new ArrayList(args).listIterator();
+            while (l.hasPrevious()) {
+                String arg = Synt.asString(l.previous());
+
+                int i;
+                i = arg.indexOf (":");
                 if (i > 0) {
                     String k = arg.substring(0,i);
+                    if (! opts.containsKey(k)) {
                     String v = arg.substring(1+i);
-                    if ( ! p.matcher(k).matches()) {
-                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#%[]")
-                            . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
+                        if ( ! pat.matcher(k).matches()) {
+                            throw new Wrong("@magpie:magpie.reference.opts.key.invalid")
+                                . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
+                        }
+                        opts.put(k,v);
+                        args.add(arg);
                     }
-                    opts.put(k, v);
-                } else {
-                    i = arg.indexOf("=");
+                    continue;
+                }
+
+                i = arg.indexOf ("=");
                 if (i > 0) {
                     String k = arg.substring(0,i);
+                    if (! nums.containsKey(k)) {
                     String v = arg.substring(1+i);
-                    if ( ! p.matcher(k).matches()) {
-                        throw new Wrong("@magpie:magpie.reference.opts.key.invalid", " .:=?&#%[]")
-                            . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
+                        if ( ! pat.matcher(k).matches()) {
+                            throw new Wrong("@magpie:magpie.reference.opts.key.invalid")
+                                . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
+                        }
+                        Double n;
+                        String s;
+                        try {
+                            n = Synt.asDouble (v);
+                            s = Synt.asString (n);
+                            arg = k +"="+ s; // 统一数字格式
+                        } catch ( ClassCastException e ) {
+                            throw new Wrong("@magpie:magpie.reference.nums.val.invalid")
+                                . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
+                        }
+                        nums.put(k,n);
+                        args.add(arg);
                     }
-                    try {
-                        opts.put(k, Synt.asDouble(v));
-                    } catch (ClassCastException e) {
-                        throw new Wrong("@magpie:magpie.reference.nums.val.invalid")
-                            . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
-                    }
-                }}
+                    continue;
+                }
+
+                argz.add(arg);
             }
+
+            rd.put("args", argz);
             rd.put("opts", opts);
+            rd.put("nums", nums);
         }
 
         int n = 0;

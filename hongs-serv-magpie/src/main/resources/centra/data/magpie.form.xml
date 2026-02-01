@@ -30,21 +30,25 @@
             <param name="form-hint">用于标记内容, 供查阅参考</param>
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
+            <param name="statable">yes</param>
             <param name="diverse">treeset</param>
         </field>
         <field text="参数" name="args" type="text" repeated="yes">
             <param name="form-hint">用于标识数据, 供内部查询; 格式: xxx 或 xxx:字串 或 xxx=数值; 查询: ?opts.xxx=abc&amp;nums.xxx.on=[18,35]</param>
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
-            <param name="diverse">treeset</param>
+            <!--param name="diverse">treeset</param--><!-- 程序内有处理 -->
         </field>
+        <!-- 以下两个字段仅用于查询 -->
         <field name="opts" type="object" rule="Ignore">
             <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
         </field>
         <field name="nums" type="object" rule="Ignore">
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
         </field>
+        <!-- 以下四个字段仅用于部分变更-->
         <field name="add_tags" type="object" rule="Intact">
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
@@ -63,7 +67,7 @@
         </field>
         <field text="文档" name="file" type="file">
             <param name="listable">yes</param>
-            <param name="accept">.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx</param>
+            <param name="accept">.txt,.md,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx</param>
             <param name="path">static/upload/magpie/reference/${id:split}</param>
             <param name="href">static/upload/magpie/reference/${id:split}</param>
             <param name="naming">keep:file.</param>
@@ -77,11 +81,15 @@
         </field>
         <field text="分块模式" name="slit" type="enum" required="yes">
             <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="statable">yes</param>
             <param name="enum">splitter</param>
             <param name="default">default</param>
         </field>
         <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>
+            <param name="filtable">yes</param>
+            <param name="statable">yes</param>
             <param name="type">int</param>
             <param name="enum">reference_state</param>
             <param name="default">1</param>
