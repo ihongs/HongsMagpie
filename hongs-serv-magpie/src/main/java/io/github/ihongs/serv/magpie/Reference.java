@@ -3,6 +3,9 @@ package io.github.ihongs.serv.magpie;
 import io.github.ihongs.Cnst;
 import io.github.ihongs.Core;
 import io.github.ihongs.CruxException;
+import io.github.ihongs.dh.lucene.quest.IQuest;
+import io.github.ihongs.dh.lucene.quest.DoubleQuest;
+import io.github.ihongs.dh.lucene.quest.StringQuest;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Dict;
 import io.github.ihongs.util.Synt;
@@ -16,12 +19,15 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.search.BooleanQuery;
 
 /**
  * 资料库
  * @author Hongs
  */
-public class Reference extends Segment {
+public class Reference extends Data {
 
     private final Set syns; // 需同步的字段
     private       int sync; // 当前同步数
@@ -243,9 +249,57 @@ public class Reference extends Segment {
     }
 
     @Override
+    protected void padDoc(Document doc, Map map, Set rep) {
+        super.padDoc(doc, map, rep);
+
+        // 写入数值选项
+        Map nums = Synt.asMap(map.get("nums"));
+        if (nums != null && !nums.isEmpty ()) {
+            for (Object ot : nums.entrySet()) {
+                Map.Entry et = (Map.Entry) ot ;
+                Object k = et.getKey  ();
+                Object v = et.getValue();
+                doc.add(new DoublePoint("@n."+k, Synt.declare(v, 0D)));
+            }
+        }
+    }
+
+    @Override
+    protected boolean padQry(BooleanQuery.Builder qr, Map rd, String k, Object v) throws CruxException {
+        // 查询数值选项
+        if ("opts".equals(k)) {
+            Map m = Synt.asMap(v);
+            for(Object o : m.entrySet() ) {
+                Map.Entry e = (Map.Entry) o ;
+                String n = Synt.asString(e.getKey( ));
+                Set    a = Synt.asSet( e.getValue( ));
+                List   b = a.stream().map(c->n+":"+c).toList(); // 转回标签
+                Object w = Synt.mapOf(Cnst.IN_REL, b);
+                IQuest q = new StringQuest();
+                padQry(qr, rd, "args", w, q);
+            }
+            return true;
+        } else
+        if ("nums".equals(k)) {
+            Map m = Synt.asMap(v);
+            for(Object o : m.entrySet() ) {
+                Map.Entry e = (Map.Entry) o ;
+                String n = Synt.asString(e.getKey( ));
+                Set    a = Synt.asSet( e.getValue( ));
+                Object w = Synt.mapOf(Cnst.AT_REL, a);
+                IQuest q = new DoubleQuest();
+                padQry(qr, rd, "n."+n, w, q);
+            }
+            return true;
+        }
+
+        return super.padQry(qr, rd, k, v);
+    }
+
+    @Override
     protected boolean missable(String fn, Object fo, Object fr) {
-        if (fn.startsWith("add-")    // 增加标签
-        ||  fn.startsWith("del-")) { // 删减标签
+        if (fn.startsWith("add_")    // 增加标签
+        ||  fn.startsWith("del_")) { // 删减标签
             return true;
         }
         if (super.missable(fn, fo, fr)) {

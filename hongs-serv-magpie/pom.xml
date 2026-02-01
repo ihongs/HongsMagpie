@@ -30,6 +30,12 @@
             <groupId>${project.groupId}</groupId>
             <version>${primary.version}</version>
         </dependency>
+        <!-- 关联 -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-join</artifactId>
+            <version>9.12.2</version>
+        </dependency>
         <!-- 模板 -->
         <dependency>
             <groupId>com.jfinal</groupId>

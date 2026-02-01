@@ -1,19 +1,19 @@
 package io.github.ihongs.serv.magpie;
 
-import io.github.ihongs.Cnst;
 import io.github.ihongs.Core;
 import io.github.ihongs.CruxException;
-import io.github.ihongs.dh.lucene.quest.DoubleQuest;
-import io.github.ihongs.dh.lucene.quest.IQuest;
-import io.github.ihongs.dh.lucene.quest.StringQuest;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Synt;
-import java.util.List;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.join.JoinUtil;
+import org.apache.lucene.search.join.ScoreMode;
 
 /**
  * 可扩展参数的数据表(资料库/向量库)
@@ -30,51 +30,39 @@ public class Segment extends Data {
     }
 
     @Override
-    protected void padDoc(Document doc, Map map, Set rep) {
-        super.padDoc(doc, map, rep);
+    protected void padQry(BooleanQuery.Builder qr, Map rd, int rl) throws CruxException {
+        Map rd2 = new HashMap(5);
 
-        // 写入数值选项
-        Map nums = Synt.asMap(map.get("nums"));
-        if (nums != null && !nums.isEmpty ()) {
-            for (Object ot : nums.entrySet()) {
-                Map.Entry et = (Map.Entry) ot ;
-                Object k = et.getKey  ();
-                Object v = et.getValue();
-                doc.add(new DoublePoint("@n."+k, Synt.declare(v, 0D)));
+        Set tags  = Synt.asSet(rd.get("tags"));
+        if (tags != null && ! tags.isEmpty( )) rd2.put("tags", tags);
+
+        Set args  = Synt.asSet(rd.get("args"));
+        if (args != null && ! args.isEmpty( )) rd2.put("args", args);
+
+        Map opts  = Synt.asMap(rd.get("opts"));
+        if (opts != null && ! opts.isEmpty( )) rd2.put("opts", args);
+
+        Map nums  = Synt.asMap(rd.get("nums"));
+        if (nums != null && ! nums.isEmpty( )) rd2.put("nums", args);
+
+        Integer stat = Synt.asInt(rd.get("state"));
+        if (stat != null) rd2.put( "state", stat );
+
+        // 关联查询
+        if (! rd2.isEmpty()) {
+            try {
+                Reference     ref;
+                IndexSearcher is2;
+                Query         qr2;
+                ref = Reference.getInstance(conf, "reference");
+                is2 = ref.getFinder();
+                qr2 = ref.padQry(rd2);
+                qr2 = JoinUtil.createJoinQuery("#id", false, "@rf", qr2, is2, ScoreMode.None);
+                qr.add(qr2,BooleanClause.Occur.MUST);
+            } catch ( IOException e ) {
+                throw new CruxException(e);
             }
         }
-    }
-
-    @Override
-    protected boolean padQry(BooleanQuery.Builder qr, Map rd, String k, Object v) throws CruxException {
-        // 查询数值选项
-        if ("opts".equals(k)) {
-            Map m = Synt.asMap(v);
-            for(Object o : m.entrySet() ) {
-                Map.Entry e = (Map.Entry) o ;
-                String n = Synt.asString(e.getKey( ));
-                Set    a = Synt.asSet( e.getValue( ));
-                List   b = a.stream().map(c->n+":"+c).toList(); // 转回标签
-                Object w = Synt.mapOf(Cnst.IN_REL, b);
-                IQuest q = new StringQuest();
-                padQry(qr, rd, "args", w, q);
-            }
-            return true;
-        } else
-        if ("nums".equals(k)) {
-            Map m = Synt.asMap(v);
-            for(Object o : m.entrySet() ) {
-                Map.Entry e = (Map.Entry) o ;
-                String n = Synt.asString(e.getKey( ));
-                Set    a = Synt.asSet( e.getValue( ));
-                Object w = Synt.mapOf(Cnst.AT_REL, a);
-                IQuest q = new DoubleQuest();
-                padQry(qr, rd, "n."+n, w, q);
-            }
-            return true;
-        }
-
-        return super.padQry(qr, rd, k, v);
     }
 
 }

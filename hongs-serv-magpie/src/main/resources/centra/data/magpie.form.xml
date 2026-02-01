@@ -132,21 +132,6 @@
         </field>
         <field name="vect" type="vector">
         </field>
-        <field name="tags" type="string" repeated="yes">
-        </field>
-        <field name="args" type="string" repeated="yes">
-        </field>
-        <field name="opts" type="object" rule="Ignore">
-            <param name="disabled">yes</param>
-            <param name="unstored">yes</param>
-        </field>
-        <field name="nums" type="object" rule="Ignore">
-            <param name="disabled">yes</param>
-            <param name="unstored">yes</param>
-        </field>
-        <field name="state" type="number">
-            <param name="type">int</param>
-        </field>
     </form>
     <form name="assistant">
         <field text="智能助理">
