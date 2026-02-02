@@ -1,5 +1,40 @@
 
+function in_centra_data_magpie_reference_list(context, listObj) {
+    // 选项对象转为字符串
+    listObj._fill_opts =
+    listObj._fill_opns = function(x, v, n) {
+        var a = [];
+        if (v) for(var k in v) {
+            a.push(k+":"+v[k]);
+        }
+        return a.join(", ");
+    };
+}
+
+function in_centra_data_magpie_reference_info(context, formObj) {
+    // 选项对象转为字符串
+    formObj._fill_opts =
+    formObj._fill_opns = function(x, v, n) {
+        var a = [];
+        if (v) for(var k in v) {
+            a.push(k+":"+v[k]);
+        }
+        return a.join(", ");
+    };
+}
+
 function in_centra_data_magpie_reference_form(context, formObj) {
+    // 选项对象转为字符串
+    formObj._fill_opts =
+    formObj._fill_opns = function(x, v, n) {
+        var a = [];
+        if (v) for(var k in v) {
+            a.push(k+":"+v[k]);
+        }
+        return a.join(", ");
+    };
+
+    // 文档上传, 提取内容
     formObj.formBox.on("change", "ul[data-fn=file]", function() {
         var inp = $(this).find("input[type=file]");
         if (inp.size() == 0) {

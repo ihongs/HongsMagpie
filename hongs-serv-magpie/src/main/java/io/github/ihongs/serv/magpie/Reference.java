@@ -6,22 +6,21 @@ import io.github.ihongs.CruxException;
 import io.github.ihongs.dh.lucene.quest.IQuest;
 import io.github.ihongs.dh.lucene.quest.DoubleQuest;
 import io.github.ihongs.dh.lucene.quest.StringQuest;
+import io.github.ihongs.dh.lucene.stock.IStock;
+import io.github.ihongs.dh.lucene.stock.DoubleStock;
+import io.github.ihongs.dh.lucene.stock.StringStock;
 import io.github.ihongs.serv.matrix.Data;
-import io.github.ihongs.util.Dict;
 import io.github.ihongs.util.Synt;
-import io.github.ihongs.util.verify.Wrong;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.SortField;
 
 /**
  * 资料库
@@ -30,7 +29,7 @@ import org.apache.lucene.search.BooleanQuery;
 public class Reference extends Data {
 
     private List parts;
-    
+
     protected Reference(String conf, String form) {
         super(conf, form);
     }
@@ -99,12 +98,10 @@ public class Reference extends Data {
 
     @Override
     protected int padDif(Map dd , Map rd) throws CruxException {
-        Set tags = rd.containsKey("tags") ? Synt.asSet(rd.get("tags")) : Synt.asSet(dd.get("tags"));
-        Set args = rd.containsKey("args") ? Synt.asSet(rd.get("args")) : Synt.asSet(dd.get("args"));
-
         // 合并标签
-        Set addTags  = Synt.toSet(rd.get("add_tags"));
-        if (addTags != null && ! addTags.isEmpty()) {
+        Set tags = rd.containsKey("tags") ? Synt.toSet(rd.get("tags")) : Synt.asSet(dd.get("tags"));
+        Set addTags = Synt.toSet(rd.get("add_tags"));
+        if (addTags != null && ! addTags.isEmpty( )) {
             if (tags != null) {
                 tags.addAll(addTags);
             } else {
@@ -112,17 +109,21 @@ public class Reference extends Data {
             }
             rd.put("tags", tags);
         }
-        Set delTags  = Synt.toSet(rd.get("del_tags"));
-        if (delTags != null && ! delTags.isEmpty()) {
+        Set delTags = Synt.toSet(rd.get("del_tags"));
+        if (delTags != null && ! delTags.isEmpty( )) {
             if (tags != null) {
                 tags.removeAll(delTags);
                 rd.put("tags", tags);
             }
         }
+        if (rd.containsKey("tags")) {
+            rd.put("tags", new TreeSet(tags));
+        }
 
         // 合并参数
-        Set addArgs  = Synt.toSet(rd.get("add_args"));
-        if (addArgs != null && ! addArgs.isEmpty()) {
+        Set args = rd.containsKey("args") ? Synt.toSet(rd.get("args")) : Synt.asSet(dd.get("args"));
+        Set addArgs = Synt.toSet(rd.get("add_args"));
+        if (addArgs != null && ! addArgs.isEmpty( )) {
             if (args != null) {
                 args.addAll(addArgs);
             } else {
@@ -130,74 +131,63 @@ public class Reference extends Data {
             }
             rd.put("args", args);
         }
-        Set delArgs  = Synt.toSet(rd.get("del_args"));
-        if (delArgs != null && ! delArgs.isEmpty()) {
+        Set delArgs = Synt.toSet(rd.get("del_args"));
+        if (delArgs != null && ! delArgs.isEmpty( )) {
             if (args != null) {
                 args.removeAll(delArgs);
                 rd.put("args", args);
             }
         }
-
-        // 解析参数
         if (rd.containsKey("args")) {
-            args = Synt.asSet(rd.get("args"));
-            Set argz = new TreeSet();
-            Map opts = new TreeMap();
-            Map nums = new TreeMap();
-            Pattern pat = Pattern.compile("^[^\\s\\[\\]\\.:=?&#%]+$");
+            rd.put("args", new TreeSet(args));
+        }
 
-            // 反向遍历, 以便处理后面的覆盖前面的
-            ListIterator l = new ArrayList(args).listIterator();
-            while (l.hasPrevious()) {
-                String arg = Synt.asString(l.previous());
-
-                int i;
-                i = arg.indexOf (":");
-                if (i > 0) {
-                    String k = arg.substring(0,i);
-                    if (! opts.containsKey(k)) {
-                    String v = arg.substring(1+i);
-                        if ( ! pat.matcher(k).matches()) {
-                            throw new Wrong("@magpie:magpie.reference.opts.key.invalid")
-                                . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
-                        }
-                        opts.put(k,v);
-                        args.add(arg);
-                    }
-                    continue;
-                }
-
-                i = arg.indexOf ("=");
-                if (i > 0) {
-                    String k = arg.substring(0,i);
-                    if (! nums.containsKey(k)) {
-                    String v = arg.substring(1+i);
-                        if ( ! pat.matcher(k).matches()) {
-                            throw new Wrong("@magpie:magpie.reference.opts.key.invalid")
-                                . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
-                        }
-                        Double n;
-                        String s;
-                        try {
-                            n = Synt.asDouble (v);
-                            s = Synt.asString (n);
-                            arg = k +"="+ s; // 统一数字格式
-                        } catch ( ClassCastException e ) {
-                            throw new Wrong("@magpie:magpie.reference.nums.val.invalid")
-                                . withLabel(Dict.get(getFields(), "args", "args", "__text__"));
-                        }
-                        nums.put(k,n);
-                        args.add(arg);
-                    }
-                    continue;
-                }
-
-                argz.add(arg);
+        // 一般选项
+        Map opts = rd.containsKey("opts") ? Synt.toMap(rd.get("opts")) : Synt.asMap(dd.get("opts"));
+        Map setOpts = Synt.toMap(rd.get("set_opts"));
+        if (setOpts != null && ! setOpts.isEmpty( )) {
+            if (opts != null) {
+                opts.putAll(setOpts);
+            } else {
+                opts  = setOpts ;
             }
-
-            rd.put("args", argz);
             rd.put("opts", opts);
-            rd.put("nums", nums);
+        }
+        if (rd.containsKey("opts") ) {
+            Map optz = new TreeMap();
+            for(Object ot : opts.entrySet()) {
+                Map.Entry et = (Map.Entry) ot;
+                String k = Synt.asString(et.getKey  ());
+                String v = Synt.asString(et.getValue());
+                if (k != null && v != null && ! k.isEmpty() && ! v.isEmpty()) {
+                    optz.put(k , v);
+                }
+            }
+            rd.put("opts", optz);
+        }
+
+        // 数值选项
+        Map opns = rd.containsKey("opns") ? Synt.toMap(rd.get("opns")) : Synt.asMap(dd.get("opns"));
+        Map setOpns = Synt.toMap(rd.get("set_opns"));
+        if (setOpns != null && ! setOpns.isEmpty( )) {
+            if (opns != null) {
+                opns.putAll(setOpns);
+            } else {
+                opns  = setOpns ;
+            }
+            rd.put("opns", opns);
+        }
+        if (rd.containsKey("opns") ) {
+            Map opnz = new TreeMap();
+            for(Object ot : opns.entrySet()) {
+                Map.Entry et = (Map.Entry) ot;
+                String k = Synt.asString(et.getKey  ());
+                Double v = Synt.asDouble(et.getValue());
+                if (k != null && v != null && ! k.isEmpty()) {
+                    opnz.put(k , v);
+                }
+            }
+            rd.put("opns", opnz);
         }
 
         // 拆分文本, 获取向量
@@ -226,48 +216,81 @@ public class Reference extends Data {
     protected void padDoc(Document doc, Map map, Set rep) {
         super.padDoc(doc, map, rep);
 
+        // 写入一般选项
+        Map opts  = Synt.asMap(map.get("opts"));
+        if (opts != null && !opts.isEmpty ()) {
+            for (Object ot : opts.entrySet()) {
+                Map.Entry et = (Map.Entry) ot;
+                String k = Synt.declare(et.getKey  (), "");
+                String v = Synt.declare(et.getValue(), "");
+                IStock s = new StringStock( );
+                k = "opts." + k;
+                doc.add(s.whr(k, v));
+                doc.add(s.odr(k, v));
+            }
+        }
+
         // 写入数值选项
-        Map nums = Synt.asMap(map.get("nums"));
-        if (nums != null && !nums.isEmpty ()) {
-            for (Object ot : nums.entrySet()) {
-                Map.Entry et = (Map.Entry) ot ;
-                Object k = et.getKey  ();
-                Object v = et.getValue();
-                doc.add(new DoublePoint("@n."+k, Synt.declare(v, 0D)));
+        Map opns  = Synt.asMap(map.get("opns"));
+        if (opns != null && !opns.isEmpty ()) {
+            for (Object ot : opns.entrySet()) {
+                Map.Entry et = (Map.Entry) ot;
+                String k = Synt.declare(et.getKey  (), "");
+                Double v = Synt.declare(et.getValue(), 0D);
+                IStock s = new DoubleStock( );
+                k = "opns." + k;
+                doc.add(s.whr(k, v));
+                doc.add(s.odr(k, v));
             }
         }
     }
 
     @Override
     protected boolean padQry(BooleanQuery.Builder qr, Map rd, String k, Object v) throws CruxException {
-        // 查询数值选项
+        // 查询一般选项
         if ("opts".equals(k)) {
             Map m = Synt.asMap(v);
             for(Object o : m.entrySet() ) {
                 Map.Entry e = (Map.Entry) o ;
-                String n = Synt.asString(e.getKey( ));
-                Set    a = Synt.asSet( e.getValue( ));
-                List   b = a.stream().map(c->n+":"+c).toList(); // 转回标签
-                Object w = Synt.mapOf(Cnst.IN_REL, b);
+                Object n = e.getKey  ();
+                Object w = e.getValue();
                 IQuest q = new StringQuest();
-                padQry(qr, rd, "args", w, q);
+                padQry(qr, rd, "opts."+n, w, q);
             }
             return true;
-        } else
-        if ("nums".equals(k)) {
+        }
+
+        // 查询数值选项
+        if ("opns".equals(k)) {
             Map m = Synt.asMap(v);
             for(Object o : m.entrySet() ) {
                 Map.Entry e = (Map.Entry) o ;
-                String n = Synt.asString(e.getKey( ));
-                Set    a = Synt.asSet( e.getValue( ));
-                Object w = Synt.mapOf(Cnst.AT_REL, a);
+                Object n = e.getKey  ();
+                Object w = e.getValue();
                 IQuest q = new DoubleQuest();
-                padQry(qr, rd, "n."+n, w, q);
+                padQry(qr, rd, "opns."+n, w, q);
             }
             return true;
         }
 
         return super.padQry(qr, rd, k, v);
+    }
+
+    @Override
+    protected boolean padSrt(List<SortField> sr, Map rd, String k, boolean r) throws CruxException {
+        // 一般选项排序
+        if (k.startsWith("opts.")) {
+            sr.add(new SortField("#" + k, SortField.Type.STRING, r));
+            return true;
+        }
+
+        // 数值选项排序
+        if ("opns".equals(k)) {
+            sr.add(new SortField("#" + k, SortField.Type.DOUBLE, r));
+            return true;
+        }
+
+        return super.padSrt(sr, rd, k, r);
     }
 
     @Override

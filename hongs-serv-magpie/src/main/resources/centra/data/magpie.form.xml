@@ -30,22 +30,18 @@
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
             <param name="statable">yes</param>
-            <param name="diverse">treeset</param>
         </field>
         <field text="参数" name="args" type="text" repeated="yes">
-            <param name="form-hint">用于标识数据, 供内部查询; 格式: xxx 或 xxx:字串 或 xxx=数值; 查询: ?opts.xxx=abc&amp;nums.xxx.on=[18,35]</param>
+            <param name="form-hint">用于标识数据, 供内部查询</param>
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
-            <!--param name="diverse">treeset</param--><!-- 程序内有处理 -->
+            <param name="statable">yes</param>
         </field>
-        <!-- 以下两个字段仅用于查询 -->
-        <field name="opts" type="object" rule="Ignore">
-            <param name="disabled">yes</param>
-            <param name="unstored">yes</param>
+        <field text="选项" name="opts" type="object" rule="Intact">
+            <param name="form-hint">用于标识数据, 供内部查询</param>
         </field>
-        <field name="nums" type="object" rule="Ignore">
-            <param name="disabled">yes</param>
-            <param name="unstored">yes</param>
+        <field text="数值" name="opns" type="object" rule="Intact">
+            <param name="form-hint">用于标识数据, 供内部查询</param>
         </field>
         <!-- 以下四个字段仅用于部分变更-->
         <field name="add_tags" type="object" rule="Intact">
@@ -61,6 +57,14 @@
             <param name="unstored">yes</param>
         </field>
         <field name="del_args" type="object" rule="Intact">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
+        </field>
+        <field name="set_opts" type="object" rule="Intact">
+            <param name="disabled">yes</param>
+            <param name="unstored">yes</param>
+        </field>
+        <field name="set_opns" type="object" rule="Intact">
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
         </field>
