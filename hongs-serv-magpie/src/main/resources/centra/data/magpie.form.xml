@@ -39,9 +39,11 @@
         </field>
         <field text="选项" name="opts" type="object" rule="Intact">
             <param name="form-hint">用于标识数据, 供内部查询</param>
+            <param name="listable">yes</param>
         </field>
         <field text="数值" name="optn" type="object" rule="Intact">
             <param name="form-hint">用于标识数据, 供内部查询</param>
+            <param name="listable">yes</param>
         </field>
         <!-- 以下四个字段仅用于部分变更-->
         <field name="add_tags" type="object" rule="Intact">
