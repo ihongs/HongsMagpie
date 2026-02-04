@@ -40,7 +40,7 @@
         <field text="选项" name="opts" type="object" rule="Intact">
             <param name="form-hint">用于标识数据, 供内部查询</param>
         </field>
-        <field text="数值" name="opns" type="object" rule="Intact">
+        <field text="数值" name="optn" type="object" rule="Intact">
             <param name="form-hint">用于标识数据, 供内部查询</param>
         </field>
         <!-- 以下四个字段仅用于部分变更-->
@@ -64,7 +64,7 @@
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
         </field>
-        <field name="set_opns" type="object" rule="Intact">
+        <field name="set_optn" type="object" rule="Intact">
             <param name="disabled">yes</param>
             <param name="unstored">yes</param>
         </field>

@@ -41,8 +41,8 @@ public class Segment extends Data {
         if (rd.containsKey("opts")) {
             rd2.put("opts", rd.get("opts"));
         }
-        if (rd.containsKey("opns")) {
-            rd2.put("opns", rd.get("opns"));
+        if (rd.containsKey("optn")) {
+            rd2.put("optn", rd.get("optn"));
         }
         if (rd.containsKey("state")) {
             rd2.put("state", rd.get("state"));

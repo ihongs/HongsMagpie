@@ -167,19 +167,19 @@ public class Reference extends Data {
         }
 
         // 数值选项
-        Map opns = rd.containsKey("opns") ? Synt.toMap(rd.get("opns")) : Synt.asMap(dd.get("opns"));
-        Map setOpns = Synt.toMap(rd.get("set_opns"));
+        Map optn = rd.containsKey("optn") ? Synt.toMap(rd.get("optn")) : Synt.asMap(dd.get("optn"));
+        Map setOpns = Synt.toMap(rd.get("set_optn"));
         if (setOpns != null && ! setOpns.isEmpty( )) {
-            if (opns != null) {
-                opns.putAll(setOpns);
+            if (optn != null) {
+                optn.putAll(setOpns);
             } else {
-                opns  = setOpns ;
+                optn  = setOpns ;
             }
-            rd.put("opns", opns);
+            rd.put("optn", optn);
         }
-        if (rd.containsKey("opns") ) {
+        if (rd.containsKey("optn") ) {
             Map opnz = new TreeMap();
-            for(Object ot : opns.entrySet()) {
+            for(Object ot : optn.entrySet()) {
                 Map.Entry et = (Map.Entry) ot;
                 String k = Synt.asString(et.getKey  ());
                 Double v = Synt.asDouble(et.getValue());
@@ -187,7 +187,7 @@ public class Reference extends Data {
                     opnz.put(k , v);
                 }
             }
-            rd.put("opns", opnz);
+            rd.put("optn", opnz);
         }
 
         // 拆分文本, 获取向量
@@ -231,14 +231,14 @@ public class Reference extends Data {
         }
 
         // 写入数值选项
-        Map opns  = Synt.asMap(map.get("opns"));
-        if (opns != null && !opns.isEmpty ()) {
-            for (Object ot : opns.entrySet()) {
+        Map optn  = Synt.asMap(map.get("optn"));
+        if (optn != null && !optn.isEmpty ()) {
+            for (Object ot : optn.entrySet()) {
                 Map.Entry et = (Map.Entry) ot;
                 String k = Synt.declare(et.getKey  (), "");
                 Double v = Synt.declare(et.getValue(), 0D);
                 IStock s = new DoubleStock( );
-                k = "opns." + k;
+                k = "optn." + k;
                 doc.add(s.whr(k, v));
                 doc.add(s.odr(k, v));
             }
@@ -261,14 +261,14 @@ public class Reference extends Data {
         }
 
         // 查询数值选项
-        if ("opns".equals(k)) {
+        if ("optn".equals(k)) {
             Map m = Synt.asMap(v);
             for(Object o : m.entrySet() ) {
                 Map.Entry e = (Map.Entry) o ;
                 Object n = e.getKey  ();
                 Object w = e.getValue();
                 IQuest q = new DoubleQuest();
-                padQry(qr, rd, "opns."+n, w, q);
+                padQry(qr, rd, "optn."+n, w, q);
             }
             return true;
         }
@@ -285,7 +285,7 @@ public class Reference extends Data {
         }
 
         // 数值选项排序
-        if ("opns".equals(k)) {
+        if (k.startsWith("optn.")) {
             sr.add(new SortField("#" + k, SortField.Type.DOUBLE, r));
             return true;
         }

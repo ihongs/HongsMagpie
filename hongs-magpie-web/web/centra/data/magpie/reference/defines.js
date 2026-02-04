@@ -2,7 +2,7 @@
 function in_centra_data_magpie_reference_list(context, listObj) {
     // 选项对象转为字符串
     listObj._fill_opts =
-    listObj._fill_opns = function(x, v, n) {
+    listObj._fill_optn = function(x, v, n) {
         var a = [];
         if (v) for(var k in v) {
             a.push(k+":"+v[k]);
@@ -14,7 +14,7 @@ function in_centra_data_magpie_reference_list(context, listObj) {
 function in_centra_data_magpie_reference_info(context, formObj) {
     // 选项对象转为字符串
     formObj._fill_opts =
-    formObj._fill_opns = function(x, v, n) {
+    formObj._fill_optn = function(x, v, n) {
         var a = [];
         if (v) for(var k in v) {
             a.push(k+":"+v[k]);
@@ -26,7 +26,7 @@ function in_centra_data_magpie_reference_info(context, formObj) {
 function in_centra_data_magpie_reference_form(context, formObj) {
     // 选项对象转为字符串
     formObj._fill_opts =
-    formObj._fill_opns = function(x, v, n) {
+    formObj._fill_optn = function(x, v, n) {
         var a = [];
         if (v) for(var k in v) {
             a.push(k+":"+v[k]);
