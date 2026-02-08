@@ -168,26 +168,26 @@ public class Reference extends Data {
 
         // 数值选项
         Map optn = rd.containsKey("optn") ? Synt.toMap(rd.get("optn")) : Synt.asMap(dd.get("optn"));
-        Map setOpns = Synt.toMap(rd.get("set_optn"));
-        if (setOpns != null && ! setOpns.isEmpty( )) {
+        Map setOptn = Synt.toMap(rd.get("set_optn"));
+        if (setOptn != null && ! setOptn.isEmpty( )) {
             if (optn != null) {
-                optn.putAll(setOpns);
+                optn.putAll(setOptn);
             } else {
-                optn  = setOpns ;
+                optn  = setOptn ;
             }
             rd.put("optn", optn);
         }
         if (rd.containsKey("optn") ) {
-            Map opnz = new TreeMap();
+            Map optz = new TreeMap();
             for(Object ot : optn.entrySet()) {
                 Map.Entry et = (Map.Entry) ot;
                 String k = Synt.asString(et.getKey  ());
                 Double v = Synt.asDouble(et.getValue());
                 if (k != null && v != null && ! k.isEmpty()) {
-                    opnz.put(k , v);
+                    optz.put(k , v);
                 }
             }
-            rd.put("optn", opnz);
+            rd.put("optn", optz);
         }
 
         // 拆分文本, 获取向量

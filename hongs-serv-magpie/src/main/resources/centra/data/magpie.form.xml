@@ -399,6 +399,7 @@
     </form>
     <enum name="splitter">
         <value code="default">默认</value>
+        <value code="defiant">不拆分</value>
     </enum>
     <enum name="reference_state">
         <value code="1">正常</value>

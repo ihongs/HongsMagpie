@@ -38,6 +38,7 @@ import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -169,18 +170,21 @@ public final class AiUtil {
     public static DocumentSplitter getDocumentSplitter(String type) {
         return Core.getInstance()
             .got(DocumentSplitter.class.getName()+":"+type, ()->{
-                CoreConfig cc = CoreConfig.getInstance("magpie");
-                String clsn = cc.getProperty(type+".splitter.class", DocumentSplitters.class.getName());
-                int maxSegmentSize = cc.getProperty(type+".splitter.max-segment-size", 1000);
-                int maxOverlaySize = cc.getProperty(type+".splitter.max-overlay-size", 100 );
-
                 try {
+                    CoreConfig cc = CoreConfig.getInstance("magpie");
+                    String clsn = cc.getProperty(type+".splitter.class", DefaultSplitter.class.getName());
                     Class  clso = Class.forName(clsn);
-                    Method mtho = clso.getMethod("recursive", int.class, int.class);
-                    return (DocumentSplitter) mtho.invoke(null, maxSegmentSize, maxOverlaySize);
+
+                    try {
+                        Constructor<DocumentSplitter> cons = clso.getConstructor(String.class);
+                        return cons.newInstance(type);
+                    } catch (NoSuchMethodException e) {
+                        Constructor<DocumentSplitter> cons = clso.getConstructor();
+                        return cons.newInstance(/**/);
+                    }
                 } catch (ClassNotFoundException e ) {
                     throw new CruxExemption(e, 821);
-                } catch ( NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
+                } catch ( NoSuchMethodException | InstantiationException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
                     throw new CruxExemption(e, 823);
                 } catch (InvocationTargetException e) {
                     Throwable ta = e.getCause( );
@@ -654,6 +658,46 @@ public final class AiUtil {
             .map    (str->str.strip())
             .filter (str->!str.isEmpty())
             .toList ();
+    }
+
+    /**
+     * 默认文档拆分器
+     *
+     * magpie 配置项:
+     * type.splitter.max-segment-size=分块大小
+     * type.splitter.max-overlay-size=交叠大小
+     * type 为拆分器分类名称
+     */
+    public static class DefaultSplitter implements DocumentSplitter {
+
+        private final DocumentSplitter that;
+
+        public DefaultSplitter (String type) {
+            CoreConfig cc = CoreConfig.getInstance("magpie");
+            int maxSegmentSize = cc.getProperty(type+".splitter.max-segment-size", 1000);
+            int maxOverlaySize = cc.getProperty(type+".splitter.max-overlay-size", 100 );
+            that = DocumentSplitters.recursive (maxSegmentSize, maxOverlaySize);
+        }
+
+        @Override
+        public List<TextSegment> split(Document docu) {
+            return that.split(docu);
+        }
+
+    }
+
+    /**
+     * 占位文档拆分器
+     *
+     * 不作拆分, 总是返回空列表
+     */
+    public static class DefiantSpliter implements DocumentSplitter {
+
+        @Override
+        public List<TextSegment> split(Document dcmnt) {
+            return new ArrayList(0);
+        }
+
     }
 
 }
