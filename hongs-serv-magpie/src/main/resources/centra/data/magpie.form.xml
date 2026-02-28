@@ -293,8 +293,10 @@
             <param name="listable">yes</param>
         </field>
         <field name="segment_id" type="hidden" repeated="yes">
+            <param name="disabled">yes</param>
         </field>
         <field name="tools"      type="stored" repeated="no" >
+            <param name="disabled">yes</param>
         </field>
         <field text="用户消息" name="prompt" type="textarea">
             <param name="listable">yes</param>
