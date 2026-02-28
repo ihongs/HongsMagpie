@@ -267,8 +267,9 @@ public class MagpieMessage {
                     "user_id"     , uid,
                     "anno_id"     , nid
                 ), 0, maxCn).toList();
+            ListIterator<Map>  litr  ;
+            litr = rows.listIterator(rows.size());
             messages = new ArrayList(rows.size() * 2 + 2);
-            ListIterator<Map> litr = rows.listIterator( );
             while (litr.hasPrevious()) {
                 Map row = litr.previous();
                 messages.add(Synt.mapOf(
