@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -229,17 +230,9 @@ public class MagpieMessage {
             throw new CruxException (404 , "Assistant is not found");
         }
 
-        List<Map> messages = Synt.asList(xd.get("messages"));
-        if (messages != null && ! messages.isEmpty()) {
-            messages = new ArrayList(messages);
-        } else {
-            messages = new ArrayList(2);
-        }
-
-        String prompt = Synt.declare(xd.get("prompt"), ""  );
-
         // 下同 io.github.ihongs.serv.centra.MagpieMessage
 
+        String prompt = Synt.declare(xd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
         String remind = Synt.declare(rd.get("remind"), ""  );
         String model  = Synt.declare(rd.get("model" ), ""  );
@@ -260,12 +253,41 @@ public class MagpieMessage {
         List<Map>     segs = new ArrayList();
         StringBuilder scts = new StringBuilder();
 
-        CoreLocale cl = CoreLocale.getInstance("magpie");
+        // 获取历史消息
+        List<Map> messages = Synt.asList(xd.get("messages"));
+        if (messages != null && ! messages.isEmpty()) {
+            messages = new ArrayList(messages);
+        } else {
+            List<Map> rows = Data.getInstance("centra/data/magpie", "assistant-message")
+                .search(Synt.mapOf(
+                    Cnst.RB_KEY, Synt.setOf("prompt", "result"),
+                    Cnst.OB_KEY, "ctime!",
+                    "assistant_id", aid,
+                    "sessoin_id"  , sid,
+                    "user_id"     , uid,
+                    "anno_id"     , nid
+                ), 0, maxCn).toList();
+            messages = new ArrayList(rows.size() * 2 + 2);
+            ListIterator<Map> litr = rows.listIterator( );
+            while (litr.hasPrevious()) {
+                Map row = litr.previous();
+                messages.add(Synt.mapOf(
+                    "role", "user",
+                    "content", row.get("prompt")
+                ));
+                messages.add(Synt.mapOf(
+                    "role", "assistant",
+                    "content", row.get("result")
+                ));
+            }
+        }
 
         // 限定上下文长度
         if (maxCn > 0 && maxCn * 2 < messages.size()) {
             messages = new ArrayList(messages.subList(messages.size() - (maxCn * 2), messages.size()));
         }
+
+        CoreLocale cl = CoreLocale.getInstance("magpie");
 
         // 查询并引用资料, 使用 refs 工具则跳过
         if (query != null && ! query.isEmpty ( )

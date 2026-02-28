@@ -145,13 +145,6 @@ public class MagpieMessage {
     private void stream(ActionHelper helper, Map rd, int stream) throws CruxException {
         String sid = Synt.asString(rd.get("session_id"));
 
-        List<Map> messages = Synt.asList(rd.get("messages"));
-        if (messages != null && ! messages.isEmpty()) {
-            messages = new ArrayList(messages);
-        } else {
-            messages = new ArrayList(2);
-        }
-
         String prompt = Synt.declare(rd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
         String remind = Synt.declare(rd.get("remind"), ""  );
@@ -173,12 +166,19 @@ public class MagpieMessage {
         List<Map>     segs = new ArrayList();
         StringBuilder scts = new StringBuilder();
 
-        CoreLocale cl = CoreLocale.getInstance("magpie");
+        List<Map> messages = Synt.asList(rd.get("messages"));
+        if (messages != null && ! messages.isEmpty()) {
+            messages = new ArrayList(messages);
+        } else {
+            messages = new ArrayList(2);
+        }
 
         // 限定上下文长度
         if (maxCn > 0 && maxCn * 2 < messages.size()) {
             messages = new ArrayList(messages.subList(messages.size() - (maxCn * 2), messages.size()));
         }
+
+        CoreLocale cl = CoreLocale.getInstance("magpie");
 
         // 查询并引用资料, 使用 refs 工具则跳过
         if (query != null && ! query.isEmpty ( )
