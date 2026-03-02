@@ -212,7 +212,7 @@ public final class AiUtil {
             try {
                 String[] ps = CoreConfig
                         .getInstance( "magpie" )
-                        .getProperty( "magpie.agent.tools", "io.github.ihongs.serv.agent.tool.**" )
+                        .getProperty( "magpie.agent.tools", "io.github.ihongs.agent.tool.**" )
                         .split(";");
                 Map<String, Mathod> ts = new HashMap (ps.length);
                 for(String pn : ps) {
@@ -561,12 +561,14 @@ public final class AiUtil {
                     }
                 } catch (Exception ex) {
                     // 异常终止
+                    CoreLogger.error(ex);
                     df.fail(ex);
                 }
             }
             @Override
             public void onError(Throwable ex) {
                 // 异常中止
+                CoreLogger.error(ex);
                 df.fail(ex);
             }
         });
