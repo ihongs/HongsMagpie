@@ -135,7 +135,7 @@ public class McpAction extends ActionDriver {
 
         for (Parameter param : params) {
              dev.langchain4j.agent.tool.P pa = param.getAnnotation( dev.langchain4j.agent.tool.P.class);
-            io.github.ihongs.agent.tool.E ea = param.getAnnotation(io.github.ihongs.agent.tool.E.class);
+            io.github.ihongs.serv.agent.E ea = param.getAnnotation(io.github.ihongs.serv.agent.E.class);
             Map pm = new HashMap(0x3);
             String pn = "arg" + (i++);
             pm.put("description", "");

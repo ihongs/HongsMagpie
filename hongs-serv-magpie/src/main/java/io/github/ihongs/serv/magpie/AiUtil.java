@@ -33,7 +33,7 @@ import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
-import io.github.ihongs.agent.tool.Env;
+import io.github.ihongs.serv.agent.Env;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
@@ -212,7 +212,7 @@ public final class AiUtil {
             try {
                 String[] ps = CoreConfig
                         .getInstance( "magpie" )
-                        .getProperty( "magpie.agent.tools", "io.github.ihongs.agent.tool.**" )
+                        .getProperty( "magpie.agent.tools", "io.github.ihongs.serv.agent.**" )
                         .split(";");
                 Map<String, Mathod> ts = new HashMap (ps.length);
                 for(String pn : ps) {

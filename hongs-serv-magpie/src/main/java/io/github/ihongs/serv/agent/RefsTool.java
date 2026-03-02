@@ -1,4 +1,4 @@
-package io.github.ihongs.agent.tool;
+package io.github.ihongs.serv.agent;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
