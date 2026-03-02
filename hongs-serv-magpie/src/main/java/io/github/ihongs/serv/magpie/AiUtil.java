@@ -33,7 +33,7 @@ import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
 import io.github.ihongs.CruxExemption;
-import io.github.ihongs.serv.agent.Env;
+import io.github.ihongs.agent.tools.Env;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
@@ -202,7 +202,7 @@ public final class AiUtil {
     /**
      * 获取工具方法集
      * 配置:
-     * magpie.tools=package.ClassName;package.name.*;package.name.**
+     * magpie.agent.tools=package.ClassName;package.name.*;package.name.**
      * 说明:
      * 指定类名仅在类下查找, .* 结尾在此包下查找, .** 结尾包含下级包
      * @return
@@ -212,7 +212,7 @@ public final class AiUtil {
             try {
                 String[] ps = CoreConfig
                         .getInstance( "magpie" )
-                        .getProperty( "magpie.agent.tools", "io.github.ihongs.serv.agent.**" )
+                        .getProperty( "magpie.agent.tools","io.github.ihongs.agent.tools.**" )
                         .split(";");
                 Map<String, Mathod> ts = new HashMap (ps.length);
                 for(String pn : ps) {

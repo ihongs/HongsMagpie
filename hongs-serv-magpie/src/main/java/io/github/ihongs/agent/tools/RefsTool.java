@@ -1,4 +1,4 @@
-package io.github.ihongs.serv.agent;
+package io.github.ihongs.agent.tools;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -32,7 +32,7 @@ public class RefsTool implements Env {
        + " Return reference contents, splice by '========'."
        + " Returns an empty string if no reference.")
     public String refs(
-        @P("query text, required")
+        @P("query text")
         String remind
     ) throws CruxException {
         Map rd = Synt.asMap(ENV.get("REQUEST"));

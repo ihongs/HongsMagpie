@@ -130,19 +130,15 @@ public class McpAction extends ActionDriver {
      */
     protected Map  toSchema(Parameter[] params) {
         Map  ps = new LinkedHashMap(params.length);
-        List rs = new ArrayList (params.length);
+        List rs = new  ArrayList   (params.length);
         int  i  = 0;
 
         for (Parameter param : params) {
-             dev.langchain4j.agent.tool.P pa = param.getAnnotation( dev.langchain4j.agent.tool.P.class);
-            io.github.ihongs.serv.agent.E ea = param.getAnnotation(io.github.ihongs.serv.agent.E.class);
+            dev.langchain4j.agent.tool.P pa = param.getAnnotation(dev.langchain4j.agent.tool.P.class);
             Map pm = new HashMap(0x3);
             String pn = "arg" + (i++);
             pm.put("description", "");
-            ps.put(pn, pm);
-            if (ea != null) {
-                pm.put("enum", ea.value());
-            }
+            ps.put(pn , pm);
             if (pa != null) {
                 pm.put("description", pa.value());
                 Class pt = param.getType();

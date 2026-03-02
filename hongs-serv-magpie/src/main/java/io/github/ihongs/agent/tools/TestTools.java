@@ -1,4 +1,4 @@
-package io.github.ihongs.serv.agent;
+package io.github.ihongs.agent.tools;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -20,8 +20,7 @@ public class TestTools {
 
     @Tool("calc: Calculator. Simple calculation")
     public String calc(
-        @P("operation")
-        @E({"+", "-", "*", "/", "add", "subtract", "multiply", "divide"})
+        @P("operation, must be +,-,*,/,add,subtract,multiply,divide")
         String p,
         @P("number a")
         double a,
