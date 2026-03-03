@@ -35,6 +35,10 @@ public class TplMethod {
         return Syno.concat(s, Synt.asColl(o)).trim();
     }
 
+    public String format(String f, Object... a) {
+        return String.format(f, a);
+    }
+
     public String date_format(Object d, String f) {
         if (d == null || "".equals(d)) {
             return "";
