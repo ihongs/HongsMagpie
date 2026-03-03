@@ -25,16 +25,15 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
-import dev.langchain4j.service.tool.ToolExecutor;
 import io.github.ihongs.Core;
 import io.github.ihongs.CoreConfig;
 import io.github.ihongs.CoreLogger;
 import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
+import io.github.ihongs.CruxException;
 import io.github.ihongs.CruxExemption;
-import io.github.ihongs.agent.tools.Env;
-import io.github.ihongs.util.Dist;
+import io.github.ihongs.agent.tool.Env;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
 import java.io.IOException;
@@ -212,7 +211,7 @@ public final class AiUtil {
             try {
                 String[] ps = CoreConfig
                         .getInstance( "magpie" )
-                        .getProperty( "magpie.agent.tools","io.github.ihongs.agent.tools.**" )
+                        .getProperty( "magpie.agent.tools", "io.github.ihongs.agent.tool.**" )
                         .split(";");
                 Map<String, Mathod> ts = new HashMap (ps.length);
                 for(String pn : ps) {
@@ -313,32 +312,29 @@ public final class AiUtil {
      * @param model
      * @param messages
      * @param tools
-     * @param temp temperature
-     * @param topP
-     * @param topK
-     * @param maxT max output tokens
-     * @param r   工具递归限定, 0 不限
-     * @param env 工具调用环境
+     * @param cnf 参数, temperature, topP, topK, maxOutputTokens, maxInvokeRounds
+     * @param env 环境
      * @return
      */
-    public static String chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Map env) {
+    public static String chat(String model, List<Map> messages, Set<String> tools, Map cnf, Map env) {
         ChatModel lm = getChatModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
         DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
-        if (temp != 0d) {
-            pb.temperature(temp);
+        if (cnf.containsKey("temperature")) {
+            pb.temperature(Synt.asDouble(cnf.get("temperature")));
         }
-        if (topP != 0d) {
-            pb.topP(topP);
+        if (cnf.containsKey("topP")) {
+            pb.topP(Synt.asDouble(cnf.get("topP")));
         }
-        if (topK != 0 ) {
-            pb.topK(topK);
+        if (cnf.containsKey("topK")) {
+            pb.topK(Synt.asInt   (cnf.get("topK")));
         }
-        if (maxT != 0 ) {
-            pb.maxOutputTokens (maxT);
+        if (cnf.containsKey("maxOutputTokens")) {
+            pb.maxOutputTokens(Synt.asInt(cnf.get("maxOutputTokens")));
         }
+        int r = Synt.declare(cnf.get("maxInvokeRounds"), 0);
 
         // 带工具和不带工具
         ChatRequestParameters ps, pz ;
@@ -398,22 +394,17 @@ public final class AiUtil {
                    ((Env) obj).env(env);
                 }
 
-                ToolExecutor te = new DefaultToolExecutor(obj, met);
-                String tr =  te.execute(ter, UUID.randomUUID().toString());
-                ChatMessage  tm = ToolExecutionResultMessage.from(ter, tr);
+                String id = UUID.randomUUID().toString();
+                String tr = new DefaultToolExecutor(obj, met).execute(ter, id);
+                ChatMessage tm = ToolExecutionResultMessage.from(id , tn , tr);
                 ms.add(tm);
 
-                Map lt = Synt.mapOf(
-                    "name"  , tn,
-                    "args"  , ta,
-                    "result", tr
-                );
+                Map lt = new HashMap(4);
+                lt.put("I", id);
+                lt.put("N", tn);
+                lt.put("P", ta);
+                lt.put("R", tr);
                 ls.add(lt);
-                /*
-                sb.append( "<tool>"  )
-                  .append(Dist.toString(lt, true))
-                  .append("</tool>\n");
-                */
             });
 
             ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
@@ -438,33 +429,30 @@ public final class AiUtil {
      * @param model
      * @param messages
      * @param tools
-     * @param temp temperature
-     * @param topP
-     * @param topK
-     * @param maxT max output tokens
-     * @param r   工具递归限定, 0 不限
-     * @param env 工具调用环境
-     * @param callback
+     * @param cnf 参数, temperature, topP, topK, maxOutputTokens, maxInvokeRounds
+     * @param env 环境
+     * @param out 回调
      * @return
      */
-    public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, double temp, double topP, int topK, int maxT, int r, Map env, Consumer<String> callback) {
+    public static Future<ChatResponse> chat(String model, List<Map> messages, Set<String> tools, Map cnf, Map env, Consumer<String> out) {
         StreamingChatModel lm = getStreamingModel(model);
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
         DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
-        if (temp != 0d) {
-            pb.temperature(temp);
+        if (cnf.containsKey("temperature")) {
+            pb.temperature(Synt.asDouble(cnf.get("temperature")));
         }
-        if (topP != 0d) {
-            pb.topP(topP);
+        if (cnf.containsKey("topP")) {
+            pb.topP(Synt.asDouble(cnf.get("topP")));
         }
-        if (topK != 0 ) {
-            pb.topK(topK);
+        if (cnf.containsKey("topK")) {
+            pb.topK(Synt.asInt   (cnf.get("topK")));
         }
-        if (maxT != 0 ) {
-            pb.maxOutputTokens (maxT);
+        if (cnf.containsKey("maxOutputTokens")) {
+            pb.maxOutputTokens(Synt.asInt(cnf.get("maxOutputTokens")));
         }
+        int r = Synt.declare(cnf.get("maxInvokeRounds"), 0);
 
         // 带工具和不带工具
         ChatRequestParameters ps, pz ;
@@ -489,6 +477,19 @@ public final class AiUtil {
             ls = null;
         }
 
+        // 工具调用回调
+        ChatStream stream;
+        if (out instanceof ChatStream) {
+            stream = (ChatStream) out;
+        } else {
+            stream = new ChatStream( ) {
+                @Override
+                public void accept(String txt) {
+                    out.accept ( txt );
+                }
+            };
+        }
+
         ChatRequest rq = ChatRequest.builder()
             .parameters(ps)
             .messages(ms)
@@ -500,7 +501,7 @@ public final class AiUtil {
             int x = r != 0 ? r : Integer.MAX_VALUE;
             @Override
             public void onPartialResponse (String rs ) {
-                callback.accept(rs);
+                stream.accept(rs);
 
                 // 中止读取
                 if (df.interrupted() || Thread.interrupted()) {
@@ -510,9 +511,11 @@ public final class AiUtil {
             @Override
             public void onCompleteResponse(ChatResponse rp) {
                 try {
+                    stream.back(rp);
+
                     AiMessage am = rp.aiMessage();
                     if (am != null && am.hasToolExecutionRequests()) {
-                        ms.add(am);
+                        ms.add (am);
 
                         // 调用工具
                         List<ToolExecutionRequest> tes = am.toolExecutionRequests();
@@ -532,18 +535,24 @@ public final class AiUtil {
                                ((Env) obj).env(env);
                             }
 
-                            ToolExecutor te = new DefaultToolExecutor(obj, met);
-                            String tr =  te.execute(ter, UUID.randomUUID().toString());
-                            ChatMessage  tm = ToolExecutionResultMessage.from(ter, tr);
-                            ms.add(tm);
+                            String id = UUID.randomUUID().toString();
+                            Map    lt ;
 
-                            Map lt = Synt.mapOf(
-                                "name"  , tn,
-                                "args"  , ta,
-                                "result", tr
-                            );
+                            lt = new HashMap(04);
+                            lt.put("I", id);
+                            lt.put("N", tn);
+                            lt.put("P", ta);
+                            stream.call(lt);
+
+                            String tr = new DefaultToolExecutor(obj, met).execute(ter, id);
+                            ChatMessage tm = ToolExecutionResultMessage.from(id , tn , tr);
+
+                            lt = new HashMap(lt);
+                            lt.put("R", tr);
+                            stream.tool(lt);
+
+                            ms.add(tm);
                             ls.add(lt);
-                            callback.accept("TOOL"+Dist.toString(lt, true));
                         });
 
                         ChatRequestParameters px = (-- x) > 0 ? ps : pz ;
@@ -660,6 +669,31 @@ public final class AiUtil {
             .map    (str->str.strip())
             .filter (str->!str.isEmpty())
             .toList ();
+    }
+
+    /**
+     * 工具调用回调
+     */
+    public static interface ChatStream extends Consumer<String> {
+
+        /**
+         * 开始调用
+         * @param call {I:ID, N:名称, P:参数}
+         */
+        default public void call(Map<String, String> call) {}
+
+        /**
+         * 结束调用
+         * @param tool {I:ID, N:名称, P:参数, R:结果}
+         */
+        default public void tool(Map<String, String> tool) {}
+
+        /**
+         * 一轮返回
+         * @param resp
+         */
+        default public void back(ChatResponse resp) {}
+
     }
 
     /**

@@ -230,8 +230,6 @@ public class MagpieMessage {
             throw new CruxException (404 , "Assistant is not found");
         }
 
-        // 下同 io.github.ihongs.serv.centra.MagpieMessage
-
         String prompt = Synt.declare(xd.get("prompt"), ""  );
         String system = Synt.declare(rd.get("system"), ""  );
         String remind = Synt.declare(rd.get("remind"), ""  );
@@ -246,15 +244,15 @@ public class MagpieMessage {
         int    topK   = Synt.declare(rd.get("top_k" ), 0   );
         double topP   = Synt.declare(rd.get("top_p" ), 0d  );
         double tmpr   = Synt.declare(rd.get("temperature"  ), 0d );
-        Set<String> tools = Synt.asSet ( rd.get( "tools" ) );
+        List<Map> messages = Synt.asList(xd.get("messages"));
+        Set<String>  tools = Synt.asSet (rd.get("tools"   ));
 
         List<Map>     tols = new ArrayList();
         List<Map>     refs = new ArrayList();
         List<Map>     segs = new ArrayList();
         StringBuilder scts = new StringBuilder();
 
-        // 获取历史消息
-        List<Map> messages = Synt.asList(xd.get("messages"));
+        // 历史消息
         if (messages != null && ! messages.isEmpty()) {
             messages = new ArrayList(messages);
         } else {
@@ -282,6 +280,8 @@ public class MagpieMessage {
                 ));
             }
         }
+
+        // 下同 io.github.ihongs.serv.centra.MagpieMessage
 
         // 限定上下文长度
         if (maxCn > 0 && maxCn * 2 < messages.size()) {
@@ -426,6 +426,23 @@ public class MagpieMessage {
             "content", prompt
         ));
 
+        Map cnf = new HashMap();
+        if (tmpr > 0) {
+            cnf.put("temperature", tmpr);
+        }
+        if (topP > 0) {
+            cnf.put("topP", topP);
+        }
+        if (topK > 0) {
+            cnf.put("topK", topK);
+        }
+        if (maxTk > 0) {
+            cnf.put("maxOutputTokens", maxTk);
+        }
+        if (maxTr > 0) {
+            cnf.put("maxInvokeRounds", maxTr);
+        }
+
         // 参数放入环境, 以便工具读取
         Map env = new HashMap(1);
         env.put("REQUEST", rd);
@@ -456,18 +473,13 @@ public class MagpieMessage {
             }
 
             try {
-                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
+                Future ft = AiUtil.chat(model, messages, tools, cnf, env, (token)-> {
                     try {
                         if (!token.isEmpty()) {
                             String thunk;
-                            if (token.startsWith("TOOL{") && token.endsWith("}")) {
-                                thunk = token.substring( 4 );
-                                thunk = "data:{\"tool\":"  + thunk +  "}\n\n";
-                            } else {
-                                thunk = Dist.doEscape(token);
-                                thunk = "data:{\"text\":\""+ thunk +"\"}\n\n";
-                                sb.append(token);
-                            }
+                            thunk = Dist.doEscape(token);
+                            thunk = "data:{\"text\":\""+ thunk +"\"}\n\n";
+                            sb.append(token);
                             out.write(thunk);
                             out.flush(  );
                         } else {
@@ -521,7 +533,7 @@ public class MagpieMessage {
             }
         } else {
             try {
-                Future ft = AiUtil.chat(model, messages, tools, tmpr, topP, topK, maxTk, maxTr, env, (token)-> {
+                Future ft = AiUtil.chat(model, messages, tools, cnf, env, (token)-> {
                     if (!token.isEmpty()) {
                         sb.append(token);
                     }

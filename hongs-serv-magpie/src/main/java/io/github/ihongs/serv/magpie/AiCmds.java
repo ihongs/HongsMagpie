@@ -60,7 +60,7 @@ public class AiCmds {
             rearrange(ref, lis);
 
             bn  = bn + lop.size( );
-            CombatHelper.println("Refreshed " + bn + "/" + lop.hits());
+            CombatHelper.println("Refreshed " + bn + "/" + lop.total());
         } while (rn <= lop.size());
     }
 

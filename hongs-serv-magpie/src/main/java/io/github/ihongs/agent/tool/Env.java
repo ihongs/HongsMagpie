@@ -1,4 +1,4 @@
-package io.github.ihongs.agent.tools;
+package io.github.ihongs.agent.tool;
 
 import java.util.Map;
 
