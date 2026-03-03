@@ -8,7 +8,7 @@ import io.github.ihongs.CruxException;
 import io.github.ihongs.CruxExemption;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.anno.Action;
-import io.github.ihongs.action.anno.CustomReplies;
+import io.github.ihongs.action.anno.AutoForward;
 import io.github.ihongs.action.anno.Preset;
 import io.github.ihongs.dh.Roster;
 import io.github.ihongs.serv.magpie.AiUtil;
@@ -46,7 +46,7 @@ public class MagpieMessage {
 
     @Action("aerate")
     @Preset(conf="", form="")
-    @CustomReplies
+    @AutoForward
     public void aerate(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
 
@@ -103,7 +103,7 @@ public class MagpieMessage {
     }
 
     @Action("cancel")
-    @CustomReplies
+    @AutoForward
     public void cancel(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
         String id;
@@ -123,7 +123,7 @@ public class MagpieMessage {
     }
 
     @Action("stream")
-    @CustomReplies
+    @AutoForward
     public void stream(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
         String id;
