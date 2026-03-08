@@ -7,9 +7,11 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.SelectHelper;
 import io.github.ihongs.combat.CombatHelper;
 import io.github.ihongs.combat.anno.Combat;
-import io.github.ihongs.serv.magpie.tpl.TplEngine;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Synt;
+import io.github.ihongs.util.Template;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -169,8 +171,13 @@ public class AiCmds {
 
     public static void transform(Data ref, Data mod, List<Map> list, String slit) throws CruxException {
         String fid = mod.getFormId();
-        String tpn = "form/" + fid + ".md";
-        TplEngine  eng = TplEngine.getInstance();
+        
+        Template tpl;
+        try {
+            tpl = Template.compile(Path.of(Core.CONF_PATH, "magpie", "form", fid+".md"));
+        } catch ( IOException ex ) {
+            throw new CruxException(ex);
+        }
 
         for(Map item : list) {
             String did = Synt.asString(item.get(Cnst.ID_KEY));
@@ -197,7 +204,7 @@ public class AiCmds {
                 info.put("mtime", t);
             }
 
-            String text = eng.render (tpn, item);
+            String text = tpl.render (item);
             info.put("text", text);
 
             String name = mod.getName(item);
