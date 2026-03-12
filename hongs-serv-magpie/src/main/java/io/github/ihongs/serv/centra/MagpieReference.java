@@ -51,7 +51,7 @@ public class MagpieReference {
             return;
         }
 
-        Set accept = Synt.toSet(Dict.getWorth(FormSet.getInstance("centra/data/magpie").getForm("reference"), "file", "accept"));
+        Set accept = Synt.toSet(Dict.getVal(FormSet.getInstance("centra/data/magpie").getForm("reference"), "file", "accept"));
 
         UploadHelper uh = new UploadHelper( );
         uh.setUploadPath("static/upload/tmp");
