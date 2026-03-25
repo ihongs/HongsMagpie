@@ -97,20 +97,20 @@ public class MagpieApplicant {
         Map cnf = new HashMap (6);
         String api, mod, url, key;
         CoreConfig conf = CoreConfig.getInstance("magpie");
-        api = conf.getProperty("magpie.llm.agent.api", "default");
-        mod = conf.getProperty("magpie.llm.agent.mod", "test");
+        api = conf.getProperty("magpie.llm.applier.api"   , "default");
+        mod = conf.getProperty("magpie.llm.applier.model" , "test");
         url = conf.getProperty("magpie.llm."+api+".url");
         key = conf.getProperty("magpie.llm."+api+".key");
-        cnf.put(  "agent_mod", mod);
-        cnf.put(  "agent_url", url);
-        cnf.put(  "agent_key", key);
-        api = conf.getProperty("magpie.llm.planner.api" , api);
-        mod = conf.getProperty("magpie.llm.planner.mod" , mod);
+        cnf.put("applier_model", mod);
+        cnf.put("applier_url"  , url);
+        cnf.put("applier_key"  , key);
+        api = conf.getProperty("magpie.llm.planner.api"   , api);
+        mod = conf.getProperty("magpie.llm.planner.model" , mod);
         url = conf.getProperty("magpie.llm."+api+".url");
         key = conf.getProperty("magpie.llm."+api+".key");
-        cnf.put("planner_mod", mod);
-        cnf.put("planner_url", url);
-        cnf.put("planner_key", key);
+        cnf.put("planner_model", mod);
+        cnf.put("planner_url"  , url);
+        cnf.put("planner_key"  , key);
 
         // 删除旧的日志(可能重新执行任务)
         String fn = System.getProperty("logs.dir", Core.DATA_PATH+"/log")

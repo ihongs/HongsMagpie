@@ -359,7 +359,9 @@
             <param name="listable">yes</param>
             <param name="filtable">yes</param>
             <param name="unwritable">yes</param>
+            <param name="hash-status">yes</param>
             <param name="path">static/upload/magpie/applicant/${id:split}</param>
+            <param name="href">static/upload/magpie/applicant/${id:split}</param>
         </field>
         <field text="状态" name="state" type="enum">
             <param name="listable">yes</param>

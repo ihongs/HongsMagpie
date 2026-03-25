@@ -9,10 +9,10 @@ import asyncio
 import logging
 import traceback
 from typing             import Any
-from urllib.request     import Request, urlopen 
-from openpyxl           import Workbook
+from urllib.request     import Request, urlopen
 from langchain_openai   import ChatOpenAI
 from browser_use        import Agent, Controller, ActionResult
+from openpyxl           import Workbook
 
 dotenv.load_dotenv()
 
@@ -92,12 +92,12 @@ async def run(info:dict, conf:dict):
         task            = info.get("prompt", ""),
         message_context = info.get("remind", ""),
         llm         = ChatOpenAI(
-            model   = conf.get( "agent_mod" ),
-            api_key = conf.get( "agent_key" ),
-            base_url= conf.get( "agent_url" ),
+            model   = conf.get("applier_model"),
+            api_key = conf.get("applier_key"),
+            base_url= conf.get("applier_url"),
         ),
         planner_llm = ChatOpenAI(
-            model   = conf.get("planner_mod"),
+            model   = conf.get("planner_model"),
             api_key = conf.get("planner_key"),
             base_url= conf.get("planner_url"),
         ),
@@ -105,7 +105,7 @@ async def run(info:dict, conf:dict):
     )
     try:
         return await agent.run(
-            max_steps   = info.get("max_steps", 100),
+            max_steps = info.get("max_steps", 100),
         )
     except KeyboardInterrupt as ex:
         agent.stop()
@@ -162,7 +162,7 @@ if __name__ == "__main__":
                 log.info("No task, waiting...")
                 time.sleep(30)
                 continue
-            
+
             info = task.get("info")
             conf = task.get("conf")
             if  not info and not conf:
@@ -205,4 +205,3 @@ if __name__ == "__main__":
             id = None
             files = []
             cache = {}
-            
