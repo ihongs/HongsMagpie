@@ -51,13 +51,47 @@ def req(api:str, reqs:dict):
     key  = os.getenv('AGENT_AUTH_KEY')
     url  = os.getenv('AGENT_BASE_URL') +'/'+ api
     print(url, reqs)
-    dats = bytes(json.dumps(reqs), encoding='utf-8')
-    head = {
-        'Authorization': 'Bearer ' + key ,
-        'Content-Type' : 'application/json; charset=UTF-8',
-        'Accept'       : 'application/json' ,
-        'X-Requested-With': 'XMLHttpRequest',
-    }
+    reps = reqs.get("report")
+    if reps and len(reps) > 0:
+        bnd = '----WebKitFormBoundary' + ''.join([str(int(time.time()*1000) % 10) for _ in range(16)])
+        lines = []
+        for k, v in reqs.items():
+            if k == "report":
+                continue
+            lines.append(f'--{bnd}')
+            lines.append(f'Content-Disposition: form-data; name="{k}"')
+            lines.append('')
+            lines.append(str(v) if v is not None else '')
+        for fn in reps:
+            fp = os.path.join(os.getenv('TMP_DIR'), fn)
+            lines.append(f'--{bnd}')
+            lines.append(f'Content-Disposition: form-data; name="report"; filename="{fn}"')
+            lines.append('Content-Type: application/octet-stream')
+            lines.append('')
+            with open(fp, 'rb') as f:
+                lines.append(f.read())
+        lines.append(f'--{bnd}--')
+        lines.append('')
+        dats = b''
+        for line in lines:
+            if isinstance(line, bytes):
+                dats += line + b'\r\n'
+            else:
+                dats += line.encode('utf-8') + b'\r\n'
+        head = {
+            'Authorization': 'Bearer ' + key ,
+            'Content-Type' : 'multipart/form-data; boundary=' + bnd,
+            'Accept'       : 'application/json' ,
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    else:
+        dats = bytes(json.dumps(reqs), encoding='utf-8')
+        head = {
+            'Authorization': 'Bearer ' + key ,
+            'Content-Type' : 'application/json; charset=UTF-8',
+            'Accept'       : 'application/json' ,
+            'X-Requested-With': 'XMLHttpRequest',
+        }
     req  = Request(url=url, data=dats, headers=head, method="POST")
     rsp  = urlopen(req)
     rsps = rsp .read ()
@@ -79,12 +113,13 @@ def reflow(id:str, text:str):
         'text'  : text,
     })
 
-def result(id:str, result:str, state=3):
+def result(id:str, state=3, result=None, report=None):
     '提交结果'
     return req('centra/data/magpie/applicant/result.act', {
         'id'    : id,
-        'result': result,
         'state' : state ,
+        'result': result,
+        'report': report,
     })
 
 async def run(info:dict, conf:dict):
@@ -139,17 +174,18 @@ async def set_cache(key:str, data:Any)->str:
     return ActionResult(extracted_content=f'已登记 {key}')
 
 @controller.registry.action("""
-写入 xlsx 文件
+写入表格文件, 写入 xlsx 文件, 写入 excel 文件
 Args:
     name: 文件名称
     data: 二维数组, 示例: [["列名1", "列名2"], ["列1取值", "列2取值"]]
 """)
 async def save_to_xlsx(name:str, data:list) -> str:
+    fn = os.getenv('TMP_DIR') +'/'+ name
     wb = Workbook()
     sh = wb.active
     for row in data:
         sh.append(row)
-    wb.save(os.getenv('TMP_DIR') +'/'+ name)
+    wb.save(fn)
     files.append(name)
     return ActionResult(extracted_content=f'已写入 {name}')
 
@@ -177,19 +213,20 @@ if __name__ == "__main__":
             try:
                 his = asyncio.run(run(info, conf))
                 res = his.final_result()
+                fns = files
                 if  his.is_successful ():
                     reflow(id, "__DONE__")
-                    result(id, res, 3)
+                    result(id, 3, res, fns)
                 else:
                     reflow(id, "__DONE__")
-                    result(id, res, 4)
+                    result(id, 4, res, fns)
             except KeyboardInterrupt as ex:
                 reflow(id, "__STOP__")
-                result(id, '', 9)
+                result(id, 9)
                 raise (ex)
             except Exception as ex:
                 reflow(id, "__STOP__")
-                result(id, '', 5)
+                result(id, 5)
                 raise (ex)
         except KeyboardInterrupt:
             # 连按 ctrl+c 退出, 只按一次中止任务
