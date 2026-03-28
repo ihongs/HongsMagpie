@@ -13,6 +13,8 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.http.client.HttpClientBuilder;
+import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +74,7 @@ public final class AiUtil {
         String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
+        boolean h1 = cc.getProperty("magpie.llm."+api +".http.1.1", false );
         Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+api+".param"));
         Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
 
@@ -82,6 +86,14 @@ public final class AiUtil {
             .customHeaders(Synt.mapOf(
                 "Accept-Charset", "UTF-8"
             ));
+        // 退回 http/1.1 版本, 用于本地 lmstudio/ollama
+        if (h1) {
+            HttpClient.Builder hc = HttpClient.newBuilder()
+                   .version ( HttpClient.Version.HTTP_1_1 );
+            HttpClientBuilder hcb = JdkHttpClient.builder()
+                   .httpClientBuilder(hc );
+            builder.httpClientBuilder(hcb);
+        }
         if (prm != null && ! prm.isEmpty()) {
             builder.customParameters (prm);
         }
@@ -102,6 +114,7 @@ public final class AiUtil {
         String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
+        boolean h1 = cc.getProperty("magpie.llm."+api +".http.1.1", false );
         Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+api+".param"));
         Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
 
@@ -113,6 +126,14 @@ public final class AiUtil {
             .customHeaders(Synt.mapOf(
                 "Accept-Charset", "UTF-8"
             ));
+        // 退回 http/1.1 版本, 用于本地 lmstudio/ollama
+        if (h1) {
+            HttpClient.Builder hc = HttpClient.newBuilder()
+                   .version ( HttpClient.Version.HTTP_1_1 );
+            HttpClientBuilder hcb = JdkHttpClient.builder()
+                   .httpClientBuilder(hc );
+            builder.httpClientBuilder(hcb);
+        }
         if (prm != null && ! prm.isEmpty()) {
             builder.customParameters (prm);
         }
