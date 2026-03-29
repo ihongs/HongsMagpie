@@ -330,16 +330,16 @@
             var siftObj  = H$("@HsSift" , chatForm);
             var messages = getMessages();
             var message  = chatInp.val();
-            var queries  = siftObj.dump( )['ar'];
+            var queries  = siftObj.dump( );
             var content  = message + "\n\n```json\n" + JSON.stringify(queries) + "\n```";
 
             // 插入消息
             addMessage(message, content, "user");
 
             // 回复前不可发送
-            chatInp.prop("disabled", true);
             chatBtn.prop("disabled", true);
-            chatInp.val ("");
+            chatInp.prop("disabled", true);
+            chatInp.val ("AI 解析中, 请稍等...");
 
             // 发送请求, 交给 AI 处理
             $.hsAjax({
@@ -355,8 +355,9 @@
                 dataType: "json",
                 complete: function(rst) {
                     // 恢复可发送状态
-                    chatInp.prop("disabled", false);
                     chatBtn.prop("disabled", false);
+                    chatInp.prop("disabled", false);
+                    chatInp.val ("");
 
                     var content = rst.responseText;
                     var message = content;
