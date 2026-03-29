@@ -3,6 +3,7 @@
 <%@page import="java.util.Map"%>
 <%@page import="java.util.Set"%>
 <%@page import="io.github.ihongs.Cnst"%>
+<%@page import="io.github.ihongs.dh.Figure"%>
 <%@page import="io.github.ihongs.util.Synt"%>
 <%@page contentType="text/html" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
 <div class="siftbox openbox invisible well">
@@ -46,6 +47,7 @@
                     <option style="color: gray;" value="-" data-rels="-">字段...</option>
                     <%
                     Set<String> siftEnum = new HashSet();
+                    Set<String> findable = new Figure( _fields ).getFindable();
                     Iterator it2 = _fields.entrySet().iterator();
                     while (it2.hasNext()) {
                         Map.Entry et = (Map.Entry) it2.next();
@@ -57,12 +59,12 @@
                         if ("@".equals(name) || "id".equals(name)) {
                             continue;
                         }
-                        // 明确不过滤或两种都不支持则跳过
-                        if (!Synt.declare(info.get("siftable"), true )) {
+                        // 排除不能查找的字段
+                        if (!findable.contains(name)) {
                             continue;
                         }
-                        if (!Synt.declare(info.get("siftable"), false)
-                        &&  !Synt.declare(info.get("filtable"), false)) {
+                        // 明确不能筛选则跳过
+                        if (!Synt.declare(info.get("siftable"), true )) {
                             continue;
                         }
 
