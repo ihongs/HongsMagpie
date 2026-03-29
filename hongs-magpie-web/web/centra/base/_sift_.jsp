@@ -305,6 +305,14 @@
         var chatInp  = chatForm.find("[name=message]");
         var chatBtn  = chatForm.find("[type=submit]" );
 
+        // 重置查询时也把消息清空
+        var findBox  = chatForm.closest(".search-list,.select-list").find(".findbox");
+        if (findBox && findBox.size()) {
+            findBox.on("reset", function() {
+                chatBox.empty();
+            });
+        }
+
         function getMessages() {
             var messages = [];
             chatBox.find(".chat-item").each(function() {

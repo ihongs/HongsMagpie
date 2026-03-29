@@ -1,5 +1,6 @@
 package io.github.ihongs.serv.centra;
 
+import io.github.ihongs.CoreConfig;
 import io.github.ihongs.CruxException;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.anno.Action;
@@ -33,6 +34,13 @@ public class DoerAction extends DataAction {
         }
         if (messages == null) {
             messages  = new ArrayList(0);
+        }
+
+        // 限定最多对话轮数
+        int limit = CoreConfig.getInstance("magpie").getProperty("magpie.llm.query.agent.max.round", 10) * 2;
+        int count = messages.size();
+        if (limit > 0 && count > limit ) {
+            messages = messages.subList(count - limit, count);
         }
 
         Data       da = (Data) getEntity(helper);
