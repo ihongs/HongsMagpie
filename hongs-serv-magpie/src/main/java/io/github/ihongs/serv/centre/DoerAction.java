@@ -1,11 +1,8 @@
-package io.github.ihongs.serv.centra;
+package io.github.ihongs.serv.centre;
 
 import io.github.ihongs.CruxException;
 import io.github.ihongs.action.ActionHelper;
-import io.github.ihongs.action.ActionRunner;
-import io.github.ihongs.action.NaviMap;
 import io.github.ihongs.action.anno.Action;
-import io.github.ihongs.dh.IActing;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.serv.matrix.QueryAgent;
 import io.github.ihongs.util.Synt;
@@ -17,15 +14,15 @@ import java.util.Map;
  * 查询扶住代理
  * @author Hongs
  */
-@Action("centra/data-summon")
-public class QueryAgentAction extends DataAction {
+@Action("centre/data")
+public class DoerAction extends DataAction {
 
-    public QueryAgentAction() {
+    public DoerAction() {
         super();
     }
 
-    @Action("summon")
-    public void action(ActionHelper helper) throws CruxException {
+    @Action("refind")
+    public void refind(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
         String    content  = Synt.asString(rd.get("content" ));
         List<Map> messages = Synt.asList  (rd.get("messages"));
@@ -41,7 +38,11 @@ public class QueryAgentAction extends DataAction {
         Data       da = (Data) getEntity(helper);
         QueryAgent qa = new QueryAgent ( da );
         String s = qa.chat(messages, content);
-        helper.write( "application/json", s );
+        helper.reply(Synt.mapOf(
+            "ok", "custom",
+            "type", "application/json",
+            "text", s
+        ));
     }
 
 }

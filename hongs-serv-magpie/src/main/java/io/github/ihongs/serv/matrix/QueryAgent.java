@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -59,10 +60,29 @@ public class QueryAgent {
     }
 
     /**
+     * 查询转换
+     * 自然语言转查询条件
+     * @param message 自然语言查询
+     * @return {"message": "Message", "queries": [Queries]}
+     * @throws CruxException
+     */
+    public Map conv(String message) throws CruxException {
+        String rst = chat(
+            new ArrayList( 0 ),
+            Dist.toString(Synt.mapOf(
+                "queries", new ArrayList(0),
+                "message", message
+            ))
+        );
+        return (Map) Dist.toObject(rst);
+    }
+
+    /**
      * 查询对话
-     * @param messages 历史消息
-     * @param content  用户消息, JSON: {"message": "Message", "queries": [Queries]}
-     * @return 查询条件
+     * 内容均为 JSON: {"message": "Message", "queries": [Queries]}
+     * @param messages 历史消息列表
+     * @param content  当前消息内容
+     * @return 返回内容
      * @throws CruxException
      */
     public String chat(List<Map> messages, String content) throws CruxException {
@@ -138,7 +158,7 @@ public class QueryAgent {
         // 系统角色
         Template temp;
         try {
-            temp = Template.compile(Path.of(Core.CONF_PATH + "/template/matrix-query-agent.md"));
+            temp = Template.compile(Path.of(Core.CONF_PATH + "/template/query-agent.md"));
         }
         catch (IOException ex) {
             throw new CruxException(ex);
@@ -165,15 +185,18 @@ public class QueryAgent {
             "role", "user",
             "content", content
         ));
-        
+
         Set tks = Synt.setOf("find_mapping");
         Map env = Synt.mapOf("QUERY_AGENT", this);
         Map cnf = Synt.mapOf();
-
         String result = AiUtil.chat("query.agent", msgs, tks, cnf, env);
-        result = Pattern.compile("<think>.*?</think>" , Pattern.DOTALL)
-                        .matcher(result).replaceAll(""); // 清除思考过程
-        return result.trim();
+
+        // 清理思考过程和 JSON 标识
+        Pattern  pattern = Pattern.compile("(<think>.*?</think>|^```(json)?\n|\n```$)", Pattern.DOTALL);
+        Matcher  matcher = pattern.matcher(result.trim());
+        result = matcher.replaceAll("").trim();
+
+        return result;
     }
 
     /**

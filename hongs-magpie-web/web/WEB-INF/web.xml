@@ -226,7 +226,7 @@
         </init-param>
         <init-param>
             <param-name>action-path</param-name>
-            <param-value>/centra/data-summon</param-value>
+            <param-value>/centra/data</param-value>
         </init-param>
     </filter>
     <filter-mapping>

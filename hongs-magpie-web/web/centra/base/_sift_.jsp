@@ -7,7 +7,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
 <div class="siftbox openbox invisible well">
     <div class="row" style="margin-top: -15px;">
-        <div class="col-xs-6 sift-body">
+        <div class="col-xs-6 rollbox sift-body">
             <ul class="list-unstyled clearfix">
                 <li class="sift-unit template">
                     <div>
@@ -236,8 +236,8 @@
                         <button type="button" class="btn btn-default" data-sift="lr" data-name="nr" data-text="非: 排除此组内所有条件">+ 非</button>
                     </div>
                     <div class="btn-group pull-right form-control-static">
-                        <a href="javascript:;" onclick="alert(hsSiftQueryString($(this).closest('.row').find('form')))">配置</a>
-                        <a href="javascript:;" onclick="alert(hsSiftParamString($(this).closest('.row').find('form')))">参数</a>
+                        <a href="javascript:;" onclick="alert(hsSiftQueryString($(this).closest('.HsSift')))">配置</a>
+                        <a href="javascript:;" onclick="alert(hsSiftParamString($(this).closest('.HsSift')))">参数</a>
                     </div>
                 </div>
             </div>
@@ -254,19 +254,64 @@
                 </p>
                 <p>
                     <i class="bi bi-arrow-right-circle-fill"></i>
-                    <strong>智能查询：</strong>
+                    <strong>智能解析：</strong>
                     <span>可让 AI 辅助设置查询条件，只需告诉 AI 你要查什么即可；</span>
                     <span>可与 AI 对话变更查询条件，也可以在 AI 基础上自行调整。</span>
                 </p>
             </div>
         </div>
-        <div class="col-xs-6 sift-chat">
+        <div class="col-xs-6 rollbox sift-chat">
             <form id="query-agent-chat-form" onsubmit="return false">
-                <div class="chatbox panel panel-default">
+                <div class="form-group">
+                    <label  class="sift-hand form-label control-label">
+                        智能解析
+                    </label>
+                    <div class="form-control multiple">
+                        <ul class="chatbox">
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                            <li class="chat-item chat-user">标签是测试的</li>
+                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <textarea name="message" class="form-control"></textarea>
-                    <button type="submit" class="btn btn-default">AI 解析</button>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input name="message" type="text" class="form-control" placeholder="请输入查询需求..."/>
+                        <span class="input-group-btn">
+                            <button type="submit" class="btn btn-default"><i class="bi bi-send"></i></button>
+                        </span>
+                    </div>
                 </div>
             </form>
         </div>
@@ -312,7 +357,7 @@
             chatBox.append(item);
         }
 
-        chatForm.on("submit", function() {
+        function send() {
             var siftObj  = H$("@HsSift" , chatForm);
             var messages = getMessages();
             var message  = chatInp.val();
@@ -328,10 +373,11 @@
             // 回复前不可发送
             chatInp.prop("disabled", true);
             chatBtn.prop("disabled", true);
+            chatInp.val ("");
 
             // 发送请求, 交给 AI 处理
             $.hsAjax({
-                url : "<%=_module%>/<%=_entity%>/summon<%=Cnst.ACT_EXT%>",
+                url : "<%=_module%>/<%=_entity%>/refind<%=Cnst.ACT_EXT%>",
                 type: "post",
                 data: {
                     messages: messages,
@@ -345,8 +391,8 @@
                     chatBtn.prop("disabled", false);
 
                     rst = hsResponse(rst);
-                    var message = rst.message;
-                    var queries = rst.queries;
+                    var message = rst.message || "好的";
+                    var queries = rst.queries || [];
                     var content = JSON.stringify({
                         "message": message,
                         "queries": queries
@@ -359,7 +405,55 @@
                     siftObj.fill(queries);
                 }
             });
+        }
+
+        chatInp.on("keypress", function(ev) {
+            if (ev.keyCode == 13) {
+                send();
+                ev.stopPropagation();
+                ev.preventDefault ();
+                return false;
+            }
+        });
+        chatBtn.click(function(ev) {
+            send();
+            ev.stopPropagation();
+            ev.preventDefault ();
             return false;
         });
     })(jQuery);
 </script>
+<style type="text/css">
+    ul.chatbox {
+        list-style: none;
+        margin-bottom: 0;
+        padding: 0 10px;
+    }
+    ul.chatbox > li {
+        margin-bottom: 8px;
+    }
+    ul.chatbox > li:last-child {
+        margin-bottom: 0px;
+    }
+    ul.chatbox > li:before {
+        margin-right : 8px;
+        display: inline-block;
+        font-family: bootstrap-icons !important;
+        font-weight: normal !important;
+        font-variant: normal;
+        text-transform: none;
+        line-height: 1;
+        vertical-align: -.12em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    ul.chatbox > li.chat-assistant:before {
+        content: "\f6b1";
+    }
+    ul.chatbox > li.chat-user:before {
+        content: "\f4d7";
+    }
+    ul.chatbox > li.chat-user{
+        font-weight: bold;
+    }
+</style>
