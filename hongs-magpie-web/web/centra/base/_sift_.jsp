@@ -266,6 +266,10 @@
                     <span>可让 AI 辅助设置查询条件，只需告诉 AI 你要查什么即可；</span>
                     <span>可与 AI 对话变更查询条件，也可以在 AI 基础上自行调整。</span>
                 </p>
+                <p>
+                    <i class="bi bi-arrow-down-circle-fill"></i>
+                    <span>查询助理只是辅助配置高级查询，请检查无误后点下方<strong>查找</strong>。</span>
+                </p>
             </div>
         </div>
         <div class="col-xs-6 rollbox sift-chat">
@@ -355,7 +359,7 @@
             // 回复前不可发送
             chatBtn.prop("disabled", true);
             chatInp.prop("disabled", true);
-            chatInp.val ("AI 解析中, 请稍等...");
+            chatInp.val ("AI 处理中, 请稍等...");
 
             // 发送请求, 交给 AI 处理
             $.hsAjax({
@@ -377,21 +381,25 @@
 
                     var content = rst.responseText;
                     var message = content;
-                    var queries = "[]";
+                    var queries ;
                     
                     // 拆解消息
                     var mq = /^(.*?)\n```json\n(.*?)\n```$/s.exec(content);
                     if (mq) {
                         message = $.trim( mq[1] );
                         queries = $.trim( mq[2] );
+                        queries = JSON.parse(queries);
+                    } else {
+                        console.warn( "No queries", content );
                     }
-                    queries = JSON.parse(queries);
 
                     // 插入回复
                     addMessage(message, content, "assistant");
 
                     // 填充配置
-                    siftObj.fill(queries);
+                    if (queries) {
+                        siftObj.fill(queries);
+                    }
                 }
             });
         }
