@@ -268,40 +268,6 @@
                     </label>
                     <div class="form-control multiple">
                         <ul class="chatbox">
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
-                            <li class="chat-item chat-user">标签是测试的</li>
-                            <li class="chat-item chat-assistant">好的，已为您构建查询</li>
                         </ul>
                     </div>
                 </div>
@@ -341,6 +307,9 @@
         function getMessages() {
             var messages = [];
             chatBox.find(".chat-item").each(function() {
+                if (!$(this).data("role")) {
+                    return ;
+                }
                 messages.push({
                     role   : $(this).data("role"   ),
                     content: $(this).data("content")
@@ -362,10 +331,7 @@
             var messages = getMessages();
             var message  = chatInp.val();
             var queries  = siftObj.dump( )['ar'];
-            var content  = JSON.stringify({
-                "message": message,
-                "queries": queries
-            });
+            var content  = message + "\n\n```json\n" + JSON.stringify(queries) + "\n```";
 
             // 插入消息
             addMessage(message, content, "user");
@@ -383,6 +349,8 @@
                     messages: messages,
                     content : content
                 },
+                cache   : false ,
+                global  : false ,
                 dataKind: "json",
                 dataType: "json",
                 complete: function(rst) {
@@ -390,13 +358,17 @@
                     chatInp.prop("disabled", false);
                     chatBtn.prop("disabled", false);
 
-                    rst = hsResponse(rst);
-                    var message = rst.message || "好的";
-                    var queries = rst.queries || [];
-                    var content = JSON.stringify({
-                        "message": message,
-                        "queries": queries
-                    });
+                    var content = rst.responseText;
+                    var message = content;
+                    var queries = "[]";
+                    
+                    // 拆解消息
+                    var mq = /^(.*?)\n```json\n(.*?)\n```$/s.exec(content);
+                    if (mq) {
+                        message = $.trim( mq[1] );
+                        queries = $.trim( mq[2] );
+                    }
+                    queries = JSON.parse(queries);
 
                     // 插入回复
                     addMessage(message, content, "assistant");

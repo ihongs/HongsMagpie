@@ -63,23 +63,22 @@ public class QueryAgent {
      * 查询转换
      * 自然语言转查询条件
      * @param message 自然语言查询
-     * @return {"message": "Message", "queries": [Queries]}
+     * @return 查询条件
      * @throws CruxException
      */
-    public Map conv(String message) throws CruxException {
-        String rst = chat(
-            new ArrayList( 0 ),
-            Dist.toString(Synt.mapOf(
-                "queries", new ArrayList(0),
-                "message", message
-            ))
-        );
-        return (Map) Dist.toObject(rst);
+    public List conv(String message) throws CruxException {
+        String result = chat(new ArrayList(0), message +"\n\n```json\n[]\n```");
+
+        // 清理消息
+        Pattern  pattern = Pattern.compile("(^.*```json|```$)", Pattern.DOTALL);
+        Matcher  matcher = pattern.matcher(result.trim());
+        result = matcher.replaceAll("").trim();
+
+        return (List) Dist.toObject(result);
     }
 
     /**
      * 查询对话
-     * 内容均为 JSON: {"message": "Message", "queries": [Queries]}
      * @param messages 历史消息列表
      * @param content  当前消息内容
      * @return 返回内容
@@ -191,8 +190,8 @@ public class QueryAgent {
         Map cnf = Synt.mapOf();
         String result = AiUtil.chat("query.agent", msgs, tks, cnf, env);
 
-        // 清理思考过程和 JSON 标识
-        Pattern  pattern = Pattern.compile("(<think>.*?</think>|^```(json)?\n|\n```$)", Pattern.DOTALL);
+        // 清理思考过程
+        Pattern  pattern = Pattern.compile("<think>.*?</think>", Pattern.DOTALL);
         Matcher  matcher = pattern.matcher(result.trim());
         result = matcher.replaceAll("").trim();
 

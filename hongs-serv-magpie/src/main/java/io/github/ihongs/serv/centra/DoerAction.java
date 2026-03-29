@@ -41,7 +41,7 @@ public class DoerAction extends DataAction {
         helper.reply(Synt.mapOf(
             "ok"  , false , // 阻断后续处理
             "cb"  , "ECHO", // 自定输出类型
-            "type", "application/json",
+            "type", "text/plain",
             "text", s
         ));
     }
