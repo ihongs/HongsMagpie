@@ -39,7 +39,8 @@ public class DoerAction extends DataAction {
         QueryAgent qa = new QueryAgent ( da );
         String s = qa.chat(messages, content);
         helper.reply(Synt.mapOf(
-            "ok", "custom",
+            "ok"  ,  false  , // 跳过后续处理
+            "cb"  , "custom", // 自定义的类型
             "type", "application/json",
             "text", s
         ));
