@@ -236,8 +236,9 @@
                         <button type="button" class="btn btn-default" data-sift="lr" data-name="nr" data-text="非: 排除此组内所有条件">+ 非</button>
                     </div>
                     <div class="btn-group pull-right form-control-static">
-                        <a href="javascript:;" onclick="alert(hsSiftQueryString($(this).closest('.HsSift')))">配置</a>
                         <a href="javascript:;" onclick="alert(hsSiftParamString($(this).closest('.HsSift')))">参数</a>
+                        <a href="javascript:;" onclick="alert(hsSiftQueryString($(this).closest('.HsSift')))">配置</a>
+                        <a href="javascript:;" onclick="alert(hsSiftHumanString($(this).closest('.HsSift')))">说人话</a>
                     </div>
                 </div>
             </div>
