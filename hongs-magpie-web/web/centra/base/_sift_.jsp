@@ -67,6 +67,11 @@
                         if (!Synt.declare(info.get("siftable"), true )) {
                             continue;
                         }
+                        // 没标签的字段也跳过
+                        if (text == null || text.isEmpty()
+                        ||  type == null || type.isEmpty()) {
+                            continue;
+                        }
 
                         String  kind = "";
                         String  rels = "";
