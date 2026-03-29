@@ -262,7 +262,7 @@
                 </p>
                 <p>
                     <i class="bi bi-arrow-right-circle-fill"></i>
-                    <strong>智能解析：</strong>
+                    <strong>查询助理：</strong>
                     <span>可让 AI 辅助设置查询条件，只需告诉 AI 你要查什么即可；</span>
                     <span>可与 AI 对话变更查询条件，也可以在 AI 基础上自行调整。</span>
                 </p>
@@ -272,7 +272,7 @@
             <form id="query-agent-chat-form" onsubmit="return false">
                 <div class="form-group">
                     <label  class="sift-hand form-label control-label">
-                        智能解析
+                        查询助理
                     </label>
                     <div class="form-control multiple">
                         <ul class="chatbox">
