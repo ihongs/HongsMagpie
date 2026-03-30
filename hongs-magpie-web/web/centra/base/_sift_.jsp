@@ -6,11 +6,154 @@
 <%@page import="io.github.ihongs.dh.Figure"%>
 <%@page import="io.github.ihongs.util.Synt"%>
 <%@page contentType="text/html" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%
+    Figure _figure = new  Figure (_fields);
+    boolean aiFind = Synt.declare(_figure.getParams().get("ai-findable"), false);
+%>
 <div class="siftbox openbox invisible well">
     <div class="row" style="margin-top: -15px;">
-        <div class="col-xs-6 rollbox sift-body">
-            <form class="findbox" onsubmit="return false">
+<%if (! aiFind) {%>
+        <div class="col-xs-6 rollbox">
+            <form class="findbox filt-body" onsubmit="return false">
+                <div class="form-group">
+                    <label class="form-label control-label">
+                        快捷查询
+                    </label>
+                </div>
+                <%
+                Iterator it1 = _fields.entrySet().iterator();
+                while (it1.hasNext()) {
+                    Map.Entry et = (Map.Entry) it1.next();
+                    Map     info = (Map ) et.getValue();
+                    String  name = (String) et.getKey();
+                    String  type = (String) info.get("__type__");
+                    String  text = (String) info.get("__text__");
+
+                    if ("@".equals(name) || "id".equals(name)) {
+                        continue;
+                    }
+                    // 未开启筛选的都跳过
+                    if (!Synt.declare(info.get("filtable"), false)) {
+                        continue;
+                    }
+                %>
+                <div class="filt-group form-group" data-name="<%=name%>">
+                    <label class="form-label control-label">
+                        <%=text != null ? text : ""%>
+                    </label>
+                    <div>
+                    <%if ("fork".equals(type) || "pick".equals(type)) {%>
+                        <%
+                            String fn = name;
+                            if (fn.endsWith( "." )) {
+                                fn = fn.substring(0, fn.length() - 1);
+                            }
+                            String kn = fn +"_fork";
+                            if (fn.endsWith("_id")) {
+                                fn = fn.substring(0, fn.length() - 3);
+                                kn = fn;
+                            }
+                            String tk = info.containsKey("data-tk") ? (String) info.get("data-tk") : "name";
+                            String vk = info.containsKey("data-vk") ? (String) info.get("data-vk") : "id";
+                            String ln = info.containsKey("data-ln") ? (String) info.get("data-ln") :  kn ;
+                            String st = info.containsKey("data-st") ? (String) info.get("data-st") :
+                                      ( info.containsKey("data-al") ? (String) info.get("data-al") :  "" );
+                            st = st.replace("centre", "centra");
+                            // 选择时禁用创建
+                            if ( ! st.isEmpty (   )) {
+                            if ( ! st.contains("#")) {
+                                st = st + "#.deny=.create";
+                            } else {
+                                st = st + "&.deny=.create";
+                            }}
+                        %>
+                        <div class="form-control multiple">
+                            <ul class="repeated labelbox labelist forkbox" data-ft="_fork" data-fn="<%=name%>.<%=Cnst.EQ_REL%>" data-ln="<%=ln%>" data-tk="<%=tk%>" data-vk="<%=vk%>"></ul>
+                            <a href="javascript:;" data-toggle="hsFork" data-target="@" data-href="<%=st%>"><%=_locale.translate("fore.fork.select", text)%></a>
+                        </div>
+                    <%} else if ("enum".equals(type) || "type".equals(type) || "select".equals(type) || "check".equals(type) || "radio".equals(type)) {%>
+                        <%
+                            String ln = info.containsKey("data-ln") ? (String) info.get("data-ln") : name;
+                        %>
+                        <select class="form-control" name="<%=name%>.<%=Cnst.EQ_REL%>" data-ln="<%=ln%>" data-ft="_enum">
+                            <option value=""><%=_locale.translate("fore.form.select", text)%></option>
+                        </select>
+                    <%} else if ("date".equals(type) || "time" .equals(type) || "datetime" .equals(type)) {%>
+                        <%
+                            Object typa = Synt.declare(info.get("type"),"time");
+                            Object fomt = Synt.defoult(info.get("format"),type);
+                            Object fset = Synt.defoult(info.get("offset"), "" );
+                        %>
+                        <div class="input-group">
+                            <span class="input-group-addon">从</span>
+                            <input type="<%=type%>" class="form-control" name="<%=name%>.<%=Cnst.GE_REL%>" data-toggle="hsDate" data-type="<%=typa%>" data-format="<%=fomt%>" data-offset="<%=fset%>" />
+                            <span class="input-group-addon"></span>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-addon">到</span>
+                            <input type="<%=type%>" class="form-control" name="<%=name%>.<%=Cnst.LE_REL%>" data-toggle="hsDate" data-type="<%=typa%>" data-format="<%=fomt%>" data-offset="<%=fset%>" />
+                            <span class="input-group-addon"></span>
+                        </div>
+                    <%} else if ("number".equals(type) || "range".equals(type) || "color".equals(type) || "sorted".equals(type)) {%>
+                        <div class="input-group">
+                            <span class="input-group-addon">从</span>
+                            <input type="<%=type%>" class="form-control" name="<%=name%>.<%=Cnst.GE_REL%>" />
+                            <span class="input-group-addon">到</span>
+                            <input type="<%=type%>" class="form-control" name="<%=name%>.<%=Cnst.LE_REL%>" />
+                        </div>
+                    <%} else if ("string".equals(type) || "email".equals(type) || "url".equals(type) || "tel".equals(type) || "sms".equals(type) || "text".equals(type)) {%>
+                        <%if (_sd.contains(name)) {%>
+                        <div class="input-group input-group">
+                            <input class="form-control" type="text" name="<%=name%>.<%=Cnst.EQ_REL%>" placeholder="精确查找" />
+                            <div class="input-group-btn input-group-rel">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="caret"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li class="active">
+                                        <a href="javascript:;" data-name="<%=name%>.<%=Cnst.EQ_REL%>" data-placeholder="精确查找">精确查找</a>
+                                    </li>
+                                    <li>
+                                        <a href="javascript:;" data-name="<%=name%>.<%=Cnst.SE_REL%>" data-placeholder="模糊搜索">模糊搜索</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <%} else {%>
+                        <input class="form-control" type="text" name="<%=name%>.<%=Cnst.EQ_REL%>" placeholder="精确查找" />
+                        <%}%>
+                    <%} else if ("search".equals(type) || "textarea".equals(type) || "textview".equals(type)) {%>
+                        <%if (_sd.contains(name)) {%>
+                        <input class="form-control" type="text" name="<%=name%>.<%=Cnst.SE_REL%>" placeholder="模糊搜索" />
+                        <%} else {%>
+                        <input class="form-control" type="text" name="<%=name%>.<%=Cnst.EQ_REL%>" placeholder="精确查找" />
+                        <%}%>
+                    <%} else {%>
+                        <select class="form-control" name="<%=name%>.<%=Cnst.IS_REL%>">
+                            <option value=""><%=_locale.translate("fore.form.select", "")%></option>
+                            <option value="not-none">不为空</option>
+                            <option value="none">为空</option>
+                        </select>
+                    <%} /*End If */%>
+                    </div>
+                </div>
+                <%} /*End For*/%>
+            </form>
+        </div>
+<%} /* Endif */%>
+        <div class="col-xs-6 rollbox">
+            <form class="findbox sift-body" onsubmit="return false">
                 <ul class="list-unstyled clearfix">
+                    <li class="sift-unit sift-root active">
+                        <div class="form-group">
+                            <label class="sift-hand form-label control-label">
+                                高级查询
+                            </label>
+                            <div style="margin-bottom: 0;">
+                                <ul class="sift-list repeated labelbox" data-name="ar" data-fn></ul>
+                            </div>
+                        </div>
+                    </li>
                     <li class="sift-unit template">
                         <div>
                             <legend class="sift-hand">
@@ -29,24 +172,13 @@
                             </ul>
                         </div>
                     </li>
-                    <li class="sift-unit sift-root">
-                        <div class="form-group">
-                            <label  class="sift-hand form-label control-label">
-                                高级查询
-                            </label>
-                            <div class="form-control multiple">
-                                <ul class="sift-list repeated labelbox" data-name="ar" data-fn>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
                 </ul>
                 <div class="form-group">
                     <select data-sift="fn" class="form-control">
                         <option style="color: gray;" value="-" data-rels="-">字段...</option>
                         <%
                         Set<String> siftEnum = new HashSet();
-                        Set<String> findable = new Figure( _fields ).getFindable();
+                        Set<String> findable = _figure.getFindable();
                         Iterator it2 = _fields.entrySet().iterator();
                         while (it2.hasNext()) {
                             Map.Entry et = (Map.Entry) it2.next();
@@ -58,12 +190,12 @@
                             if ("@".equals(name) || "id".equals(name)) {
                                 continue;
                             }
-                            // 排除不能查找的字段
-                            if (!findable.contains(name)) {
-                                continue;
-                            }
                             // 明确不能筛选则跳过
                             if (!Synt.declare(info.get("siftable"), true )) {
+                                continue;
+                            }
+                            // 排除不能查找的字段
+                            if (!findable.contains(name)) {
                                 continue;
                             }
                             // 没标签的字段也跳过
@@ -261,28 +393,35 @@
                         <span>如需变更筛查条件的分组，按住条目拖拽过去即可；</span>
                         <span>点击“&times;”删除条目或分组。</span>
                     </p>
+<%if (aiFind) {%>
                     <p>
                         <i class="bi bi-arrow-right-circle-fill"></i>
                         <strong>查询助理：</strong>
                         <span>可让 AI 辅助设置查询条件，只需告诉 AI 你要查什么即可；</span>
                         <span>可与 AI 对话变更查询条件，也可以在 AI 基础上自行调整。</span>
+                        <span>查询助理只是辅助配置高级查询，请检查无误后点下方查找。</span>
                     </p>
+<%} else {%>
                     <p>
-                        <i class="bi bi-arrow-down-circle-fill"></i>
-                        <span>查询助理只是辅助配置高级查询，请检查无误后点下方<strong>查找</strong>。</span>
+                        <i class="bi bi-arrow-left-circle-fill"></i>
+                        <strong>快捷查询：</strong>
+                        <span>可对文本、标签、选项、关联进行简单查询，各项仅支持单个取值；</span>
+                        <span>可对数值、日期、时间等进行区间范围查询，包含最大值和最小值。</span>
+                        <span>当快捷查询无法满足需求时请使用高级查询。</span>
                     </p>
+<%} /* Endif */%>
                 </div>
             </form>
         </div>
-        <div class="col-xs-6 rollbox sift-chat">
-            <form id="query-agent-chat-form" onsubmit="return false">
+<%if (aiFind) {%>
+        <div class="col-xs-6 rollbox">
+            <form id="refind-chat-form" class="refind-chat-form" onsubmit="return false">
                 <div class="form-group">
-                    <label  class="sift-hand form-label control-label">
+                    <label class="sift-hand form-label control-label">
                         查询助理
                     </label>
-                    <div class="form-control multiple">
-                        <ul class="chatbox">
-                        </ul>
+                    <div style="margin-bottom: 0;">
+                        <ul class="chat-list"></ul>
                     </div>
                 </div>
                 <div class="form-group">
@@ -294,153 +433,16 @@
                     </div>
                 </div>
             </form>
-<script type="text/javascript">
-    (function($) {
-        var chatForm = H$("#query-agent-chat-form");
-        var chatBox  = chatForm.find( ".chatbox"  );
-        var chatInp  = chatForm.find("[name=message]");
-        var chatBtn  = chatForm.find("[type=submit]" );
-
-        // 重置查询时也把消息清空
-        var findBox  = chatForm.closest(".search-list,.select-list").find(".findbox");
-        if (findBox && findBox.size()) {
-            findBox.on("reset", function() {
-                chatBox.empty();
-            });
-        }
-
-        function getMessages() {
-            var messages = [];
-            chatBox.find(".chat-item").each(function() {
-                if (!$(this).data("role")) {
-                    return ;
-                }
-                messages.push({
-                    role   : $(this).data("role"   ),
-                    content: $(this).data("content")
+            <script type="text/javascript">
+                hsRequires( [
+                    "centra/data/aifind.js",
+                    "centra/data/aifind.css"
+                ] , function() {
+                    hsAiFind(H$("#refind-chat-form"), "<%=_module%>/<%=_entity%>/aifind<%=Cnst.ACT_EXT%>");
                 });
-            });
-            return messages;
-        }
-
-        function addMessage(message, content, role) {
-            var item = $('<li class="chat-item chat-'+role+'"></li>');
-            item.data("role"    , role   );
-            item.data("content" , content);
-            item.text( message );
-            chatBox.append(item);
-        }
-
-        function send() {
-            var siftObj  = H$("@HsSift", chatForm);
-            var messages = getMessages ( );
-            var message  = chatInp.val ( );
-            var queries  = siftObj.dump( );
-            var content  = message + "\n\n```json\n" + JSON.stringify(queries) + "\n```";
-
-            // 插入消息
-            addMessage(message, content, "user");
-
-            // 回复前不可发送
-            chatBtn.prop("disabled", true);
-            chatInp.prop("disabled", true);
-            chatInp.val ("AI 处理中, 请稍等...");
-
-            // 发送请求, 交给 AI 处理
-            $.hsAjax({
-                url : "<%=_module%>/<%=_entity%>/refind<%=Cnst.ACT_EXT%>",
-                type: "post",
-                data: {
-                    messages: messages,
-                    content : content
-                },
-                cache   : false ,
-                global  : false ,
-                dataKind: "json",
-                dataType: "json",
-                complete: function(rst) {
-                    // 恢复可发送状态
-                    chatBtn.prop("disabled", false);
-                    chatInp.prop("disabled", false);
-                    chatInp.val ("");
-
-                    var content = rst.responseText;
-                    var message = content;
-                    var queries ;
-
-                    // 拆解消息
-                    var mq = /^(.*?)\n```json\n(.*?)\n```$/s.exec(content);
-                    if (mq) {
-                        message = $.trim( mq[1] );
-                        queries = $.trim( mq[2] );
-                        queries = JSON.parse(queries);
-                    } else {
-                        console.warn( "No queries", content );
-                    }
-
-                    // 插入回复
-                    addMessage(message, content, "assistant");
-
-                    // 填充配置
-                    if (queries) {
-                        siftObj.fill(queries);
-                        $.hsNote("已设置查询");
-                    }
-                }
-            });
-        }
-
-        chatInp.on("keypress", function(ev) {
-            if (ev.keyCode == 13) {
-                send();
-                ev.stopPropagation();
-                ev.preventDefault ();
-                return false;
-            }
-        });
-        chatBtn.click(function(ev) {
-            send();
-            ev.stopPropagation();
-            ev.preventDefault ();
-            return false;
-        });
-    })(jQuery);
-</script>
-<style type="text/css">
-    ul.chatbox {
-        list-style: none;
-        margin-bottom: 0;
-        padding: 0 10px;
-    }
-    ul.chatbox > li {
-        margin-bottom: 8px;
-    }
-    ul.chatbox > li:last-child {
-        margin-bottom: 0px;
-    }
-    ul.chatbox > li:before {
-        margin-right : 8px;
-        display: inline-block;
-        font-family: bootstrap-icons !important;
-        font-weight: normal !important;
-        font-variant: normal;
-        text-transform: none;
-        line-height: 1;
-        vertical-align: -.12em;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-    ul.chatbox > li.chat-assistant:before {
-        content: "\f6b1";
-    }
-    ul.chatbox > li.chat-user:before {
-        content: "\f4d7";
-    }
-    ul.chatbox > li.chat-user{
-        font-weight: bold;
-    }
-</style>
+            </script>
         </div>
+<%} /* Endif */%>
     </div>
     <hr style="margin-top: 0; border-color: #ccc;"/>
     <form class="findbox">

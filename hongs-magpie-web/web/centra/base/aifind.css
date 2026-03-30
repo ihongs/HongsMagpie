@@ -1,0 +1,36 @@
+.refind-chat-form ul.chat-list {
+    list-style: none;
+    margin-bottom: 0;
+    padding : 0 35px;
+}
+.refind-chat-form ul.chat-list > li {
+    white-space: pre-line;
+    margin-bottom: 21px;
+}
+.refind-chat-form ul.chat-list > li:last-child {
+    margin-bottom: 0px;
+}
+.refind-chat-form ul.chat-list > li:before {
+    margin-left : -21px;
+    margin-right : 7px;
+    display: inline-block;
+    font-family: bootstrap-icons !important;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: -.12em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.refind-chat-form ul.chat-list > li.chat-user{
+    font-weight: bold;
+}
+.refind-chat-form ul.chat-list > li.chat-user:before {
+    font-weight: bold;
+    content: "\f4d7";
+}
+.refind-chat-form ul.chat-list > li.chat-assistant:before {
+    font-weight: bold;
+    content: "\f6b1";
+}

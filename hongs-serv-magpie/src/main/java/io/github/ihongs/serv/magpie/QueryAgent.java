@@ -1,4 +1,4 @@
-package io.github.ihongs.serv.matrix;
+package io.github.ihongs.serv.magpie;
 
 import io.github.ihongs.Cnst;
 import io.github.ihongs.Core;
@@ -189,6 +189,7 @@ public class QueryAgent {
         Map env = Synt.mapOf("QUERY_AGENT", this);
         Map cnf = Synt.mapOf();
         String result = AiUtil.chat("query.agent", msgs, tks, cnf, env);
+        CoreLogger.debug("result: {}", result);
 
         // 清理思考过程
         Pattern  pattern = Pattern.compile("<think>.*?</think>", Pattern.DOTALL);

@@ -4,25 +4,27 @@ import io.github.ihongs.CoreConfig;
 import io.github.ihongs.CruxException;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.anno.Action;
+import io.github.ihongs.action.anno.AutoAdapter;
 import io.github.ihongs.serv.matrix.Data;
-import io.github.ihongs.serv.matrix.QueryAgent;
+import io.github.ihongs.serv.magpie.QueryAgent;
 import io.github.ihongs.util.Synt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 查询扶住代理
+ * 查询辅助代理
  * @author Hongs
  */
+@AutoAdapter
 @Action("centra/data")
-public class DoerAction extends DataAction {
+public class AiDataAction extends DataAction {
 
-    public DoerAction() {
+    public AiDataAction() {
         super();
     }
 
-    @Action("refind")
+    @Action("aifind")
     public void refind(ActionHelper helper) throws CruxException {
         Map rd = helper.getRequestData();
         String    content  = Synt.asString(rd.get("content" ));

@@ -3,7 +3,7 @@ package io.github.ihongs.agent.tool;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import io.github.ihongs.CruxException;
-import io.github.ihongs.serv.matrix.QueryAgent;
+import io.github.ihongs.serv.magpie.QueryAgent;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import java.util.Map;
