@@ -20,6 +20,9 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.request.DefaultChatRequestParameters;
+import dev.langchain4j.model.chat.request.ResponseFormat;
+import dev.langchain4j.model.chat.request.json.JsonSchema;
+import dev.langchain4j.model.chat.request.json.JsonRawSchema;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -33,7 +36,6 @@ import io.github.ihongs.CoreLogger;
 import io.github.ihongs.CoreRoster;
 import io.github.ihongs.CoreRoster.Mathod;
 import io.github.ihongs.CruxCause;
-import io.github.ihongs.CruxException;
 import io.github.ihongs.CruxExemption;
 import io.github.ihongs.agent.tool.Env;
 import io.github.ihongs.util.Synt;
@@ -74,18 +76,17 @@ public final class AiUtil {
         String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
-        boolean h1 = cc.getProperty("magpie.llm."+api +".http.1.1", false );
-        Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+api+".param"));
-        Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
+        boolean h1 = cc.getProperty("magpie.llm."+api +".http.1.1", false);
+        Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+name+".custom.param"));
+        Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+name+".custom.query"));
+        Map    hea = Synt.toMap(cc.getProperty("magpie.llm."+name+".custom.header"));
 
         OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel
             . builder (   )
             .  apiKey (key)
             . baseUrl (url)
-            .modelName(mod)
-            .customHeaders(Synt.mapOf(
-                "Accept-Charset", "UTF-8"
-            ));
+            .modelName(mod);
+
         // 退回 http/1.1 版本, 用于本地 lmstudio/ollama
         if (h1) {
             HttpClient.Builder hc = HttpClient.newBuilder()
@@ -94,12 +95,19 @@ public final class AiUtil {
                    .httpClientBuilder(hc );
             builder.httpClientBuilder(hcb);
         }
+
+        if (hea == null) {
+            hea  = Synt.mapOf("Accept-Charset", "UTF-8");
+        }   builder.customHeaders    (hea);
+
         if (prm != null && ! prm.isEmpty()) {
             builder.customParameters (prm);
         }
+
         if (qry != null && ! qry.isEmpty()) {
             builder.customQueryParams(qry);
         }
+
         return builder.build();
     }
 
@@ -114,18 +122,17 @@ public final class AiUtil {
         String mod = cc.getProperty("magpie.llm."+name+".model");
         String url = cc.getProperty("magpie.llm."+api +".url");
         String key = cc.getProperty("magpie.llm."+api +".key");
-        boolean h1 = cc.getProperty("magpie.llm."+api +".http.1.1", false );
+        boolean h1 = cc.getProperty("magpie.llm."+api +".http.1.1", false);
         Map    prm = Synt.toMap(cc.getProperty("magepi.llm."+api+".param"));
         Map    qry = Synt.toMap(cc.getProperty("magpie.llm."+api+".query"));
+        Map    hea = Synt.toMap(cc.getProperty("magpie.llm."+name+".custom.header"));
 
         OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder builder = OpenAiStreamingChatModel
             . builder (   )
             .  apiKey (key)
             . baseUrl (url)
-            .modelName(mod)
-            .customHeaders(Synt.mapOf(
-                "Accept-Charset", "UTF-8"
-            ));
+            .modelName(mod);
+
         // 退回 http/1.1 版本, 用于本地 lmstudio/ollama
         if (h1) {
             HttpClient.Builder hc = HttpClient.newBuilder()
@@ -134,12 +141,19 @@ public final class AiUtil {
                    .httpClientBuilder(hc );
             builder.httpClientBuilder(hcb);
         }
+
+        if (hea == null) {
+            hea  = Synt.mapOf("Accept-Charset", "UTF-8");
+        }   builder.customHeaders    (hea);
+
         if (prm != null && ! prm.isEmpty()) {
             builder.customParameters (prm);
         }
+
         if (qry != null && ! qry.isEmpty()) {
             builder.customQueryParams(qry);
         }
+
         return builder.build();
     }
 
@@ -318,7 +332,56 @@ public final class AiUtil {
         ChatModel lm = getChatModel(model);
         List<ChatMessage> ms = toChatMessages(messages);
 
+        // 模型默认配置
+        CoreConfig cc = CoreConfig.getInstance("magpie");
+        Map cnf  = Synt.toMap ( cc.getProperty("magepi.llm." + model + ".param"));
+        if (cnf == null) {
+            cnf  = new HashMap( 0 );
+        }
+
+        DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
+        if (cnf.containsKey("temperature")) {
+            pb.temperature(Synt.asDouble(cnf.get("temperature")));
+        }
+        if (cnf.containsKey("topP")) {
+            pb.topP(Synt.asDouble(cnf.get("topP")));
+        }
+        if (cnf.containsKey("topK")) {
+            pb.topK(Synt.asInt   (cnf.get("topK")));
+        }
+        if (cnf.containsKey("frequencyPenalty")) {
+            pb.frequencyPenalty(Synt.asDouble(cnf.get("frequencyPenalty")));
+        }
+        if (cnf.containsKey("presencePenalty" )) {
+            pb.presencePenalty (Synt.asDouble(cnf.get("presencePenalty" )));
+        }
+        if (cnf.containsKey("maxOutputTokens" )) {
+            pb.maxOutputTokens (Synt.asInt   (cnf.get("maxOutputTokens" )));
+        }
+
+        // 停止词
+        if (cnf.containsKey("stopSequences")) {
+            pb.stopSequences(Synt.asList(cnf.get("stopSequences")));
+        }
+
+        // 格式化
+        if (cnf.containsKey("responseFormat")) {
+            Object fmt = cnf.get("responseFormat");
+            if (fmt instanceof ResponseFormat) {
+                pb.responseFormat((ResponseFormat) fmt);
+            } else
+            if (fmt instanceof JsonSchema) {
+                pb.responseFormat(( JsonSchema   ) fmt);
+            } else
+            if (fmt != null && ! "".equals( fmt )) {
+                JsonRawSchema jrs = JsonRawSchema.from( Synt.declare(fmt , "" ) );
+                JsonSchema    jsc = JsonSchema.builder().rootElement(jrs).build();
+                pb.responseFormat ( jsc );
+            }
+        }
+
         ChatRequest rq = ChatRequest.builder()
+            .parameters(pb.build())
             .messages(ms)
             .build();
 
@@ -342,6 +405,15 @@ public final class AiUtil {
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
+        // 模型默认配置
+        CoreConfig cc = CoreConfig.getInstance("magpie");
+        Map def  = Synt.toMap ( cc.getProperty("magepi.llm." + model + ".param"));
+        if (def != null) {
+            def  = new HashMap(def);
+            def.putAll(cnf);
+            cnf  = def;
+        }
+
         DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
         if (cnf.containsKey("temperature")) {
             pb.temperature(Synt.asDouble(cnf.get("temperature")));
@@ -352,10 +424,37 @@ public final class AiUtil {
         if (cnf.containsKey("topK")) {
             pb.topK(Synt.asInt   (cnf.get("topK")));
         }
-        if (cnf.containsKey("maxOutputTokens")) {
-            pb.maxOutputTokens(Synt.asInt(cnf.get("maxOutputTokens")));
+        if (cnf.containsKey("frequencyPenalty")) {
+            pb.frequencyPenalty(Synt.asDouble(cnf.get("frequencyPenalty")));
+        }
+        if (cnf.containsKey("presencePenalty" )) {
+            pb.presencePenalty (Synt.asDouble(cnf.get("presencePenalty" )));
+        }
+        if (cnf.containsKey("maxOutputTokens" )) {
+            pb.maxOutputTokens (Synt.asInt   (cnf.get("maxOutputTokens" )));
         }
         int r = Synt.declare(cnf.get("maxInvokeRounds"), 0);
+
+        // 停止词
+        if (cnf.containsKey("stopSequences")) {
+            pb.stopSequences(Synt.asList(cnf.get("stopSequences")));
+        }
+
+        // 格式化
+        if (cnf.containsKey("responseFormat")) {
+            Object fmt = cnf.get("responseFormat");
+            if (fmt instanceof ResponseFormat) {
+                pb.responseFormat((ResponseFormat) fmt);
+            } else
+            if (fmt instanceof JsonSchema) {
+                pb.responseFormat(( JsonSchema   ) fmt);
+            } else
+            if (fmt != null && ! "".equals( fmt )) {
+                JsonRawSchema jrs = JsonRawSchema.from( Synt.declare(fmt , "" ) );
+                JsonSchema    jsc = JsonSchema.builder().rootElement(jrs).build();
+                pb.responseFormat ( jsc );
+            }
+        }
 
         // 带工具和不带工具
         ChatRequestParameters ps, pz ;
@@ -387,8 +486,12 @@ public final class AiUtil {
 
         ChatResponse rp = lm.chat(rq);
         AiMessage am = rp.aiMessage();
+        String mt = am.text();
+        if (mt == null) {
+            mt = ""; // 规避只调工具无输出
+        }
 
-        StringBuilder sb = new StringBuilder(am.text());
+        StringBuilder sb = new StringBuilder(mt);
 
         int x = r != 0 ? r : Integer.MAX_VALUE;
 
@@ -438,8 +541,10 @@ public final class AiUtil {
             // 继续执行
             rp = lm.chat ( rx );
             am = rp.aiMessage();
-
-            sb.append(am.text());
+            mt = am.text ( );
+            if ( mt != null) {
+               sb.append(mt);
+            }
         }
 
         return sb.toString();
@@ -460,6 +565,15 @@ public final class AiUtil {
         List<ToolSpecification> ts = toToolSpecifications(tools);
         List<ChatMessage> ms = new ArrayList(toChatMessages(messages)); // 工具执行后可能需加消息
 
+        // 模型默认配置
+        CoreConfig cc = CoreConfig.getInstance("magpie");
+        Map def  = Synt.toMap ( cc.getProperty("magepi.llm." + model + ".param"));
+        if (def != null) {
+            def  = new HashMap(def);
+            def.putAll(cnf);
+            cnf  = def;
+        }
+
         DefaultChatRequestParameters.Builder pb = ChatRequestParameters.builder();
         if (cnf.containsKey("temperature")) {
             pb.temperature(Synt.asDouble(cnf.get("temperature")));
@@ -470,10 +584,37 @@ public final class AiUtil {
         if (cnf.containsKey("topK")) {
             pb.topK(Synt.asInt   (cnf.get("topK")));
         }
-        if (cnf.containsKey("maxOutputTokens")) {
-            pb.maxOutputTokens(Synt.asInt(cnf.get("maxOutputTokens")));
+        if (cnf.containsKey("frequencyPenalty")) {
+            pb.frequencyPenalty(Synt.asDouble(cnf.get("frequencyPenalty")));
+        }
+        if (cnf.containsKey("presencePenalty" )) {
+            pb.presencePenalty (Synt.asDouble(cnf.get("presencePenalty" )));
+        }
+        if (cnf.containsKey("maxOutputTokens" )) {
+            pb.maxOutputTokens (Synt.asInt   (cnf.get("maxOutputTokens" )));
         }
         int r = Synt.declare(cnf.get("maxInvokeRounds"), 0);
+
+        // 停止词
+        if (cnf.containsKey("stopSequences")) {
+            pb.stopSequences(Synt.asList(cnf.get("stopSequences")));
+        }
+
+        // 格式化
+        if (cnf.containsKey("responseFormat")) {
+            Object fmt = cnf.get("responseFormat");
+            if (fmt instanceof ResponseFormat) {
+                pb.responseFormat((ResponseFormat) fmt);
+            } else
+            if (fmt instanceof JsonSchema) {
+                pb.responseFormat(( JsonSchema   ) fmt);
+            } else
+            if (fmt != null && ! "".equals( fmt )) {
+                JsonRawSchema jrs = JsonRawSchema.from( Synt.declare(fmt , "" ) );
+                JsonSchema    jsc = JsonSchema.builder().rootElement(jrs).build();
+                pb.responseFormat ( jsc );
+            }
+        }
 
         // 带工具和不带工具
         ChatRequestParameters ps, pz ;
