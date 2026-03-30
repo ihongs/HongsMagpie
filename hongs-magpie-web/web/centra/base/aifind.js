@@ -100,7 +100,7 @@ function hsAiFind( chatForm, url ) {
                 // 填充配置
                 if (queries) {
                     siftObj.fill(queries);
-                    $.hsNote("已设置查询");
+                    $.hsNote("已设置查询", "success");
                 }
             }
         });
