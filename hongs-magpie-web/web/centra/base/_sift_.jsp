@@ -415,7 +415,7 @@
         </div>
 <%if (aiFind) {%>
         <div class="col-xs-6 rollbox">
-            <form id="refind-chat-form" class="refind-chat-form" onsubmit="return false">
+            <form id="aifind-chat-form" class="aifind-chat-form" onsubmit="return false">
                 <div class="form-group">
                     <label class="sift-hand form-label control-label">
                         查询助理
@@ -438,7 +438,7 @@
                     "centra/data/aifind.js",
                     "centra/data/aifind.css"
                 ] , function() {
-                    hsAiFind(H$("#refind-chat-form"), "<%=_module%>/<%=_entity%>/aifind<%=Cnst.ACT_EXT%>");
+                    hsAiFind(H$("#aifind-chat-form"), "<%=_module%>/<%=_entity%>/aifind<%=Cnst.ACT_EXT%>");
                 });
             </script>
         </div>
