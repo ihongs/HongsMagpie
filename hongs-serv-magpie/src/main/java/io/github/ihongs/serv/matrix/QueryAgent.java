@@ -232,7 +232,7 @@ public class QueryAgent {
         Map dict  = FormSet.getInstance(conf).getEnum( link );
         if (dict != null) {
             for(String text : texts) {
-                List<String> item = findMostSimilar(text, dict, 0.75); // 寻找最接近的选项
+                List<String> item = findMostSimilar(text, dict, 0.5); // 寻找最接近的选项
                 if (null  != item) {
                     list.add(item);
                 }
