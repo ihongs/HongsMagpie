@@ -10,7 +10,6 @@ import io.github.ihongs.action.FormSet;
 import io.github.ihongs.dh.IFigure;
 import io.github.ihongs.dh.JFigure;
 import io.github.ihongs.jsp.Pagelet;
-import io.github.ihongs.serv.magpie.AiUtil;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
