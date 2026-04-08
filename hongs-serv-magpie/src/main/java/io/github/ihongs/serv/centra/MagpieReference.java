@@ -87,7 +87,7 @@ public class MagpieReference {
             InputStream ip = new FileInputStream(file)
         ) {
             Document dc = dp.parse(ip);
-            text = dc.text();
+            text = dc.text().strip(  );
         }
         catch (BlankDocumentException ex) {
             text = "";
