@@ -13,7 +13,7 @@ import java.util.Set;
  * 查询代理工具
  * @author Hongs
  */
-public class QueryAgentTool implements Env {
+public class QuerTool implements Env {
 
     private Map ENV;
 

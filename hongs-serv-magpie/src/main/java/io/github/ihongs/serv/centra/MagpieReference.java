@@ -11,7 +11,7 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.FormSet;
 import io.github.ihongs.action.UploadHelper;
 import io.github.ihongs.action.anno.Action;
-import io.github.ihongs.serv.magpie.doc.DocParser;
+import io.github.ihongs.serv.magpie.parser.DocParser;
 import io.github.ihongs.util.Dict;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.verify.Wrong;

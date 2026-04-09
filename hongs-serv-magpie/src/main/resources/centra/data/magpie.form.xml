@@ -134,6 +134,8 @@
         <field name="sn" type="number">
             <param name="type">int</param>
         </field>
+        <field name="name" type="stored">
+        </field>
         <field name="text" type="stored">
         </field>
         <field name="vect" type="vector">
@@ -404,7 +406,7 @@
     </form>
     <enum name="splitter">
         <value code="default">默认</value>
-        <value code="defiant">不拆分</value>
+        <value code="discard">不拆分</value>
     </enum>
     <enum name="reference_state">
         <value code="1">正常</value>

@@ -6,7 +6,6 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
-import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -40,6 +39,7 @@ import io.github.ihongs.CruxExemption;
 import io.github.ihongs.agent.tool.Env;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
+import io.github.ihongs.serv.magpie.splitter.DefSpliter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -206,7 +206,7 @@ public final class AiUtil {
             .got(DocumentSplitter.class.getName()+":"+type, ()->{
                 try {
                     CoreConfig cc = CoreConfig.getInstance("magpie");
-                    String clsn = cc.getProperty(type+".splitter.class", DefaultSplitter.class.getName());
+                    String clsn = cc.getProperty(type+".splitter.class", DefSpliter.class.getName());
                     Class  clso = Class.forName(clsn);
 
                     try {
@@ -855,46 +855,6 @@ public final class AiUtil {
          * @param resp
          */
         default public void back(ChatResponse resp) {}
-
-    }
-
-    /**
-     * 默认文档拆分器
-     *
-     * magpie 配置项:
-     * type.splitter.max-segment-size=分块大小
-     * type.splitter.max-overlay-size=交叠大小
-     * type 为拆分器分类名称
-     */
-    public static class DefaultSplitter implements DocumentSplitter {
-
-        private final DocumentSplitter that;
-
-        public DefaultSplitter (String type) {
-            CoreConfig cc = CoreConfig.getInstance("magpie");
-            int maxSegmentSize = cc.getProperty(type+".splitter.max-segment-size", 1000);
-            int maxOverlaySize = cc.getProperty(type+".splitter.max-overlay-size", 100 );
-            that = DocumentSplitters.recursive (maxSegmentSize, maxOverlaySize);
-        }
-
-        @Override
-        public List<TextSegment> split(Document docu) {
-            return that.split(docu);
-        }
-
-    }
-
-    /**
-     * 占位文档拆分器
-     *
-     * 不作拆分, 总是返回空列表
-     */
-    public static class DefiantSpliter implements DocumentSplitter {
-
-        @Override
-        public List<TextSegment> split(Document dcmnt) {
-            return new ArrayList(0);
-        }
 
     }
 

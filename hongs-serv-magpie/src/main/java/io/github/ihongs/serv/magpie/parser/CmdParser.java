@@ -1,4 +1,4 @@
-package io.github.ihongs.serv.magpie.doc;
+package io.github.ihongs.serv.magpie.parser;
 
 import dev.langchain4j.data.document.Document;
 import io.github.ihongs.Core;
