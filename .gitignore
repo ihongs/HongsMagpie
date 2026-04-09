@@ -9,6 +9,7 @@
 *.pyo
 *.iml
 *.iws
+.venv
 .idea
 .project
 .settings
