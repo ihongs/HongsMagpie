@@ -72,9 +72,10 @@
         </field>
         <field text="文档" name="file" type="file">
             <param name="listable">yes</param>
-            <param name="accept">.txt,.md,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx</param>
+            <param name="accept">.md,.txt,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.html</param>
             <param name="path">static/upload/magpie/reference/${id:split}</param>
             <param name="href">static/upload/magpie/reference/${id:split}</param>
+            <param name="size">20485760</param><!-- 20Mb -->
             <param name="naming">keep:file.</param>
             <param name="hash-status">yes</param>
         </field>

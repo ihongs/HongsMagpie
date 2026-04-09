@@ -11,6 +11,7 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.FormSet;
 import io.github.ihongs.action.UploadHelper;
 import io.github.ihongs.action.anno.Action;
+import io.github.ihongs.serv.magpie.doc.DocParser;
 import io.github.ihongs.util.Dict;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.verify.Wrong;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.Part;
 
@@ -51,55 +53,28 @@ public class MagpieReference {
             return;
         }
 
-        Set accept = Synt.toSet(Dict.getVal(FormSet.getInstance("centra/data/magpie").getForm("reference"), "file", "accept"));
+        Map    form = FormSet.getInstance("centra/data/magpie").getForm("reference");
+        Set  accept = Synt.toSet  (Dict.getVal(form, "file", "accept") );
+        Set  reject = Synt.toSet  (Dict.getVal(form, "file", "reject") );
+        long   size = Synt.declare(Dict.getVal(form, "file", "size"), 0);
 
-        UploadHelper uh = new UploadHelper( );
+        UploadHelper  uh = new UploadHelper();
         uh.setUploadPath("static/upload/tmp");
         uh.setUploadHref("static/upload/tmp");
         uh.setAccept(accept);
+        uh.setAccept(reject);
+        uh.setMaxSize (size);
 
         Part   part = (Part) item;
-        String name = uid +"-"+ nid +".magpie-ref-doc.";
-        File   file = uh.upload(part , name);
-        String href = uh.getResultHref(/**/);
+        File   file = uh.upload(part, uid +"-"+ nid +".magpie-ref-doc.");
+        String href = uh.getResultHref();
         String link = Core.SERVER_HREF.get()
                     + Core.SERVER_PATH.get()
-                    + "/" + href;
-        name = file.getName( ) + "|" + part.getSubmittedFileName();
-
-        String text;
-        String extn = file.getName( );
-        int p = extn.lastIndexOf(".");
-        extn  = extn.substring(p + 0);
-        String clsn = CoreConfig.getInstance("magpie").getProperty("document.parser"+extn);
-        if (clsn == null) {
-            helper.reply(Synt.mapOf(
-                "ok" , false,
-                "ern", "Er400",
-                "err", "Unsupported file type: " + extn
-            ));
-            return;
-        }
-
-        // 解析文档, 提取内容
-         DocumentParser dp = (DocumentParser) Core.newInstance(clsn);
-        try (
-            InputStream ip = new FileInputStream(file)
-        ) {
-            Document dc = dp.parse(ip);
-            text = dc.text().strip(  );
-        }
-        catch (BlankDocumentException ex) {
-            text = "";
-        }
-        catch (IOException ex) {
-            helper.reply(Synt.mapOf(
-                "ok" , false,
-                "ern", "Er400",
-                "err", "Can not read file. " + ex.getMessage()
-            ));
-            return;
-        }
+                    + "/" + href ;
+        String name = part.getSubmittedFileName();
+               name = file.getName()
+                    + "|" + name ;
+        String text = parse(file);
 
         helper.reply(Synt.mapOf(
             "info" , Synt.mapOf(
@@ -109,6 +84,47 @@ public class MagpieReference {
                 "text", text
             )
         ));
+    }
+
+    /**
+     * 解析文件, 获取文本
+     * @param file
+     * @return
+     * @throws CruxException 400 不支持的格式, 500 读取文件异常
+     */
+    public static String parse(File file) throws CruxException {
+        String tmpn = file.getName(   );
+        int dot = tmpn.lastIndexOf(".");
+        String extn = dot < 0 ? "" : tmpn.substring(dot);
+
+        CoreConfig cc = CoreConfig.getInstance("magpie");
+        String clsm = cc.getProperty("document.parser" );
+        String clsn = cc.getProperty("document.parser" + extn, clsm);
+        if (clsn == null || clsn.isEmpty()) {
+        if (clsm == null || clsm.isEmpty()) {
+            throw new CruxException(400, "magpie:document.parser not set");
+        } else {
+            throw new CruxException(400, "Unsupported file type: " + extn);
+        }}
+
+        try (
+            InputStream ip = new FileInputStream(file)
+        ) {
+            Document dc ;
+            Object   dp = Core . newInstance( clsn );
+            if (dp instanceof DocParser) {
+                dc = ((DocParser) dp ).parse( file );
+            } else {
+                dc = ((DocumentParser) dp).parse(ip);
+            }
+            return dc.text( ).strip( );
+        }
+        catch (BlankDocumentException e) {
+            return "";
+        }
+        catch (IOException e) {
+            throw new CruxException(e, 500, "Can not read file. " + e.getMessage());
+        }
     }
 
 }

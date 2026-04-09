@@ -56,11 +56,13 @@
             <artifactId>langchain4j-http-client-jdk</artifactId>
             <version>1.10.0</version>
         </dependency>
+        <!-- markitdown 更好用
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-document-parser-apache-tika</artifactId>
             <version>1.10.0-beta18</version>
         </dependency>
+        //-->
         <!-- MCP -->
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
