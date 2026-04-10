@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * @author Hongs
  */
-public class NetParser implements DocParser {
+public class NetParser implements Parser {
 
     @Override
     public Document parse(File file) {

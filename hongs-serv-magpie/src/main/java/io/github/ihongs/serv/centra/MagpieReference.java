@@ -11,7 +11,7 @@ import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.action.FormSet;
 import io.github.ihongs.action.UploadHelper;
 import io.github.ihongs.action.anno.Action;
-import io.github.ihongs.serv.magpie.parser.DocParser;
+import io.github.ihongs.serv.magpie.parser.Parser;
 import io.github.ihongs.util.Dict;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.verify.Wrong;
@@ -108,21 +108,19 @@ public class MagpieReference {
         }}
 
         try (
-            InputStream ip = new FileInputStream(file)
+            InputStream in = new FileInputStream(file)
         ) {
-            Document dc ;
-            Object   dp = Core . newInstance( clsn );
-            if (dp instanceof DocParser) {
-                dc = ((DocParser) dp ).parse( file );
+            Document dc;
+            Object dp = Core.newInstance(clsn);
+            if (dp instanceof  Parser) {
+                dc = ((Parser) dp).parse(file);
             } else {
-                dc = ((DocumentParser) dp).parse(ip);
+                dc = ((DocumentParser) dp).parse( in );
             }
             return dc.text( ).strip( );
-        }
-        catch (BlankDocumentException e) {
+        } catch (BlankDocumentException e) {
             return "";
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new CruxException(e, 500, "Can not read file. " + e.getMessage());
         }
     }

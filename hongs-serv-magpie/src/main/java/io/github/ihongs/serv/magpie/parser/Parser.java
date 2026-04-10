@@ -7,7 +7,7 @@ import java.io.File;
  * 文档解析器
  * @author Hongs
  */
-public interface DocParser {
+public interface Parser {
     
     /**
      * 解析文档

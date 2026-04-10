@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Hongs
  */
-public class CmdParser implements DocParser {
+public class CmdParser implements Parser {
 
     @Override
     public Document parse(File file) {
