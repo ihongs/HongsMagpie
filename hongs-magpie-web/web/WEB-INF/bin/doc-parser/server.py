@@ -135,4 +135,4 @@ if __name__ == '__main__':
     # 启动服务器
     print(f"Starting Markdown Parser Server on port {CONFIG['port']}")
     
-    app.run(host='0.0.0.0', port=int(CONFIG['port']), debug=False)
+    app.run(host='0.0.0.0', port=CONFIG['port'], debug=False, threaded=True)

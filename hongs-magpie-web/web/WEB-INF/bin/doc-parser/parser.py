@@ -16,7 +16,7 @@ CONFIG = {
     'llm_base_url': os.getenv('LLM_BASE_URL')
 }
 
-def parse(filepath):
+def parse(filepath=None):
     try:
         # 使用 MarkItDown 库处理文件
         if CONFIG['ocr']:
@@ -33,7 +33,11 @@ def parse(filepath):
         else:
             md = MarkItDown()
         
-        data = md.convert(filepath)
+        if filepath:
+            data = md.convert(filepath)
+        else:
+            data = md.convert_stream(sys.stdin.buffer)
+        
         text = data.text_content
         
         print(text)
@@ -44,7 +48,7 @@ def parse(filepath):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Markdown Parser')
-    parser.add_argument('--file', type=str, required=True, help='File to convert')
+    parser.add_argument('--file', type=str, required=False, help='File to convert')
     parser.add_argument('--ocr' , action='store_true', help='Enable OCR')
     parser.add_argument('--llm-model', type=str, default=None, help='LLM Model')
     parser.add_argument('--llm-api-key', type=str, default=None, help='LLM API key')
@@ -64,7 +68,7 @@ if __name__ == '__main__':
     
     filepath = args.file
     
-    if not os.path.exists(filepath):
+    if filepath and not os.path.exists(filepath):
         print(f'ERROR: File not found: {filepath}', file=sys.stderr)
         sys.exit(1)
     
