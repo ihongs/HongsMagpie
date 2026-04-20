@@ -116,12 +116,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # 更新配置
-    CONFIG['port'] = args.port
-    CONFIG['auth'] = args.auth
-    CONFIG['addr'] = args.addr
-    CONFIG['tmp' ] = args.tmp
-    if args.ocr:
-        CONFIG['ocr'] = True
+    if args.port:
+        CONFIG['port'] = args.port
+    if args.auth:
+        CONFIG['auth'] = args.auth
+    if args.addr:
+        CONFIG['addr'] = args.addr
+    if args.tmp :
+        CONFIG['tmp' ] = args.tmp
+    if args.ocr :
+        CONFIG['ocr' ] = True
     if args.llm_model:
         CONFIG['llm_model'] = args.llm_model
     if args.llm_api_key:
