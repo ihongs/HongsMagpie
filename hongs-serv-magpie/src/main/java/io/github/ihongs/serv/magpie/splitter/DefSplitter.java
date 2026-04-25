@@ -15,11 +15,11 @@ import java.util.List;
  * type.splitter.max-overlay-size=交叠大小
  * type 为拆分器分类名称, 默认 default
  */
-public class DefSpliter implements DocumentSplitter {
+public class DefSplitter implements DocumentSplitter {
 
     private final DocumentSplitter that;
 
-    public DefSpliter (String type) {
+    public DefSplitter (String type) {
         CoreConfig cc = CoreConfig.getInstance("magpie");
         int maxSegmentSize = cc.getProperty(type+".splitter.max-segment-size", 1000);
         int maxOverlaySize = cc.getProperty(type+".splitter.max-overlay-size", 100 );

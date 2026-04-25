@@ -39,7 +39,7 @@ import io.github.ihongs.CruxExemption;
 import io.github.ihongs.agent.tool.Env;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.daemon.Defer;
-import io.github.ihongs.serv.magpie.splitter.DefSpliter;
+import io.github.ihongs.serv.magpie.splitter.DefSplitter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -206,7 +206,7 @@ public final class AiUtil {
             .got(DocumentSplitter.class.getName()+":"+type, ()->{
                 try {
                     CoreConfig cc = CoreConfig.getInstance("magpie");
-                    String clsn = cc.getProperty(type+".splitter.class", DefSpliter.class.getName());
+                    String clsn = cc.getProperty(type+".splitter.class", DefSplitter.class.getName());
                     Class  clso = Class.forName(clsn);
 
                     try {
