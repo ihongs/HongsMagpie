@@ -3,7 +3,7 @@ package io.github.ihongs.agent.tool;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import io.github.ihongs.CruxException;
-import io.github.ihongs.serv.magpie.QueryAgent;
+import io.github.ihongs.serv.magpie.FindAgent;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.Set;
  * 查询代理工具
  * @author Hongs
  */
-public class QuerTool implements Env {
+public class FindTool implements Env {
 
     private Map ENV;
 
@@ -40,8 +40,8 @@ public class QuerTool implements Env {
     ) {
         try {
             Set labelz = Synt.toSet(labels);
-            QueryAgent agent = (QueryAgent) ENV.get("QUERY_AGENT");
-            return Dist.toString(agent.findMapping(field, labelz), true);
+            FindAgent agent = (FindAgent) ENV.get ("FIND_AGENT");
+            return Dist.toString(agent.findMapping(field,labelz), true);
         } catch (CruxException ex) {
             throw ex.toExemption();
         }

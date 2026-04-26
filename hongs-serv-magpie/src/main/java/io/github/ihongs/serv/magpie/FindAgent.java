@@ -30,11 +30,11 @@ import java.util.regex.Pattern;
  * 将自然语言翻译成查询结构
  * @author Hongs
  */
-public class QueryAgent {
+public class FindAgent {
 
     private final IFigure that;
 
-    public QueryAgent(IFigure that) {
+    public FindAgent(IFigure that) {
         this.that = that;
     }
 
@@ -156,7 +156,7 @@ public class QueryAgent {
         // 系统角色
         Template temp;
         try {
-            temp = Template.compile(Path.of(Core.CONF_PATH + "/template/query-agent.md"));
+            temp = Template.compile(Path.of(Core.CONF_PATH + "/template/find-agent.md"));
         }
         catch (IOException ex) {
             throw new CruxException(ex);
@@ -185,9 +185,9 @@ public class QueryAgent {
         ));
 
         Set tks = Synt.setOf("find_mapping");
-        Map env = Synt.mapOf("QUERY_AGENT", this);
         Map cnf = Synt.mapOf();
-        String result = AiUtil.chat("query.agent", msgs, tks, cnf, env);
+        Map env = Synt.mapOf("FIND_AGENT", this);
+        String result = AiUtil.chat("find.agent", msgs, tks, cnf, env);
         CoreLogger.debug("result: {}", result);
 
         // 清理思考过程
