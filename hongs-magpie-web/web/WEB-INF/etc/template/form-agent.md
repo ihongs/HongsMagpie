@@ -56,8 +56,6 @@
 - `sms`：手机号码
 - `search`：搜索字段（Lucene 分词查询）
 - `stored`：存储字段（Lucene 仅存不查）
-- `legend`: 分栏标题（页面元素，内容为其下的 `info-text` 或 `form-text`，格式为 html）
-- `figure`: 附加板块（页面元素，内容为其下的 `info-text` 或 `form-text`，格式为 html）
 
 #### number 类型
 - `number`：数字输入
@@ -117,6 +115,12 @@
 #### form 类型
 - `form`：子表单
 - `part`：form 的别名
+
+#### 页面类型
+- `legend`: 分栏标题，用于分隔标识
+- `figure`: 附加板块，用于附加内容
+
+由 info-text 或 form-text 提供内容，格式为 html
 
 ### 字段参数
 
