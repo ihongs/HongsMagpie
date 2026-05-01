@@ -10,8 +10,6 @@ import io.github.ihongs.combat.anno.Combat;
 import io.github.ihongs.serv.matrix.Data;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.Template;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,12 +170,7 @@ public class AiCmds {
     public static void transform(Data ref, Data mod, List<Map> list, String slit) throws CruxException {
         String fid = mod.getFormId();
         
-        Template tpl;
-        try {
-            tpl = Template.compile(Path.of(Core.CONF_PATH, "magpie", "form", fid+".md"));
-        } catch ( IOException ex ) {
-            throw new CruxException(ex);
-        }
+        Template tpl = Template.compileByName("magpie/form/"+fid+".md");
 
         for(Map item : list) {
             String did = Synt.asString(item.get(Cnst.ID_KEY));

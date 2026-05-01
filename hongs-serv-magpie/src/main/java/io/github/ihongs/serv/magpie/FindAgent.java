@@ -14,8 +14,6 @@ import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Syno;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.Template;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -156,9 +154,9 @@ public class FindAgent {
         // 系统角色
         Template temp;
         try {
-            temp = Template.compile(Path.of(Core.CONF_PATH + "/template/find-agent.md"));
+            temp = Template.compileByName("template/find-agent.md");
         }
-        catch (IOException ex) {
+        catch (UnsupportedOperationException ex) {
             throw new CruxException(ex);
         }
         temp.regist("escape", args -> {

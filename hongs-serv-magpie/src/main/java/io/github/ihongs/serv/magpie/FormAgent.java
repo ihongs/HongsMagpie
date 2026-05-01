@@ -7,8 +7,6 @@ import io.github.ihongs.jsp.Pagelet;
 import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.github.ihongs.util.Template;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +49,9 @@ public class FormAgent {
         // 系统角色
         Template temp;
         try {
-            temp = Template.compile(Path.of(Core.CONF_PATH + "/template/form-agent.md"));
+            temp = Template.compileByName("template/form-agent.md");
         }
-        catch (IOException ex) {
+        catch (UnsupportedOperationException ex) {
             throw new CruxException(ex);
         }
         temp.regist("escape", args -> {
