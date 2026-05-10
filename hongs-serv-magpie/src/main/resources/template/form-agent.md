@@ -244,3 +244,411 @@
 - `disabled`：是否禁用（yes/no，字段内部操控）
 - `unreadable`：是否不出现在详情页（yes/no）
 - `unwritable`：是否不出现在表单页（yes/no）
+
+## 字段配置
+
+### 常用字段
+
+这些字段只能添加一个.
+
+- 标题、名称
+```json
+{
+    "__name__": "name",
+    "__type__": "text",
+    "__text__": "标题",
+    "__required__": "true",
+    "__repeated__": "",
+    "form-hold": "请输入...",
+    "listable": "true",
+    "wordable": "true"
+}
+```
+
+- 概要、说明
+```json
+{
+    "__name__": "note",
+    "__type__": "text",
+    "__text__": "概要",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "请输入...",
+    "listable": "true",
+    "wordable": "true",
+    "sortable": "false"
+}
+```
+
+- 标签、标记
+```json
+{
+    "__name__": "tags",
+    "__type__": "text",
+    "__text__": "标签",
+    "__required__": "",
+    "__repeated__": "true",
+    "form-hold": "请输入...",
+    "listable": "true",
+    "wordable": "true",
+    "statable": "true",
+    "deverse": "true",
+    "split": ",",
+    "slice": ","
+}
+```
+
+- 权重
+```json
+{
+    "__name__": "boost",
+    "__type__": "number",
+    "__text__": "权重",
+    "__required__": "",
+    "__repeated__": "",
+    "default": "0",
+    "type": "long",
+    "listable": "true",
+    "sortable": "true"
+}
+```
+
+- 状态
+```json
+{
+    "__name__": "state",
+    "__type__": "select",
+    "__text__": "状态",
+    "__required__": "",
+    "__repeated__": "",
+    "default": "1",
+    "type": "byte",
+    "listable": "true",
+    "statable": "true",
+    "datalist": "[[\"1\",\"正常\"]]",
+    "selected": "[\"1\"]"
+}
+```
+
+### 常用字段
+
+这些字段只能添加一个, 即使不加也会隐性存在.
+
+- 创建时间、添加时间
+```json
+{
+    "__name__": "ctime",
+    "__type__": "datetime",
+    "__text__": "创建时间",
+    "__required__": "",
+    "__repeated__": "",
+    "type": "timestamp",
+    "default": "@now",
+    "deforce": "create",
+    "readonly": "yes",
+    "listable": "true",
+    "sortable": "true"
+}
+```
+
+- 修改时间、更新时间
+```json
+{
+    "__name__": "mtime",
+    "__type__": "datetime",
+    "__text__": "修改时间",
+    "__required__": "",
+    "__repeated__": "",
+    "type": "timestamp",
+    "default": "@now",
+    "deforce": "always",
+    "readonly": "yes",
+    "listable": "true",
+    "sortable": "true"
+}
+```
+
+- 创建用户
+```json
+{
+    "__name__": "cuser",
+    "__type__": "fork",
+    "__text__": "创建用户",
+    "__required__": "",
+    "__repeated__": "",
+    "default": "@uid",
+    "deforce": "create",
+    "readonly": "yes",
+    "listable": "true",
+    "unopenable": "yes",
+    "pass-id": "yes",
+    "data-ln": "cuser",
+    "data-vk": "id",
+    "data-tk": "name",
+    "data-at": "centra/master/user/list",
+    "data-st": "centra/master/user/pick.html"
+}
+```
+
+- 修改用户
+```json
+{
+    "__name__": "muser",
+    "__type__": "fork",
+    "__text__": "修改用户",
+    "__required__": "",
+    "__repeated__": "",
+    "default": "@uid",
+    "deforce": "always",
+    "readonly": "yes",
+    "listable": "true",
+    "unopenable": "yes",
+    "pass-id": "yes",
+    "data-ln": "muser",
+    "data-vk": "id",
+    "data-tk": "name",
+    "data-at": "centra/master/user/list",
+    "data-st": "centra/master/user/pick.html"
+}
+```
+
+- 表单设置
+```json
+{
+    "__name__": "@"
+}
+```
+
+### 标准字段
+
+这些字段可以添加多个, `"__name__":"-"` 表示字段名未定, 之后由系统分配.
+
+- 文本
+```json
+{
+    "__name__": "-",
+    "__type__": "text",
+    "__text__": "文本",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "请输入...",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "pattern": ""
+}
+```
+
+- 邮箱
+```json
+{
+    "__name__": "-",
+    "__type__": "email",
+    "__text__": "邮箱",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "请输入电子邮箱",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": ""
+}
+```
+
+- 网址
+```json
+{
+    "__name__": "-",
+    "__type__": "url",
+    "__text__": "网址",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "请输入链接地址",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": ""
+}
+```
+
+- 电话
+```json
+{
+    "__name__": "-",
+    "__type__": "tel",
+    "__text__": "电话",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "请输入电话号码",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": ""
+}
+```
+
+- 数字
+```json
+{
+    "__name__": "-",
+    "__type__": "number",
+    "__text__": "数字",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "请输入数字",
+    "listable": "yes",
+    "sortable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "min": "",
+    "max": "",
+    "scale": ""
+}
+```
+
+- 日期
+```json
+{
+    "__name__": "-",
+    "__type__": "date",
+    "__text__": "日期",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "",
+    "type": "timestamp",
+    "listable": "yes",
+    "sortable": "yes",
+    "form-hint": "",
+    "info-hint": ""
+}
+```
+
+- 选择
+```json
+{
+    "__name__": "-",
+    "__type__": "select",
+    "__text__": "选择",
+    "__required__": "",
+    "__repeated__": "",
+    "listable": "yes",
+    "statable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "datalist": "[[\"\",\"--请选择--\"]]",
+    "selected": "[\"\"]"
+}
+```
+
+- 复选框
+```json
+{
+    "__name__": "-",
+    "__type__": "check",
+    "__text__": "复选框",
+    "__required__": "",
+    "__repeated__": "true",
+    "form-hold": "",
+    "listable": "yes",
+    "statable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "datalist": "[[\"1\",\"选项1\"],[\"2\",\"选项2\"]]",
+    "selected": "[]"
+}
+```
+
+- 单选框
+```json
+{
+    "__name__": "-",
+    "__type__": "radio",
+    "__text__": "单选框",
+    "__required__": "",
+    "__repeated__": "true",
+    "form-hold": "",
+    "listable": "yes",
+    "statable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "datalist": "[[\"1\",\"选项1\"],[\"2\",\"选项2\"]]",
+    "selected": "[]"
+}
+```
+
+- 文本域
+```json
+{
+    "__name__": "-",
+    "__type__": "textarea",
+    "__text__": "文本域",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "在此输入内容...",
+    "form-hint": "",
+    "info-hint": ""
+}
+```
+
+- 富文本
+```json
+{
+    "__name__": "-",
+    "__type__": "textview",
+    "__text__": "富文本",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "",
+    "type": "html",
+    "mode": "",
+    "form-hint": "",
+    "info-hint": ""
+}
+```
+
+- 图片
+```json
+{
+    "__name__": "-",
+    "__type__": "image",
+    "__text__": "图片",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "浏览...",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "accept": "",
+    "__rule__": "Thumb",
+    "thumb-mode": "",
+    "thumb-size": ""
+}
+```
+
+- 文件
+```json
+{
+    "__name__": "-",
+    "__type__": "file",
+    "__text__": "文件",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "浏览...",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": "",
+    "accept": ""
+}
+```
+
+- 关联
+```json
+{
+    "__name__": "-",
+    "__type__": "fork",
+    "__text__": "关联",
+    "__required__": "",
+    "__repeated__": "",
+    "form-hold": "选择...",
+    "listable": "yes",
+    "form-hint": "",
+    "info-hint": ""
+}
+```

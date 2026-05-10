@@ -11,6 +11,7 @@ import io.github.ihongs.util.Synt;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
@@ -25,11 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * MCP 服务接口
@@ -43,21 +44,23 @@ public class McpAction extends ActionDriver {
     public void init(ServletConfig conf) throws ServletException {
         super.init(conf);
 
-        String sseUrl = conf.getInitParameter("sse-url");
-        String msgUrl = conf.getInitParameter("msg-url");
         Set<String> tools = Synt.toSet(conf.getInitParameter("tools"));
-
-        if (sseUrl == null || sseUrl.isEmpty()
-        ||  msgUrl == null || msgUrl.isEmpty()
-        ||  tools  == null || tools .isEmpty()) {
-            throw new ServletException("Init params sse-url, msg-url and tools required");
+        if (tools == null || tools.isEmpty()) {
+            throw new ServletException( "Init params tools required" );
         }
+
+        String basUrl = conf.getInitParameter("base-url");
+        if (basUrl == null || basUrl.isEmpty()) basUrl = "/mcp";
+        String sseUrl = conf.getInitParameter( "sse-url");
+        if (sseUrl == null || sseUrl.isEmpty()) sseUrl = "/sse";
+        String msgUrl = conf.getInitParameter( "msg-url");
+        if (msgUrl == null || msgUrl.isEmpty()) msgUrl = "/message";
 
         McpServerTransportProvider provider = HttpServletSseServerTransportProvider
             .builder()
-            .baseUrl(Core.SERV_PATH)
-            .messageEndpoint(msgUrl)
+            .baseUrl(basUrl)
             .sseEndpoint(sseUrl)
+            .messageEndpoint(msgUrl)
             .build();
 
         McpSyncServer server = McpServer.sync(provider)

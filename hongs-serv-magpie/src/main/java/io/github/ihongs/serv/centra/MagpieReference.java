@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.Part;
+import jakarta.servlet.http.Part;
 
 /**
  * 文档补充接口

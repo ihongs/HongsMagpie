@@ -264,7 +264,7 @@
     </filter>
     <filter-mapping>
         <filter-name>McpAuthFilter</filter-name>
-        <url-pattern>/common/mcp/*</url-pattern>
+        <url-pattern>/mcp/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
     <filter>
@@ -278,7 +278,7 @@
     </filter>
     <filter-mapping>
         <filter-name>McpRoleFilter</filter-name>
-        <url-pattern>/common/mcp/*</url-pattern>
+        <url-pattern>/mcp/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
     <servlet>
@@ -295,18 +295,14 @@
             <param-value>echo,calc</param-value>
         </init-param>
         <init-param>
-            <param-name>sse-url</param-name>
-            <param-value>/common/mcp/sse</param-value>
-        </init-param>
-        <init-param>
-            <param-name>msg-url</param-name>
-            <param-value>/common/mcp/message</param-value>
+            <param-name>base-url</param-name>
+            <param-value>/mcp/test</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>
         <servlet-name>McpServer</servlet-name>
-        <url-pattern>/common/mcp/sse</url-pattern>
-        <url-pattern>/common/mcp/message</url-pattern>
+        <url-pattern>/mcp/test/sse</url-pattern>
+        <url-pattern>/mcp/test/message</url-pattern>
     </servlet-mapping>
     <!-- Session Sets -->
     <session-config>
