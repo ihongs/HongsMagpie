@@ -10,6 +10,7 @@ import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -28,7 +29,7 @@ public class McpRunner {
         this.method = method ;
     }
 
-    public String execute(Map<String, Object> argumentsMap , Object memoryId) {
+    public Object execute(Map<String, Object> argumentsMap , Object memoryId) {
         Object[] arguments = prepareArguments(method, argumentsMap, memoryId);
         try {
             return execute (arguments);
@@ -46,16 +47,28 @@ public class McpRunner {
         }
     }
 
-    private String execute(Object[] arguments) throws IllegalAccessException, InvocationTargetException {
-        Object result = method.invoke(object, arguments);
-        Class<?> returnType = method.getReturnType();
-        if (returnType == void.class) {
-            return "Success";
-        } else if (returnType == String.class) {
-            return (String) result;
-        } else {
-            return Json.toJson(result);
+    public Object execute(List<Object> argumentsLst, Object memoryId) {
+        Object[] arguments = prepareArguments(method, argumentsLst, memoryId);
+        try {
+            return execute (arguments);
+        } catch (IllegalAccessException e) {
+        try {
+            method.setAccessible(true);
+            return execute (arguments);
+        } catch (IllegalAccessException x) {
+            throw  new RuntimeException(x);
+        } catch (InvocationTargetException x) {
+            throw  new RuntimeException(x.getCause());
         }
+        } catch (InvocationTargetException e) {
+            throw  new RuntimeException(e.getCause());
+        }
+    }
+
+    private Object execute(Object[] arguments) throws IllegalAccessException, InvocationTargetException {
+        Object result = method.invoke(object, arguments);
+        Class<?> ret  = method.getReturnType(/**/);
+        return   ret == void.class ? true : result;
     }
 
     static Object[] prepareArguments(Method method, Map<String, Object> argumentsMap, Object memoryId) {
@@ -63,7 +76,6 @@ public class McpRunner {
         Object[] arguments = new Object[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) {
-
             Parameter parameter = parameters[i];
 
             if (parameter.isAnnotationPresent(ToolMemoryId.class)) {
@@ -74,6 +86,31 @@ public class McpRunner {
             String parameterName = parameter.getName();
             if (argumentsMap.containsKey(parameterName)) {
                 Object argument = argumentsMap.get(parameterName);
+                Class<?> parameterClass = parameter.getType();
+                Type parameterType = parameter.getParameterizedType();
+
+                arguments[i] = coerceArgument(argument, parameterName, parameterClass, parameterType);
+            }
+        }
+
+        return arguments;
+    }
+
+    static Object[] prepareArguments(Method method, List<Object> argumentsLst, Object memoryId) {
+        Parameter[] parameters = method.getParameters();
+        Object[] arguments = new Object[parameters.length];
+
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+
+            if (parameter.isAnnotationPresent(ToolMemoryId.class)) {
+                arguments[i] = memoryId;
+                continue;
+            }
+
+            String parameterName = parameter.getName();
+            if (argumentsLst.size() < i) {
+                Object argument = argumentsLst.get(i);
                 Class<?> parameterClass = parameter.getType();
                 Type parameterType = parameter.getParameterizedType();
 

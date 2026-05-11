@@ -30,6 +30,19 @@
             <groupId>${project.groupId}</groupId>
             <version>${primary.version}</version>
         </dependency>
+        <!-- servlet 由 server 提供, 无需打包 -->
+        <dependency>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <version>6.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <artifactId>jakarta.servlet.jsp-api</artifactId>
+            <groupId>jakarta.servlet.jsp</groupId>
+            <version>4.0.0</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- LLM -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -67,7 +80,7 @@
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
             <artifactId>mcp</artifactId>
-            <version>0.9.0</version>
+            <version>2.0.0-M2</version>
         </dependency>
     </dependencies>
 </project>

@@ -303,6 +303,7 @@
         <servlet-name>McpServer</servlet-name>
         <url-pattern>/mcp/test/sse</url-pattern>
         <url-pattern>/mcp/test/message</url-pattern>
+        <url-pattern>/mcp/test/execute</url-pattern>
     </servlet-mapping>
     <!-- Session Sets -->
     <session-config>

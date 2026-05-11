@@ -1,12 +1,14 @@
 package io.github.ihongs.serv.magpie.mcp;
 
+import io.github.ihongs.Cnst;
 import io.github.ihongs.Core;
 import io.github.ihongs.CoreLogger;
 import io.github.ihongs.CoreRoster.Mathod;
+import io.github.ihongs.CruxCause;
+import io.github.ihongs.CruxException;
 import io.github.ihongs.action.ActionDriver;
 import io.github.ihongs.action.ActionHelper;
 import io.github.ihongs.serv.magpie.AiUtil;
-import io.github.ihongs.util.Dist;
 import io.github.ihongs.util.Synt;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -31,6 +33,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
 
 /**
  * MCP 服务接口
@@ -39,28 +42,27 @@ import jakarta.servlet.http.HttpServletResponse;
 public class McpAction extends ActionDriver {
 
     protected HttpServlet actor;
+    protected String baseUrl;
+    protected String execUrl;
 
     @Override
     public void init(ServletConfig conf) throws ServletException {
-        super.init(conf);
+        super.init (conf);
 
-        Set<String> tools = Synt.toSet(conf.getInitParameter("tools"));
-        if (tools == null || tools.isEmpty()) {
-            throw new ServletException( "Init params tools required" );
+        Set<String> tools;
+        tools   = Synt.toSet(conf.getInitParameter("tools"));
+        baseUrl = conf.getInitParameter("base-url");
+        if (tools   == null || tools  .isEmpty()
+        ||  baseUrl == null || baseUrl.isEmpty()) {
+            throw new ServletException("Init params tools and base-url required");
         }
-
-        String basUrl = conf.getInitParameter("base-url");
-        if (basUrl == null || basUrl.isEmpty()) basUrl = "/mcp";
-        String sseUrl = conf.getInitParameter( "sse-url");
-        if (sseUrl == null || sseUrl.isEmpty()) sseUrl = "/sse";
-        String msgUrl = conf.getInitParameter( "msg-url");
-        if (msgUrl == null || msgUrl.isEmpty()) msgUrl = "/message";
+        execUrl = baseUrl + "/execute";
 
         McpServerTransportProvider provider = HttpServletSseServerTransportProvider
             .builder()
-            .baseUrl(basUrl)
-            .sseEndpoint(sseUrl)
-            .messageEndpoint(msgUrl)
+            .baseUrl(baseUrl)
+            .sseEndpoint("/sse")
+            .messageEndpoint("/message")
             .build();
 
         McpSyncServer server = McpServer.sync(provider)
@@ -84,27 +86,31 @@ public class McpAction extends ActionDriver {
             dev.langchain4j.agent.tool.Tool  ta = met.getAnnotation(dev.langchain4j.agent.tool.Tool.class);
             String name = Synt.defxult(ta.name(), met.getName());
             String desc = String.join ("\n", ta.value());
-            String sche = Dist.toString(toSchema( mps ));
+            Map    sche = toSchema( mps );
 
-            server.addTool(
-                new SyncToolSpecification(
-                    new Tool(name, desc, sche), (exch, args) -> {
-                        try {
-                            Object obj = Core.getInstance ( mcl );
-                            String mid = UUID.randomUUID().toString();
-                            String rst = new McpRunner(obj, met ).execute(args, mid);
-                            return new CallToolResult (rst,false);
-                        } catch (Exception ex) {
-                            Throwable ax = ex.getCause();
-                            if (ax == null) {
-                                ax  = ex;
-                            }
-                            CoreLogger.error(ax);
-                            String msg = ax.getMessage();
-                            return new CallToolResult (msg, true);
-                        }
-                    }
+            server.addTool(SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                    .name(name)
+                    .description(desc)
+                    .inputSchema(sche)
+                    .build()
                 )
+                .callHandler((exch, reqs) -> {
+                    try {
+                        Object obj = Core.getInstance ( mcl );
+                        String mid = UUID.randomUUID().toString();
+                        Object rst = new McpRunner(obj, met ).execute(reqs.arguments(), mid);
+                        return toResult(rst);
+                    } catch (Exception ex) {
+                        Throwable ax = ex.getCause();
+                        if (ax == null) {
+                            ax  = ex;
+                        }
+                        CoreLogger.error(ax);
+                        return toResult (ax);
+                    }
+                })
+                .build()
             );
         }
 
@@ -122,7 +128,106 @@ public class McpAction extends ActionDriver {
     throws ServletException, IOException {
         HttpServletRequest  request  = helper.getRequest ();
         HttpServletResponse response = helper.getResponse();
+
+        // JSON RPC
+        String   url = getRecentPath ( request );
+        if ( execUrl.equals(url)) {
+            Map  req = helper.getRequestData ( );
+            Object x = req.get ( "data" );
+
+            if (x != null && x instanceof List ) {
+                List a = Synt. asList (x);
+                List r = new ArrayList(a.size());
+                for(Object o : a) {
+                    Map m = Synt.asMap(o);
+                    Object s = execute(m);
+                    r.add( s );
+                }
+                helper.reply(Synt.mapOf(
+                    Cnst.CB_KEY, "~",
+                    "data", r
+                ));
+            } else {
+                Object s = execute(req);
+                helper.reply(Synt.mapOf(
+                    Cnst.CB_KEY, "~",
+                    "data", s
+                ));
+            }
+            return;
+        }
+
         actor.service(request, response);
+    }
+
+    protected Object execute(Map req) {
+            String  id = "";
+        try {
+                    id = Synt.declare (req.get("id"), id);
+            String mtd = Synt.asString(req.get("method"));
+            Object pms = req.get("params");
+
+            Map<String, Mathod> toolz = AiUtil.getTools();
+            Mathod mat = toolz.get ( mtd );
+            if (mat == null) {
+                throw new CruxException("@magpie:jsonrpc.error", -32601, "method not found: " + mtd);
+            }
+
+            Method met = mat.getMethod ( );
+            Class  mcl = mat.getMclass ( );
+            Object obj = Core.getInstance(mcl);
+            String mid = UUID.randomUUID().toString();
+            Object rst ;
+
+            if (pms instanceof List) {
+                rst = new McpRunner(obj , met).execute((List) pms, mid);
+            } else
+            if (pms instanceof Map ) {
+                rst = new McpRunner(obj , met).execute((Map ) pms, mid);
+            } else
+            {
+                throw new CruxException("@magpie:jsonrpc.error", -32603, "params must be list or dict");
+            }
+            return Synt.mapOf(
+                "jsonrpc", "2.0",
+                "result" ,  rst ,
+                "id", id
+            );
+        }
+        catch  (Exception ex) {
+            Object  code ;
+            Object  msg  ;
+            if (ex instanceof CruxCause) {
+                CruxCause cx = (CruxCause) ex;
+                if ("@magpie:jsonrpc.error".equals(cx.getError())) {
+                    code = cx.getCases()[0];
+                    msg  = cx.getCases()[1];
+                } else
+                if (cx.getErrno() == 400) {
+                    code = -32600;
+                    msg  = ex.getMessage( );
+                } else
+                if (cx.getErrno() == 404) {
+                    code = -32601;
+                    msg  = ex.getMessage( );
+                } else
+                {
+                    code = -32603;
+                    msg  = ex.getMessage( );
+                }
+            } else {
+                    code = -32603;
+                    msg  = ex.getMessage( );
+            }
+            return Synt.mapOf(
+                "jsonrpc", "2.0",
+                "error"  , Synt.mapOf(
+                    "code"   , code,
+                    "message", msg
+                ),
+                "id", id
+            );
+        }
     }
 
     /**
@@ -131,7 +236,7 @@ public class McpAction extends ActionDriver {
      * @param params
      * @return
      */
-    protected Map  toSchema(Parameter[] params) {
+    protected Map toSchema(Parameter[] params) {
         Map  ps = new LinkedHashMap(params.length);
         List rs = new  ArrayList   (params.length);
         int  i  = 0;
@@ -160,10 +265,10 @@ public class McpAction extends ActionDriver {
                 ||  byte  .class == pt) {
                     pm.put("type", "number");
                 } else
-                if (Map.class.isAssignableFrom(pt)) {
+                if (Map .class.isAssignableFrom(pt)) {
                     pm.put("type", "object");
                 } else
-                if (Set.class.isAssignableFrom(pt)) {
+                if (Set .class.isAssignableFrom(pt)) {
                     pm.put("type", "array");
                 } else
                 if (List.class.isAssignableFrom(pt)) {
@@ -174,12 +279,32 @@ public class McpAction extends ActionDriver {
                 }
             }
         }
+
         return Synt.mapOf(
-            "id", "urn:jsonschema:Operation",
+            //"id", "urn:jsonschema:Operation",
             "type", "object",
             "properties", ps,
             "required"  , rs
         );
+    }
+
+    protected CallToolResult toResult(Object data) {
+        List<String> list = Synt.asColl(data)
+            .stream( )
+            .map(x -> Synt.asString(x))
+            .toList( );
+        return CallToolResult
+            .builder()
+            .textContent(list)
+            .build ( );
+    }
+
+    protected CallToolResult toResult(Throwable e) {
+        return CallToolResult
+            .builder()
+            .isError(true)
+            .addTextContent(e.getMessage())
+            .build ( );
     }
 
 }
