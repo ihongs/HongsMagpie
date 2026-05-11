@@ -38,11 +38,11 @@ public class AiFormAction {
             messages = messages.subList(count - limit, count);
         }
 
-        FormAgent  fa = new FormAgent();
+        FormAgent  fa = new FormAgent( );
         String s = fa.chat(messages, content);
         helper.reply(Synt.mapOf(
-            "ok"  , false , // 阻断后续处理
-            "cb"  , "ECHO", // 自定输出类型
+            "ok"  , false, // 阻断后续处理
+            "cb"  , "~"  , // 自定输出类型
             "type", "text/plain",
             "text", s
         ));
